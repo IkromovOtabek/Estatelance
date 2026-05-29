@@ -8,7 +8,9 @@ const nextConfig = {
       'images.unsplash.com',
       't.me',
       'telegram.org',
-      'res.cloudinary.com',  // if using Cloudinary for uploads
+      'res.cloudinary.com',
+      'bufu.uz',
+      'api.bufu.uz',
     ],
   },
 
