@@ -18,6 +18,7 @@ import {
   DashboardStats,
   DailyVisitorStat,
   TrackVisitInput,
+  VisitorUserDetail,
 } from '../../libs/dto/admin.dto';
 
 @Resolver()
@@ -202,5 +203,16 @@ export class AdminResolver {
     @Args('days', { type: () => Int, defaultValue: 14 }) days: number,
   ): Promise<DailyVisitorStat[]> {
     return this.adminService.getDailyVisitorStats(days);
+  }
+
+  // ─── Admin: User details for a day + event ───────────────────────────────────
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Query(() => [VisitorUserDetail])
+  async adminGetDailyUserDetails(
+    @Args('date') date: string,
+    @Args('event') event: string,
+  ): Promise<VisitorUserDetail[]> {
+    return this.adminService.getDailyUserDetails(date, event);
   }
 }

@@ -4,14 +4,16 @@ import { userVar, setUserFromToken, clearUser } from '../../apollo/store';
 import { LOGIN, SIGNUP, LOGIN_WITH_TELEGRAM } from '../../apollo/user/mutation';
 import { TRACK_VISIT } from '../../apollo/admin/mutation';
 
-function fireTrackEvent(event: 'visit' | 'register' | 'login') {
+function fireTrackEvent(event: 'visit' | 'register' | 'login', userId?: string) {
   if (typeof window === 'undefined') return;
   let id = localStorage.getItem('_vid');
   if (!id) {
     id = `v_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     localStorage.setItem('_vid', id);
   }
-  apolloClient.mutate({ mutation: TRACK_VISIT, variables: { input: { visitorId: id, event } } }).catch(() => {});
+  const input: any = { visitorId: id, event };
+  if (userId) input.userId = userId;
+  apolloClient.mutate({ mutation: TRACK_VISIT, variables: { input } }).catch(() => {});
 }
 
 // ─── Log in with username + password ─────────────────────────────────────────
@@ -26,8 +28,9 @@ export async function loginWithPassword(username: string, password: string): Pro
   if (!user?.accessToken) throw new Error('Login failed — no token returned');
 
   saveToken(user.accessToken);
-  setUserFromToken(jwtDecode(user.accessToken));
-  fireTrackEvent('login');
+  const decoded: any = jwtDecode(user.accessToken);
+  setUserFromToken(decoded);
+  fireTrackEvent('login', decoded._id);
 }
 
 // ─── Sign up with username + password ────────────────────────────────────────
@@ -49,8 +52,9 @@ export async function signupWithPassword(
   if (!user?.accessToken) throw new Error('Signup failed — no token returned');
 
   saveToken(user.accessToken);
-  setUserFromToken(jwtDecode(user.accessToken));
-  fireTrackEvent('register');
+  const decodedNew: any = jwtDecode(user.accessToken);
+  setUserFromToken(decodedNew);
+  fireTrackEvent('register', decodedNew._id);
 }
 
 // ─── Log in via Telegram ─────────────────────────────────────────────────────
@@ -78,8 +82,9 @@ export async function loginWithTelegram(telegramData: {
   if (!user?.accessToken) throw new Error('Telegram login failed — no token returned');
 
   saveToken(user.accessToken);
-  setUserFromToken(jwtDecode(user.accessToken));
-  fireTrackEvent(user.needsOnboarding ? 'register' : 'login');
+  const decodedTg: any = jwtDecode(user.accessToken);
+  setUserFromToken(decodedTg);
+  fireTrackEvent(user.needsOnboarding ? 'register' : 'login', decodedTg._id);
   return !!user.needsOnboarding;
 }
 

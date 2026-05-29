@@ -9,6 +9,10 @@ export class SiteVisit {
   @Prop({ required: true })
   visitorId: string;
 
+  // Actual user ID (set for login/register events)
+  @Prop({ default: null })
+  userId: string | null;
+
   // Event type: 'visit' | 'register' | 'login'
   @Prop({ required: true })
   event: string;

@@ -21,6 +21,7 @@ import {
   DashboardStats,
   DailyVisitorStat,
   TrackVisitInput,
+  VisitorUserDetail,
 } from '../../libs/dto/admin.dto';
 import { NotificationType, UserStatus, UserType } from '../../libs/enums/common.enums';
 import { DEFAULT_AVATAR_URL } from '../../libs/config';
@@ -323,19 +324,57 @@ export class AdminService {
   // ─── Send Broadcast Notification to All Users ─────────────────────────────────
   // ─── Track Site Visit ─────────────────────────────────────────────────────────
   async trackVisit(input: TrackVisitInput): Promise<boolean> {
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    // Use Tashkent timezone (UTC+5) for date
+    const now = new Date();
+    const tzOffset = 5 * 60; // UTC+5
+    const local = new Date(now.getTime() + tzOffset * 60 * 1000);
+    const date = local.toISOString().slice(0, 10); // YYYY-MM-DD
+
     await this.siteVisitModel.create({
       visitorId: input.visitorId,
       event: input.event,
-      date: today,
+      userId: input.userId ?? null,
+      date,
     });
     return true;
+  }
+
+  // ─── Get user details for a specific date and event ──────────────────────────
+  async getDailyUserDetails(date: string, event: string): Promise<VisitorUserDetail[]> {
+    const visits = await this.siteVisitModel
+      .find({ date, event, userId: { $ne: null } })
+      .lean();
+
+    if (visits.length === 0) return [];
+
+    const userIds = [...new Set(visits.map((v) => v.userId).filter(Boolean))];
+    const users = await this.userModel
+      .find({ _id: { $in: userIds } }, { _id: 1, username: 1, fullName: 1, profileImage: 1, userType: 1 })
+      .lean();
+
+    const userMap = new Map(users.map((u) => [u._id.toString(), u]));
+
+    return visits
+      .filter((v) => v.userId && userMap.has(v.userId))
+      .map((v) => {
+        const u = userMap.get(v.userId!)!;
+        return {
+          userId: u._id.toString(),
+          username: u.username,
+          fullName: u.fullName ?? '',
+          profileImage: u.profileImage ?? '',
+          userType: u.userType,
+          event: v.event,
+          createdAt: (v as any).createdAt?.toISOString?.() ?? '',
+        };
+      });
   }
 
   // ─── Get Daily Visitor Stats (last N days) ────────────────────────────────────
   async getDailyVisitorStats(days = 14): Promise<DailyVisitorStat[]> {
     const result: DailyVisitorStat[] = [];
-    const today = new Date();
+    const tzOffset = 5 * 60; // UTC+5 Tashkent
+    const today = new Date(Date.now() + tzOffset * 60 * 1000);
 
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(today);

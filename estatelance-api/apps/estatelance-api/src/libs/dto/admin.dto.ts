@@ -100,4 +100,21 @@ export class TrackVisitInput {
   @IsString()
   @Field(() => String)
   event: string; // 'visit' | 'register' | 'login'
+
+  @IsOptional()
+  @IsString()
+  @Field(() => String, { nullable: true })
+  userId?: string;
+}
+
+// ─── Object: User detail for visitor stats drill-down ────────────────────────
+@ObjectType()
+export class VisitorUserDetail {
+  @Field(() => String) userId: string;
+  @Field(() => String) username: string;
+  @Field(() => String, { nullable: true }) fullName?: string;
+  @Field(() => String, { nullable: true }) profileImage?: string;
+  @Field(() => String) userType: string;
+  @Field(() => String) event: string;
+  @Field(() => String) createdAt: string;
 }

@@ -87,6 +87,20 @@ export const ADMIN_GET_VISITOR_STATS = gql`
   }
 `;
 
+export const ADMIN_GET_DAILY_USER_DETAILS = gql`
+  query AdminGetDailyUserDetails($date: String!, $event: String!) {
+    adminGetDailyUserDetails(date: $date, event: $event) {
+      userId
+      username
+      fullName
+      profileImage
+      userType
+      event
+      createdAt
+    }
+  }
+`;
+
 // Public query — available to all users
 export const GET_ACTIVE_ANNOUNCEMENTS = gql`
   query GetActiveAnnouncements {

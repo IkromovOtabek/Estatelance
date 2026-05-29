@@ -119,3 +119,4 @@ export const TRACK_VISIT = gql`
     trackVisit(input: $input)
   }
 `;
+

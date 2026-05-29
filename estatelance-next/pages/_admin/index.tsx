@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery, useLazyQuery } from '@apollo/client';
 import { useReactiveVar } from '@apollo/client';
 import {
   Alert,
@@ -62,6 +62,7 @@ import {
   ADMIN_GET_ALL_ANNOUNCEMENTS,
   ADMIN_GET_DASHBOARD_STATS,
   ADMIN_GET_VISITOR_STATS,
+  ADMIN_GET_DAILY_USER_DETAILS,
 } from '../../apollo/admin/query';
 import {
   ADMIN_CHANGE_USER_STATUS,
@@ -108,6 +109,11 @@ const AdminPage = () => {
   // Alert messages
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Visitor detail modal
+  const [detailModal, setDetailModal] = useState<{ open: boolean; date: string; event: string; label: string }>({
+    open: false, date: '', event: '', label: '',
+  });
 
   // ── Delete user dialog ─────────────────────────────────────────────────────
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId: string; username: string }>({
@@ -169,6 +175,11 @@ const AdminPage = () => {
     fetchPolicy: 'cache-and-network',
   });
 
+  const [fetchUserDetails, { data: detailData, loading: detailLoading }] = useLazyQuery(
+    ADMIN_GET_DAILY_USER_DETAILS,
+    { fetchPolicy: 'network-only' },
+  );
+
   // ── Mutations ──────────────────────────────────────────────────────────────
   const [changeStatus] = useMutation(ADMIN_CHANGE_USER_STATUS);
   const [changeRole] = useMutation(ADMIN_CHANGE_USER_ROLE);
@@ -186,6 +197,11 @@ const AdminPage = () => {
   const allJobs: Job[] = jobsData?.adminGetAllJobs ?? [];
   const allPosts: Post[] = postsData?.adminGetAllPosts ?? [];
   const visitorStats: DailyVisitorStat[] = visitorData?.adminGetVisitorStats ?? [];
+  const detailUsers = detailData?.adminGetDailyUserDetails ?? [];
+
+  // Today in Tashkent (UTC+5)
+  const todayStr = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const todayStat = visitorStats.find((s) => s.date === todayStr);
   const allAnn: Announcement[] = annData?.adminGetAllAnnouncements ?? [];
   const stats: DashboardStats | null = statsData?.adminGetDashboardStats ?? null;
 
@@ -514,11 +530,46 @@ const AdminPage = () => {
           )}
 
           {/* ── Visitor Stats ── */}
-          {visitorStats.length > 0 && (
-            <Box mt={4}>
-              <Typography fontWeight={700} fontSize={15} mb={2} color="#0f172a">
-                📊 Kunlik tashrif buyuruvchilar (so'nggi 14 kun)
-              </Typography>
+          <Box mt={4}>
+            <Typography fontWeight={700} fontSize={15} mb={2} color="#0f172a">
+              📊 Tashrif buyuruvchilar statistikasi
+            </Typography>
+
+            {/* Today highlight */}
+            {todayStat && (
+              <Box sx={{ bgcolor: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 2, p: 2, mb: 3 }}>
+                <Typography fontWeight={700} fontSize={13} color="#16a34a" mb={1.5}>
+                  🟢 Bugun — {todayStr}
+                </Typography>
+                <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                  <Box sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2, py: 1, border: '1px solid #e2e8f0' }}>
+                    <Typography fontSize={22} fontWeight={800} color="#4f46e5">{todayStat.visits}</Typography>
+                    <Typography fontSize={11} color="#64748b">Tashriflar</Typography>
+                  </Box>
+                  <Box sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2, py: 1, border: '1px solid #e2e8f0' }}>
+                    <Typography fontSize={22} fontWeight={800} color="#0891b2">{todayStat.uniqueVisitors}</Typography>
+                    <Typography fontSize={11} color="#64748b">Unikal</Typography>
+                  </Box>
+                  <Box
+                    onClick={() => { setDetailModal({ open: true, date: todayStr, event: 'register', label: "Ro'yxatdan o'tganlar" }); fetchUserDetails({ variables: { date: todayStr, event: 'register' } }); }}
+                    sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2, py: 1, border: '1px solid #e2e8f0', cursor: 'pointer', '&:hover': { bgcolor: '#dcfce7' } }}
+                  >
+                    <Typography fontSize={22} fontWeight={800} color="#16a34a">{todayStat.registrations}</Typography>
+                    <Typography fontSize={11} color="#64748b">Ro'yxatdan o'tdi ↗</Typography>
+                  </Box>
+                  <Box
+                    onClick={() => { setDetailModal({ open: true, date: todayStr, event: 'login', label: 'Login bo\'lganlar' }); fetchUserDetails({ variables: { date: todayStr, event: 'login' } }); }}
+                    sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2, py: 1, border: '1px solid #e2e8f0', cursor: 'pointer', '&:hover': { bgcolor: '#fef3c7' } }}
+                  >
+                    <Typography fontSize={22} fontWeight={800} color="#d97706">{todayStat.logins}</Typography>
+                    <Typography fontSize={11} color="#64748b">Login bo'ldi ↗</Typography>
+                  </Box>
+                </Stack>
+              </Box>
+            )}
+
+            {/* 14-day table */}
+            {visitorStats.length > 0 && (
               <Box sx={{ overflowX: 'auto' }}>
                 <Table size="small">
                   <TableHead>
@@ -531,9 +582,11 @@ const AdminPage = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {visitorStats.map((s) => (
-                      <TableRow key={s.date} hover>
-                        <TableCell sx={{ fontSize: 12, fontFamily: 'monospace' }}>{s.date}</TableCell>
+                    {[...visitorStats].reverse().map((s) => (
+                      <TableRow key={s.date} hover sx={s.date === todayStr ? { bgcolor: '#f0fdf4' } : {}}>
+                        <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', fontWeight: s.date === todayStr ? 700 : 400 }}>
+                          {s.date} {s.date === todayStr && <Chip label="bugun" size="small" sx={{ ml: 0.5, bgcolor: '#16a34a', color: '#fff', fontSize: 10, height: 18 }} />}
+                        </TableCell>
                         <TableCell align="center">
                           <Chip label={s.visits} size="small" sx={{ bgcolor: '#ede9fe', color: '#4f46e5', fontWeight: 700, fontSize: 11 }} />
                         </TableCell>
@@ -541,18 +594,28 @@ const AdminPage = () => {
                           <Chip label={s.uniqueVisitors} size="small" sx={{ bgcolor: '#e0f2fe', color: '#0891b2', fontWeight: 700, fontSize: 11 }} />
                         </TableCell>
                         <TableCell align="center">
-                          <Chip label={s.registrations} size="small" sx={{ bgcolor: '#dcfce7', color: '#16a34a', fontWeight: 700, fontSize: 11 }} />
+                          <Chip
+                            label={s.registrations}
+                            size="small"
+                            onClick={() => { setDetailModal({ open: true, date: s.date, event: 'register', label: "Ro'yxatdan o'tganlar" }); fetchUserDetails({ variables: { date: s.date, event: 'register' } }); }}
+                            sx={{ bgcolor: '#dcfce7', color: '#16a34a', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
+                          />
                         </TableCell>
                         <TableCell align="center">
-                          <Chip label={s.logins} size="small" sx={{ bgcolor: '#fef3c7', color: '#d97706', fontWeight: 700, fontSize: 11 }} />
+                          <Chip
+                            label={s.logins}
+                            size="small"
+                            onClick={() => { setDetailModal({ open: true, date: s.date, event: 'login', label: "Login bo'lganlar" }); fetchUserDetails({ variables: { date: s.date, event: 'login' } }); }}
+                            sx={{ bgcolor: '#fef3c7', color: '#d97706', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </Box>
-            </Box>
-          )}
+            )}
+          </Box>
         </Box>
       )}
 
@@ -1099,6 +1162,57 @@ const AdminPage = () => {
           <Button variant="contained" onClick={handleSendNotification} sx={{ bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' } }}>
             Send Notification
           </Button>
+        </DialogActions>
+      </Dialog>
+      {/* ── Dialog: Visitor User Details ─────────────────────────────────── */}
+      <Dialog open={detailModal.open} onClose={() => setDetailModal({ open: false, date: '', event: '', label: '' })} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, fontSize: 15, pb: 1 }}>
+          {detailModal.label} — {detailModal.date}
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 0 }}>
+          {detailLoading ? (
+            <Box sx={{ p: 3, textAlign: 'center' }}><CircularProgress size={28} /></Box>
+          ) : detailUsers.length === 0 ? (
+            <Box sx={{ p: 3, textAlign: 'center' }}>
+              <Typography color="text.secondary" fontSize={13}>Ma'lumot yo'q</Typography>
+            </Box>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Foydalanuvchi</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Tur</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Vaqt</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {detailUsers.map((u: any, i: number) => (
+                  <TableRow key={i} hover>
+                    <TableCell>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Box sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 700, overflow: 'hidden', flexShrink: 0 }}>
+                          {u.profileImage ? <img src={u.profileImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (u.fullName || u.username)?.[0]?.toUpperCase()}
+                        </Box>
+                        <Box>
+                          <Typography fontSize={12} fontWeight={600}>{u.fullName || u.username}</Typography>
+                          <Typography fontSize={11} color="#94a3b8">@{u.username}</Typography>
+                        </Box>
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Chip label={u.userType} size="small" sx={{ fontSize: 10, bgcolor: u.userType === 'FREELANCER' ? '#ede9fe' : '#e0f2fe', color: u.userType === 'FREELANCER' ? '#4f46e5' : '#0891b2' }} />
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 11, color: '#64748b' }}>
+                      {u.createdAt ? new Date(u.createdAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button size="small" onClick={() => setDetailModal({ open: false, date: '', event: '', label: '' })}>Yopish</Button>
         </DialogActions>
       </Dialog>
     </>
