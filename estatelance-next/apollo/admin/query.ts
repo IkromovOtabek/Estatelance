@@ -1,0 +1,90 @@
+import { gql } from '@apollo/client';
+
+export const ADMIN_GET_ALL_USERS = gql`
+  query AdminGetAllUsers($page: Int, $limit: Int) {
+    adminGetAllUsers(page: $page, limit: $limit) {
+      _id
+      username
+      fullName
+      userType
+      userStatus
+      spamReason
+      authProvider
+      followerCount
+      completedJobCount
+      createdAt
+    }
+  }
+`;
+
+export const ADMIN_GET_ALL_JOBS = gql`
+  query AdminGetAllJobs($page: Int, $limit: Int) {
+    adminGetAllJobs(page: $page, limit: $limit) {
+      _id
+      title
+      category
+      status
+      budget
+      agentName
+      bidCount
+      createdAt
+    }
+  }
+`;
+
+export const ADMIN_GET_ALL_POSTS = gql`
+  query AdminGetAllPosts($page: Int, $limit: Int) {
+    adminGetAllPosts(page: $page, limit: $limit) {
+      _id
+      title
+      authorName
+      likeCount
+      viewCount
+      createdAt
+    }
+  }
+`;
+
+export const ADMIN_GET_ALL_ANNOUNCEMENTS = gql`
+  query AdminGetAllAnnouncements {
+    adminGetAllAnnouncements {
+      _id
+      title
+      body
+      announcementType
+      isActive
+      imageUrl
+      createdAt
+    }
+  }
+`;
+
+export const ADMIN_GET_DASHBOARD_STATS = gql`
+  query AdminGetDashboardStats {
+    adminGetDashboardStats {
+      totalUsers
+      totalAgents
+      totalFreelancers
+      totalJobs
+      activeJobs
+      totalPosts
+      totalAnnouncements
+      spammedUsers
+      totalBudgetPosted
+    }
+  }
+`;
+
+// Public query — available to all users
+export const GET_ACTIVE_ANNOUNCEMENTS = gql`
+  query GetActiveAnnouncements {
+    getActiveAnnouncements {
+      _id
+      title
+      body
+      imageUrl
+      announcementType
+      createdAt
+    }
+  }
+`;

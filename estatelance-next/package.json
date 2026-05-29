@@ -1,0 +1,41 @@
+{
+  "name": "bufu-web",
+  "version": "1.0.0",
+  "description": "BuFu — Build Future. Freelance platform for Uzbekistan (Next.js + Apollo + Material UI)",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.12.3",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^5.16.14",
+    "@mui/material": "^5.16.14",
+    "@phosphor-icons/react": "^2.1.10",
+    "apollo-upload-client": "^17.0.0",
+    "axios": "^1.7.9",
+    "graphql": "^16.10.0",
+    "graphql-tag": "^2.12.6",
+    "jwt-decode": "^4.0.0",
+    "moment": "^2.30.1",
+    "next": "14.2.21",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "socket.io-client": "^4.8.3",
+    "sweetalert2": "^11.15.10"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "14.2.21",
+    "sass": "^1.83.4",
+    "sharp": "^0.34.5",
+    "typescript": "^5.7.3"
+  }
+}

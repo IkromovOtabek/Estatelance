@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="32" height="32" rx="8" fill="url(#bg)"/>
+
+  <!-- B letter -->
+  <rect x="6" y="8" width="4" height="16" rx="1.5" fill="white"/>
+  <rect x="10" y="8" width="6" height="3.5" rx="1.5" fill="white"/>
+  <rect x="10" y="14" width="5.5" height="3" rx="1.5" fill="white"/>
+  <rect x="10" y="20.5" width="6" height="3.5" rx="1.5" fill="white"/>
+  <rect x="14.5" y="9.5" width="2.5" height="5" rx="1.2" fill="white"/>
+  <rect x="14.5" y="15.5" width="2.5" height="6" rx="1.2" fill="white"/>
+
+  <!-- F letter (slightly transparent) -->
+  <rect x="20" y="8" width="3.5" height="16" rx="1.5" fill="rgba(255,255,255,0.55)"/>
+  <rect x="20" y="8" width="7" height="3.5" rx="1.5" fill="rgba(255,255,255,0.55)"/>
+  <rect x="20" y="14" width="5.5" height="3" rx="1.5" fill="rgba(255,255,255,0.55)"/>
+</svg>

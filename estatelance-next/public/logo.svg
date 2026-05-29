@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <defs>
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icon: stylized "BF" cube/building concept -->
+  <rect x="0" y="4" width="40" height="40" rx="10" fill="url(#iconGrad)"/>
+
+  <!-- Left column (B shape) -->
+  <rect x="9" y="12" width="5" height="24" rx="2" fill="white"/>
+  <!-- B top bump -->
+  <rect x="14" y="12" width="8" height="5" rx="2" fill="white"/>
+  <rect x="14" y="21" width="8" height="4" rx="2" fill="white"/>
+  <rect x="14" y="31" width="8" height="5" rx="2" fill="white"/>
+  <!-- B right curves -->
+  <rect x="20" y="14" width="4" height="7" rx="2" fill="white"/>
+  <rect x="20" y="23" width="4" height="9" rx="2" fill="white"/>
+
+  <!-- Right column (F shape) -->
+  <rect x="28" y="12" width="5" height="24" rx="2" fill="rgba(255,255,255,0.5)"/>
+  <!-- F top bar -->
+  <rect x="28" y="12" width="9" height="4.5" rx="2" fill="rgba(255,255,255,0.5)"/>
+  <!-- F middle bar -->
+  <rect x="28" y="21" width="7" height="4" rx="2" fill="rgba(255,255,255,0.5)"/>
+
+  <!-- Wordmark -->
+  <!-- Bu -->
+  <text x="52" y="33" font-family="'Inter', 'Segoe UI', sans-serif" font-weight="800" font-size="24" fill="#1e1b4b" letter-spacing="-0.5">Bu</text>
+  <!-- Fu -->
+  <text x="87" y="33" font-family="'Inter', 'Segoe UI', sans-serif" font-weight="800" font-size="24" fill="url(#iconGrad)" letter-spacing="-0.5">Fu</text>
+
+  <!-- Tagline dot -->
+  <circle cx="122" cy="30" r="2.5" fill="#6366f1"/>
+</svg>
