@@ -666,8 +666,13 @@ const AdminPage = () => {
                       <TableRow key={s.sessionId} hover onClick={() => setSelectedSession(s)} sx={{ cursor: 'pointer', bgcolor: s.isOnline ? '#f0fdf4' : undefined }}>
                         <TableCell>
                           <Stack direction="row" alignItems="center" spacing={0.5}>
-                            <Circle size={8} color={s.isOnline ? '#16a34a' : '#94a3b8'} weight="fill" />
-                            <Typography fontSize={11} color={s.isOnline ? '#16a34a' : '#94a3b8'} fontWeight={600}>{s.isOnline ? 'Online' : 'Chiqdi'}</Typography>
+                            <Circle size={8}
+                              color={s.isOnline ? '#16a34a' : s.endedAt ? '#94a3b8' : '#f59e0b'}
+                              weight="fill" />
+                            <Typography fontSize={11} fontWeight={600}
+                              color={s.isOnline ? '#16a34a' : s.endedAt ? '#94a3b8' : '#f59e0b'}>
+                              {s.isOnline ? 'Online' : s.endedAt ? 'Chiqdi' : 'Faolsiz'}
+                            </Typography>
                           </Stack>
                         </TableCell>
                         <TableCell>
@@ -681,7 +686,17 @@ const AdminPage = () => {
                         <TableCell><Typography fontSize={11}>{s.os} / {s.browser}</Typography></TableCell>
                         <TableCell><Chip label={s.pages.length} size="small" sx={{ bgcolor: '#ede9fe', color: '#4f46e5', fontSize: 10 }} /></TableCell>
                         <TableCell sx={{ fontSize: 11, fontFamily: 'monospace' }}>{new Date(s.startedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}</TableCell>
-                        <TableCell sx={{ fontSize: 11, fontFamily: 'monospace', color: '#94a3b8' }}>{s.endedAt ? new Date(s.endedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : '—'}</TableCell>
+                        <TableCell sx={{ fontSize: 11, fontFamily: 'monospace', color: '#94a3b8' }}>
+                          {s.endedAt
+                            ? new Date(s.endedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })
+                            : s.isOnline ? '—' : (
+                              <Tooltip title="Tab yopilmagan, oxirgi faollik vaqti">
+                                <span style={{ color: '#f59e0b' }}>
+                                  ~{new Date(s.lastSeenAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </Tooltip>
+                            )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1343,7 +1358,13 @@ const AdminPage = () => {
                   </Box>
                   <Box>
                     <Typography fontSize={11} color="#94a3b8">Chiqdi</Typography>
-                    <Typography fontSize={13} fontWeight={600}>{selectedSession.endedAt ? new Date(selectedSession.endedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '— (hali online)'}</Typography>
+                    <Typography fontSize={13} fontWeight={600}>
+                      {selectedSession.endedAt
+                        ? new Date(selectedSession.endedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                        : selectedSession.isOnline
+                          ? '— (hali online)'
+                          : `~${new Date(selectedSession.lastSeenAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} (oxirgi faollik)`}
+                    </Typography>
                   </Box>
                   {selectedSession.endedAt && (
                     <Box>

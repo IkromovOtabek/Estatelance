@@ -11,8 +11,11 @@ function fireTrackEvent(event: 'visit' | 'register' | 'login', userId?: string) 
     id = `v_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     localStorage.setItem('_vid', id);
   }
+  // sessionId ni ham yubor — session userName bilan bog'lanishi uchun
+  const sid = sessionStorage.getItem('_sid');
   const input: any = { visitorId: id, event };
   if (userId) input.userId = userId;
+  if (sid) input.sessionId = sid;
   apolloClient.mutate({ mutation: TRACK_VISIT, variables: { input } }).catch(() => {});
 }
 
