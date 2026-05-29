@@ -11,7 +11,31 @@ import { userVar } from '../apollo/store';
 import AnnouncementBanner from '../libs/components/common/AnnouncementBanner';
 import SpamModal from '../libs/components/common/SpamModal';
 import ChatWidget from '../libs/components/common/ChatWidget';
+import { TRACK_VISIT } from '../apollo/admin/mutation';
 import '../scss/app.scss';
+
+// Get or create a unique visitor ID stored in localStorage
+function getOrCreateVisitorId(): string {
+  if (typeof window === 'undefined') return '';
+  let id = localStorage.getItem('_vid');
+  if (!id) {
+    id = `v_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    localStorage.setItem('_vid', id);
+  }
+  return id;
+}
+
+// Track a visit event (fire-and-forget, no error handling needed)
+function trackEvent(event: 'visit' | 'register' | 'login') {
+  const visitorId = getOrCreateVisitorId();
+  if (!visitorId) return;
+  apolloClient.mutate({
+    mutation: TRACK_VISIT,
+    variables: { input: { visitorId, event } },
+  }).catch(() => {});
+}
+
+export { trackEvent };
 
 const theme = createTheme({
   palette: {
@@ -43,6 +67,12 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     restoreUserSession();
+    // Track page visit once per session
+    const sessionKey = '_tracked';
+    if (!sessionStorage.getItem(sessionKey)) {
+      sessionStorage.setItem(sessionKey, '1');
+      trackEvent('visit');
+    }
   }, []);
 
   return (

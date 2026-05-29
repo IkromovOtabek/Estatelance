@@ -77,3 +77,27 @@ export class DashboardStats {
   @Field(() => Int) activeJobs: number;
   @Field(() => Float) totalBudgetPosted: number;
 }
+
+// ─── Object: Daily visitor statistics ────────────────────────────────────────
+@ObjectType()
+export class DailyVisitorStat {
+  @Field(() => String) date: string;
+  @Field(() => Int) visits: number;
+  @Field(() => Int) uniqueVisitors: number;
+  @Field(() => Int) registrations: number;
+  @Field(() => Int) logins: number;
+}
+
+// ─── Input: Track a site visit event ─────────────────────────────────────────
+@InputType()
+export class TrackVisitInput {
+  @IsNotEmpty()
+  @IsString()
+  @Field(() => String)
+  visitorId: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @Field(() => String)
+  event: string; // 'visit' | 'register' | 'login'
+}

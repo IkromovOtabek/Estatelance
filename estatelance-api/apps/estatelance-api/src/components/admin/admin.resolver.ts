@@ -16,6 +16,8 @@ import {
   ChangeUserRoleInput,
   CreateAnnouncementInput,
   DashboardStats,
+  DailyVisitorStat,
+  TrackVisitInput,
 } from '../../libs/dto/admin.dto';
 
 @Resolver()
@@ -184,5 +186,21 @@ export class AdminResolver {
   @Query(() => [Announcement])
   async getActiveAnnouncements(): Promise<Announcement[]> {
     return this.adminService.getActiveAnnouncements();
+  }
+
+  // ─── Public: Track visit event (no auth required) ────────────────────────────
+  @Mutation(() => Boolean)
+  async trackVisit(@Args('input') input: TrackVisitInput): Promise<boolean> {
+    return this.adminService.trackVisit(input);
+  }
+
+  // ─── Admin: Daily visitor stats ──────────────────────────────────────────────
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Query(() => [DailyVisitorStat])
+  async adminGetVisitorStats(
+    @Args('days', { type: () => Int, defaultValue: 14 }) days: number,
+  ): Promise<DailyVisitorStat[]> {
+    return this.adminService.getDailyVisitorStats(days);
   }
 }

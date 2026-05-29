@@ -11,6 +11,7 @@ import { Job } from '../../schemas/Job.model';
 import { Post } from '../../schemas/Post.model';
 import { Announcement } from '../../schemas/Announcement.model';
 import { Notification } from '../../schemas/Notification.model';
+import { SiteVisit } from '../../schemas/SiteVisit.model';
 import { AuthService } from '../auth/auth.service';
 import {
   AdminLoginInput,
@@ -18,6 +19,8 @@ import {
   ChangeUserRoleInput,
   CreateAnnouncementInput,
   DashboardStats,
+  DailyVisitorStat,
+  TrackVisitInput,
 } from '../../libs/dto/admin.dto';
 import { NotificationType, UserStatus, UserType } from '../../libs/enums/common.enums';
 import { DEFAULT_AVATAR_URL } from '../../libs/config';
@@ -30,6 +33,7 @@ export class AdminService {
     @InjectModel('Post') private readonly postModel: Model<Post>,
     @InjectModel('Announcement') private readonly announcementModel: Model<Announcement>,
     @InjectModel('Notification') private readonly notificationModel: Model<Notification>,
+    @InjectModel('SiteVisit') private readonly siteVisitModel: Model<SiteVisit>,
     private readonly authService: AuthService,
   ) {}
 
@@ -317,6 +321,47 @@ export class AdminService {
   }
 
   // ─── Send Broadcast Notification to All Users ─────────────────────────────────
+  // ─── Track Site Visit ─────────────────────────────────────────────────────────
+  async trackVisit(input: TrackVisitInput): Promise<boolean> {
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    await this.siteVisitModel.create({
+      visitorId: input.visitorId,
+      event: input.event,
+      date: today,
+    });
+    return true;
+  }
+
+  // ─── Get Daily Visitor Stats (last N days) ────────────────────────────────────
+  async getDailyVisitorStats(days = 14): Promise<DailyVisitorStat[]> {
+    const result: DailyVisitorStat[] = [];
+    const today = new Date();
+
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+
+      const [allVisits, registrations, logins] = await Promise.all([
+        this.siteVisitModel.find({ date: dateStr, event: 'visit' }).lean(),
+        this.siteVisitModel.countDocuments({ date: dateStr, event: 'register' }),
+        this.siteVisitModel.countDocuments({ date: dateStr, event: 'login' }),
+      ]);
+
+      const uniqueVisitors = new Set(allVisits.map((v) => v.visitorId)).size;
+
+      result.push({
+        date: dateStr,
+        visits: allVisits.length,
+        uniqueVisitors,
+        registrations,
+        logins,
+      });
+    }
+
+    return result;
+  }
+
   async sendBroadcastNotification(title: string, description: string): Promise<boolean> {
     const activeUsers = await this.userModel.find(
       { userStatus: UserStatus.ACTIVE, userType: { $ne: UserType.ADMIN } },

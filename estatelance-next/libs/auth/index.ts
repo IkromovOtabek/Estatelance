@@ -2,6 +2,17 @@ import { jwtDecode } from 'jwt-decode';
 import { apolloClient, saveToken, removeToken } from '../../apollo/client';
 import { userVar, setUserFromToken, clearUser } from '../../apollo/store';
 import { LOGIN, SIGNUP, LOGIN_WITH_TELEGRAM } from '../../apollo/user/mutation';
+import { TRACK_VISIT } from '../../apollo/admin/mutation';
+
+function fireTrackEvent(event: 'visit' | 'register' | 'login') {
+  if (typeof window === 'undefined') return;
+  let id = localStorage.getItem('_vid');
+  if (!id) {
+    id = `v_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    localStorage.setItem('_vid', id);
+  }
+  apolloClient.mutate({ mutation: TRACK_VISIT, variables: { input: { visitorId: id, event } } }).catch(() => {});
+}
 
 // ─── Log in with username + password ─────────────────────────────────────────
 export async function loginWithPassword(username: string, password: string): Promise<void> {
@@ -16,6 +27,7 @@ export async function loginWithPassword(username: string, password: string): Pro
 
   saveToken(user.accessToken);
   setUserFromToken(jwtDecode(user.accessToken));
+  fireTrackEvent('login');
 }
 
 // ─── Sign up with username + password ────────────────────────────────────────
@@ -38,6 +50,7 @@ export async function signupWithPassword(
 
   saveToken(user.accessToken);
   setUserFromToken(jwtDecode(user.accessToken));
+  fireTrackEvent('register');
 }
 
 // ─── Log in via Telegram ─────────────────────────────────────────────────────
@@ -66,6 +79,7 @@ export async function loginWithTelegram(telegramData: {
 
   saveToken(user.accessToken);
   setUserFromToken(jwtDecode(user.accessToken));
+  fireTrackEvent(user.needsOnboarding ? 'register' : 'login');
   return !!user.needsOnboarding;
 }
 

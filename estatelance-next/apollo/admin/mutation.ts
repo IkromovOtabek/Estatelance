@@ -113,3 +113,9 @@ export const ADMIN_SEND_BROADCAST = gql`
     adminSendBroadcastNotification(title: $title, description: $description)
   }
 `;
+
+export const TRACK_VISIT = gql`
+  mutation TrackVisit($input: TrackVisitInput!) {
+    trackVisit(input: $input)
+  }
+`;

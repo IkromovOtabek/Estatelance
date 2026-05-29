@@ -7,6 +7,7 @@ import { Job, JobSchema } from '../../schemas/Job.model';
 import { Post, PostSchema } from '../../schemas/Post.model';
 import { Announcement, AnnouncementSchema } from '../../schemas/Announcement.model';
 import { Notification, NotificationSchema } from '../../schemas/Notification.model';
+import { SiteVisit, SiteVisitSchema } from '../../schemas/SiteVisit.model';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
@@ -17,6 +18,7 @@ import { AuthModule } from '../auth/auth.module';
       { name: Post.name, schema: PostSchema },
       { name: Announcement.name, schema: AnnouncementSchema },
       { name: Notification.name, schema: NotificationSchema },
+      { name: SiteVisit.name, schema: SiteVisitSchema },
     ]),
     AuthModule,
   ],

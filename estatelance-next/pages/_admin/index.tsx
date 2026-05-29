@@ -61,6 +61,7 @@ import {
   ADMIN_GET_ALL_POSTS,
   ADMIN_GET_ALL_ANNOUNCEMENTS,
   ADMIN_GET_DASHBOARD_STATS,
+  ADMIN_GET_VISITOR_STATS,
 } from '../../apollo/admin/query';
 import {
   ADMIN_CHANGE_USER_STATUS,
@@ -77,7 +78,7 @@ import {
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { logout } from '../../libs/auth';
-import { User, Job, Post, Announcement, DashboardStats } from '../../libs/types';
+import { User, Job, Post, Announcement, DashboardStats, DailyVisitorStat } from '../../libs/types';
 import { UserType, UserStatus, AnnouncementType } from '../../libs/enums';
 
 // ─── Color helpers ─────────────────────────────────────────────────────────────
@@ -162,6 +163,12 @@ const AdminPage = () => {
     fetchPolicy: 'cache-and-network',
   });
 
+  const { data: visitorData } = useQuery(ADMIN_GET_VISITOR_STATS, {
+    variables: { days: 14 },
+    skip: !isAdmin || activeTab !== 0,
+    fetchPolicy: 'cache-and-network',
+  });
+
   // ── Mutations ──────────────────────────────────────────────────────────────
   const [changeStatus] = useMutation(ADMIN_CHANGE_USER_STATUS);
   const [changeRole] = useMutation(ADMIN_CHANGE_USER_ROLE);
@@ -178,6 +185,7 @@ const AdminPage = () => {
   const allUsers: User[] = usersData?.adminGetAllUsers ?? [];
   const allJobs: Job[] = jobsData?.adminGetAllJobs ?? [];
   const allPosts: Post[] = postsData?.adminGetAllPosts ?? [];
+  const visitorStats: DailyVisitorStat[] = visitorData?.adminGetVisitorStats ?? [];
   const allAnn: Announcement[] = annData?.adminGetAllAnnouncements ?? [];
   const stats: DashboardStats | null = statsData?.adminGetDashboardStats ?? null;
 
@@ -415,8 +423,8 @@ const AdminPage = () => {
         >
           <Tab icon={<ChartBar size={15} />} iconPosition="start" label="Stats" />
           <Tab icon={<Users size={15} />} iconPosition="start" label={`Users (${allUsers.length})`} />
-          <Tab icon={<Briefcase size={15} />} iconPosition="start" label={`Jobs (${allJobs.length})`} />
-          <Tab icon={<Newspaper size={15} />} iconPosition="start" label={`Posts (${allPosts.length})`} />
+          <Tab icon={<Briefcase size={15} />} iconPosition="start" label={`Jobs (${stats?.totalJobs ?? allJobs.length})`} />
+          <Tab icon={<Newspaper size={15} />} iconPosition="start" label={`Posts (${stats?.totalPosts ?? allPosts.length})`} />
           <Tab icon={<Megaphone size={15} />} iconPosition="start" label="Announcements" />
           <Tab icon={<Bell size={15} />} iconPosition="start" label="Notifications" />
         </Tabs>
@@ -503,6 +511,47 @@ const AdminPage = () => {
             </>
           ) : (
             <Typography color="text.secondary">No stats available.</Typography>
+          )}
+
+          {/* ── Visitor Stats ── */}
+          {visitorStats.length > 0 && (
+            <Box mt={4}>
+              <Typography fontWeight={700} fontSize={15} mb={2} color="#0f172a">
+                📊 Kunlik tashrif buyuruvchilar (so'nggi 14 kun)
+              </Typography>
+              <Box sx={{ overflowX: 'auto' }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                      <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Sana</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12, color: '#4f46e5' }}>Tashriflar</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12, color: '#0891b2' }}>Unikal</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12, color: '#16a34a' }}>Ro'yxatdan o'tdi</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12, color: '#d97706' }}>Login bo'ldi</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {visitorStats.map((s) => (
+                      <TableRow key={s.date} hover>
+                        <TableCell sx={{ fontSize: 12, fontFamily: 'monospace' }}>{s.date}</TableCell>
+                        <TableCell align="center">
+                          <Chip label={s.visits} size="small" sx={{ bgcolor: '#ede9fe', color: '#4f46e5', fontWeight: 700, fontSize: 11 }} />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip label={s.uniqueVisitors} size="small" sx={{ bgcolor: '#e0f2fe', color: '#0891b2', fontWeight: 700, fontSize: 11 }} />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip label={s.registrations} size="small" sx={{ bgcolor: '#dcfce7', color: '#16a34a', fontWeight: 700, fontSize: 11 }} />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip label={s.logins} size="small" sx={{ bgcolor: '#fef3c7', color: '#d97706', fontWeight: 700, fontSize: 11 }} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Box>
+            </Box>
           )}
         </Box>
       )}

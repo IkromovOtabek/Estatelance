@@ -75,6 +75,18 @@ export const ADMIN_GET_DASHBOARD_STATS = gql`
   }
 `;
 
+export const ADMIN_GET_VISITOR_STATS = gql`
+  query AdminGetVisitorStats($days: Int) {
+    adminGetVisitorStats(days: $days) {
+      date
+      visits
+      uniqueVisitors
+      registrations
+      logins
+    }
+  }
+`;
+
 // Public query — available to all users
 export const GET_ACTIVE_ANNOUNCEMENTS = gql`
   query GetActiveAnnouncements {

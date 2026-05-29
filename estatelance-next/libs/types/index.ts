@@ -152,6 +152,16 @@ export interface Announcement {
   createdAt?: string;
 }
 
+// ─── Visitor Stats ────────────────────────────────────────────────────────────
+
+export interface DailyVisitorStat {
+  date: string;
+  visits: number;
+  uniqueVisitors: number;
+  registrations: number;
+  logins: number;
+}
+
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 
 export interface DashboardStats {
