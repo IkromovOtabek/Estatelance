@@ -80,7 +80,6 @@ export const ADMIN_GET_VISITOR_STATS = gql`
     adminGetVisitorStats(days: $days) {
       date
       visits
-      uniqueVisitors
       registrations
       logins
     }
