@@ -67,11 +67,6 @@ export class AuthService {
     }
 
     // Step 2: Build the data_check_string
-    // Rules from Telegram docs:
-    //   - Exclude the 'hash' field
-    //   - Exclude any fields that are undefined or null (Telegram omits empty fields)
-    //   - Sort remaining fields alphabetically
-    //   - Join with newline character
     const dataToCheck = Object.keys(data)
       .filter((key) => key !== 'hash' && data[key] !== undefined && data[key] !== null && data[key] !== '')
       .sort()
@@ -86,6 +81,11 @@ export class AuthService {
       .createHmac('sha256', secretKey)
       .update(dataToCheck)
       .digest('hex');
+
+    // Debug log (remove after fixing)
+    console.log('[TelegramAuth] dataToCheck:', dataToCheck);
+    console.log('[TelegramAuth] computedHash:', computedHash);
+    console.log('[TelegramAuth] receivedHash:', data.hash);
 
     // Step 5: Compare computed hash with the hash Telegram sent
     if (computedHash !== data.hash) {
