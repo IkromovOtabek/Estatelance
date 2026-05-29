@@ -70,6 +70,7 @@ import {
   ADMIN_GET_DASHBOARD_STATS,
   ADMIN_GET_VISITOR_STATS,
   ADMIN_GET_DAILY_USER_DETAILS,
+  ADMIN_GET_TODAY_SESSIONS,
 } from '../../apollo/admin/query';
 import {
   ADMIN_CHANGE_USER_STATUS,
@@ -86,7 +87,7 @@ import {
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { logout } from '../../libs/auth';
-import { User, Job, Post, Announcement, DashboardStats, DailyVisitorStat } from '../../libs/types';
+import { User, Job, Post, Announcement, DashboardStats, DailyVisitorStat, VisitorSessionItem } from '../../libs/types';
 import { UserType, UserStatus, AnnouncementType } from '../../libs/enums';
 
 // ─── Color helpers ─────────────────────────────────────────────────────────────
@@ -185,6 +186,12 @@ const AdminPage = () => {
     fetchPolicy: 'cache-and-network',
   });
 
+  const { data: sessionsData, refetch: refetchSessions } = useQuery(ADMIN_GET_TODAY_SESSIONS, {
+    skip: !isAdmin || activeTab !== 0,
+    fetchPolicy: 'network-only',
+    pollInterval: showVisitorStats ? 30_000 : 0, // auto-refresh every 30s when panel open
+  });
+
   const [fetchUserDetails, { data: detailData, loading: detailLoading }] = useLazyQuery(
     ADMIN_GET_DAILY_USER_DETAILS,
     { fetchPolicy: 'network-only' },
@@ -208,6 +215,9 @@ const AdminPage = () => {
   const allPosts: Post[] = postsData?.adminGetAllPosts ?? [];
   const visitorStats: DailyVisitorStat[] = visitorData?.adminGetVisitorStats ?? [];
   const detailUsers = detailData?.adminGetDailyUserDetails ?? [];
+  const todaySessions: VisitorSessionItem[] = sessionsData?.adminGetTodaySessions ?? [];
+  const onlineSessions = todaySessions.filter((s) => s.isOnline);
+  const [selectedSession, setSelectedSession] = useState<VisitorSessionItem | null>(null);
 
   // Today in Tashkent (UTC+5)
   const todayStr = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -565,21 +575,17 @@ const AdminPage = () => {
                 <Box sx={{ bgcolor: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 2, p: 2, mb: 3 }}>
                   <Stack direction="row" alignItems="center" spacing={1} mb={1.5}>
                     <Circle size={10} color="#16a34a" weight="fill" />
-                    <Typography fontWeight={700} fontSize={13} color="#16a34a">
-                      Bugun — {todayStr}
-                    </Typography>
+                    <Typography fontWeight={700} fontSize={13} color="#16a34a">Bugun — {todayStr}</Typography>
                     <CalendarBlank size={14} color="#16a34a" />
+                    {onlineSessions.length > 0 && (
+                      <Chip label={`${onlineSessions.length} online`} size="small" sx={{ bgcolor: '#16a34a', color: '#fff', fontSize: 10, height: 20, ml: 1 }} />
+                    )}
                   </Stack>
                   <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
                     <Box sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2.5, py: 1.5, border: '1px solid #e2e8f0' }}>
                       <Stack direction="row" justifyContent="center" mb={0.5}><Eye size={16} color="#4f46e5" /></Stack>
                       <Typography fontSize={24} fontWeight={800} color="#4f46e5" lineHeight={1}>{todayStat.visits}</Typography>
                       <Typography fontSize={11} color="#64748b" mt={0.5}>Tashriflar</Typography>
-                    </Box>
-                    <Box sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2.5, py: 1.5, border: '1px solid #e2e8f0' }}>
-                      <Stack direction="row" justifyContent="center" mb={0.5}><PersonSimple size={16} color="#0891b2" /></Stack>
-                      <Typography fontSize={24} fontWeight={800} color="#0891b2" lineHeight={1}>{todayStat.uniqueVisitors}</Typography>
-                      <Typography fontSize={11} color="#64748b" mt={0.5}>Unikal</Typography>
                     </Box>
                     <Box
                       onClick={() => { setDetailModal({ open: true, date: todayStr, event: 'register', label: "Ro'yxatdan o'tganlar" }); fetchUserDetails({ variables: { date: todayStr, event: 'register' } }); }}
@@ -601,6 +607,49 @@ const AdminPage = () => {
                 </Box>
               )}
 
+            {/* Today sessions table */}
+            {todaySessions.length > 0 && (
+              <Box sx={{ overflowX: 'auto', mb: 3 }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Eye size={15} color="#4f46e5" />
+                    <Typography fontSize={13} fontWeight={600} color="#374151">Bugungi tashriflar ({todaySessions.length})</Typography>
+                    {onlineSessions.length > 0 && <Chip label={`${onlineSessions.length} online`} size="small" sx={{ bgcolor: '#16a34a', color: '#fff', fontSize: 10, height: 20 }} />}
+                  </Stack>
+                  <Button size="small" variant="text" sx={{ fontSize: 11 }} onClick={() => refetchSessions()}>Yangilash</Button>
+                </Stack>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Holat</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Qurilma</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>OS / Brauzer</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Sahifalar</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Kirdi</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Chiqdi</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {[...todaySessions].sort((a, b) => (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0)).map((s) => (
+                      <TableRow key={s.sessionId} hover onClick={() => setSelectedSession(s)} sx={{ cursor: 'pointer', bgcolor: s.isOnline ? '#f0fdf4' : undefined }}>
+                        <TableCell>
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <Circle size={8} color={s.isOnline ? '#16a34a' : '#94a3b8'} weight="fill" />
+                            <Typography fontSize={11} color={s.isOnline ? '#16a34a' : '#94a3b8'} fontWeight={600}>{s.isOnline ? 'Online' : 'Chiqdi'}</Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell><Typography fontSize={11}>{s.device}</Typography></TableCell>
+                        <TableCell><Typography fontSize={11}>{s.os} / {s.browser}</Typography></TableCell>
+                        <TableCell><Chip label={s.pages.length} size="small" sx={{ bgcolor: '#ede9fe', color: '#4f46e5', fontSize: 10 }} /></TableCell>
+                        <TableCell sx={{ fontSize: 11, fontFamily: 'monospace' }}>{new Date(s.startedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}</TableCell>
+                        <TableCell sx={{ fontSize: 11, fontFamily: 'monospace', color: '#94a3b8' }}>{s.endedAt ? new Date(s.endedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : '—'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Box>
+            )}
+
               {/* 14-day table */}
               {visitorStats.length > 0 && (
                 <Box sx={{ overflowX: 'auto' }}>
@@ -615,11 +664,6 @@ const AdminPage = () => {
                         <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12 }}>
                           <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5}>
                             <Eye size={12} color="#4f46e5" /><span style={{ color: '#4f46e5' }}>Tashriflar</span>
-                          </Stack>
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12 }}>
-                          <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5}>
-                            <PersonSimple size={12} color="#0891b2" /><span style={{ color: '#0891b2' }}>Unikal</span>
                           </Stack>
                         </TableCell>
                         <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12 }}>
@@ -646,9 +690,6 @@ const AdminPage = () => {
                           </TableCell>
                           <TableCell align="center">
                             <Chip label={s.visits} size="small" sx={{ bgcolor: '#ede9fe', color: '#4f46e5', fontWeight: 700, fontSize: 11 }} />
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip label={s.uniqueVisitors} size="small" sx={{ bgcolor: '#e0f2fe', color: '#0891b2', fontWeight: 700, fontSize: 11 }} />
                           </TableCell>
                           <TableCell align="center">
                             <Chip
@@ -1222,6 +1263,72 @@ const AdminPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      {/* ── Dialog: Session Detail ───────────────────────────────────────── */}
+      <Dialog open={!!selectedSession} onClose={() => setSelectedSession(null)} maxWidth="sm" fullWidth>
+        {selectedSession && (
+          <>
+            <DialogTitle sx={{ fontWeight: 700, fontSize: 15, pb: 1 }}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Circle size={10} color={selectedSession.isOnline ? '#16a34a' : '#94a3b8'} weight="fill" />
+                <span>Tashrif tafsiloti</span>
+                <Chip label={selectedSession.isOnline ? 'Online' : 'Offline'} size="small"
+                  sx={{ bgcolor: selectedSession.isOnline ? '#dcfce7' : '#f1f5f9', color: selectedSession.isOnline ? '#16a34a' : '#64748b', fontSize: 10 }} />
+              </Stack>
+            </DialogTitle>
+            <DialogContent dividers>
+              <Stack spacing={1.5}>
+                <Stack direction="row" spacing={3}>
+                  <Box>
+                    <Typography fontSize={11} color="#94a3b8">Qurilma</Typography>
+                    <Typography fontSize={13} fontWeight={600}>{selectedSession.device}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography fontSize={11} color="#94a3b8">OS</Typography>
+                    <Typography fontSize={13} fontWeight={600}>{selectedSession.os}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography fontSize={11} color="#94a3b8">Brauzer</Typography>
+                    <Typography fontSize={13} fontWeight={600}>{selectedSession.browser}</Typography>
+                  </Box>
+                </Stack>
+                <Stack direction="row" spacing={3}>
+                  <Box>
+                    <Typography fontSize={11} color="#94a3b8">Kirdi</Typography>
+                    <Typography fontSize={13} fontWeight={600}>{new Date(selectedSession.startedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography fontSize={11} color="#94a3b8">Chiqdi</Typography>
+                    <Typography fontSize={13} fontWeight={600}>{selectedSession.endedAt ? new Date(selectedSession.endedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '— (hali online)'}</Typography>
+                  </Box>
+                  {selectedSession.endedAt && (
+                    <Box>
+                      <Typography fontSize={11} color="#94a3b8">Davomiyligi</Typography>
+                      <Typography fontSize={13} fontWeight={600}>
+                        {Math.round((new Date(selectedSession.endedAt).getTime() - new Date(selectedSession.startedAt).getTime()) / 60000)} daq
+                      </Typography>
+                    </Box>
+                  )}
+                </Stack>
+                <Box>
+                  <Typography fontSize={11} color="#94a3b8" mb={0.5}>Ko'rilgan sahifalar ({selectedSession.pages.length})</Typography>
+                  <Box sx={{ bgcolor: '#f8fafc', borderRadius: 1, p: 1.5, maxHeight: 200, overflowY: 'auto' }}>
+                    {selectedSession.pages.map((p, i) => (
+                      <Stack key={i} direction="row" justifyContent="space-between" py={0.5} sx={{ borderBottom: i < selectedSession.pages.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                        <Typography fontSize={12} sx={{ fontFamily: 'monospace', color: '#4f46e5' }}>{p.path}</Typography>
+                        <Typography fontSize={11} color="#94a3b8">{new Date(p.visitedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}</Typography>
+                      </Stack>
+                    ))}
+                  </Box>
+                </Box>
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button size="small" onClick={() => setSelectedSession(null)}>Yopish</Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
+
       {/* ── Dialog: Visitor User Details ─────────────────────────────────── */}
       <Dialog open={detailModal.open} onClose={() => setDetailModal({ open: false, date: '', event: '', label: '' })} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700, fontSize: 15, pb: 1 }}>

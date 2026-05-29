@@ -19,6 +19,10 @@ import {
   DailyVisitorStat,
   TrackVisitInput,
   VisitorUserDetail,
+  StartSessionInput,
+  TrackPageInput,
+  EndSessionInput,
+  VisitorSessionObject,
 } from '../../libs/dto/admin.dto';
 
 @Resolver()
@@ -203,6 +207,35 @@ export class AdminResolver {
     @Args('days', { type: () => Int, defaultValue: 14 }) days: number,
   ): Promise<DailyVisitorStat[]> {
     return this.adminService.getDailyVisitorStats(days);
+  }
+
+  // ─── Public: Session tracking mutations ──────────────────────────────────────
+  @Mutation(() => Boolean)
+  async startVisitorSession(@Args('input') input: StartSessionInput): Promise<boolean> {
+    return this.adminService.startSession(input);
+  }
+
+  @Mutation(() => Boolean)
+  async trackPageView(@Args('input') input: TrackPageInput): Promise<boolean> {
+    return this.adminService.trackPage(input);
+  }
+
+  @Mutation(() => Boolean)
+  async pingVisitorSession(@Args('sessionId') sessionId: string): Promise<boolean> {
+    return this.adminService.pingSession(sessionId);
+  }
+
+  @Mutation(() => Boolean)
+  async endVisitorSession(@Args('input') input: EndSessionInput): Promise<boolean> {
+    return this.adminService.endSession(input);
+  }
+
+  // ─── Admin: Today's sessions ──────────────────────────────────────────────────
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Query(() => [VisitorSessionObject])
+  async adminGetTodaySessions(): Promise<VisitorSessionObject[]> {
+    return this.adminService.getTodaySessions();
   }
 
   // ─── Admin: User details for a day + event ───────────────────────────────────

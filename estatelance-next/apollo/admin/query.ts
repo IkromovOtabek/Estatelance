@@ -87,6 +87,23 @@ export const ADMIN_GET_VISITOR_STATS = gql`
   }
 `;
 
+export const ADMIN_GET_TODAY_SESSIONS = gql`
+  query AdminGetTodaySessions {
+    adminGetTodaySessions {
+      sessionId
+      visitorId
+      device
+      os
+      browser
+      pages { path visitedAt }
+      startedAt
+      lastSeenAt
+      endedAt
+      isOnline
+    }
+  }
+`;
+
 export const ADMIN_GET_DAILY_USER_DETAILS = gql`
   query AdminGetDailyUserDetails($date: String!, $event: String!) {
     adminGetDailyUserDetails(date: $date, event: $event) {

@@ -157,9 +157,26 @@ export interface Announcement {
 export interface DailyVisitorStat {
   date: string;
   visits: number;
-  uniqueVisitors: number;
   registrations: number;
   logins: number;
+}
+
+export interface PageVisitItem {
+  path: string;
+  visitedAt: string;
+}
+
+export interface VisitorSessionItem {
+  sessionId: string;
+  visitorId: string;
+  device: string;
+  os: string;
+  browser: string;
+  pages: PageVisitItem[];
+  startedAt: string;
+  lastSeenAt: string;
+  endedAt?: string;
+  isOnline: boolean;
 }
 
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────

@@ -120,3 +120,27 @@ export const TRACK_VISIT = gql`
   }
 `;
 
+export const START_SESSION = gql`
+  mutation StartVisitorSession($input: StartSessionInput!) {
+    startVisitorSession(input: $input)
+  }
+`;
+
+export const TRACK_PAGE = gql`
+  mutation TrackPageView($input: TrackPageInput!) {
+    trackPageView(input: $input)
+  }
+`;
+
+export const PING_SESSION = gql`
+  mutation PingVisitorSession($sessionId: String!) {
+    pingVisitorSession(sessionId: $sessionId)
+  }
+`;
+
+export const END_SESSION = gql`
+  mutation EndVisitorSession($input: EndSessionInput!) {
+    endVisitorSession(input: $input)
+  }
+`;
+

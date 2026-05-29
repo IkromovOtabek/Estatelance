@@ -12,6 +12,7 @@ import { Post } from '../../schemas/Post.model';
 import { Announcement } from '../../schemas/Announcement.model';
 import { Notification } from '../../schemas/Notification.model';
 import { SiteVisit } from '../../schemas/SiteVisit.model';
+import { VisitorSession } from '../../schemas/VisitorSession.model';
 import { AuthService } from '../auth/auth.service';
 import {
   AdminLoginInput,
@@ -22,6 +23,10 @@ import {
   DailyVisitorStat,
   TrackVisitInput,
   VisitorUserDetail,
+  StartSessionInput,
+  TrackPageInput,
+  EndSessionInput,
+  VisitorSessionObject,
 } from '../../libs/dto/admin.dto';
 import { NotificationType, UserStatus, UserType } from '../../libs/enums/common.enums';
 import { DEFAULT_AVATAR_URL } from '../../libs/config';
@@ -35,6 +40,7 @@ export class AdminService {
     @InjectModel('Announcement') private readonly announcementModel: Model<Announcement>,
     @InjectModel('Notification') private readonly notificationModel: Model<Notification>,
     @InjectModel('SiteVisit') private readonly siteVisitModel: Model<SiteVisit>,
+    @InjectModel('VisitorSession') private readonly visitorSessionModel: Model<VisitorSession>,
     private readonly authService: AuthService,
   ) {}
 
@@ -381,24 +387,101 @@ export class AdminService {
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().slice(0, 10);
 
-      const [allVisits, registrations, logins] = await Promise.all([
-        this.siteVisitModel.find({ date: dateStr, event: 'visit' }).lean(),
+      const [visits, registrations, logins] = await Promise.all([
+        this.siteVisitModel.countDocuments({ date: dateStr, event: 'visit' }),
         this.siteVisitModel.countDocuments({ date: dateStr, event: 'register' }),
         this.siteVisitModel.countDocuments({ date: dateStr, event: 'login' }),
       ]);
 
-      const uniqueVisitors = new Set(allVisits.map((v) => v.visitorId)).size;
-
-      result.push({
-        date: dateStr,
-        visits: allVisits.length,
-        uniqueVisitors,
-        registrations,
-        logins,
-      });
+      result.push({ date: dateStr, visits, registrations, logins });
     }
 
     return result;
+  }
+
+  // ─── Start a visitor session ──────────────────────────────────────────────────
+  async startSession(input: StartSessionInput): Promise<boolean> {
+    const tzOffset = 5 * 60;
+    const local = new Date(Date.now() + tzOffset * 60 * 1000);
+    const date = local.toISOString().slice(0, 10);
+
+    await this.visitorSessionModel.findOneAndUpdate(
+      { sessionId: input.sessionId },
+      {
+        $setOnInsert: {
+          sessionId: input.sessionId,
+          visitorId: input.visitorId,
+          device: input.device,
+          os: input.os,
+          browser: input.browser,
+          date,
+          startedAt: new Date(),
+          expireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        },
+        $set: { lastSeenAt: new Date(), endedAt: null },
+        $push: { pages: { path: input.firstPage, visitedAt: new Date() } },
+      },
+      { upsert: true, new: true },
+    );
+    return true;
+  }
+
+  // ─── Track a page view within session ────────────────────────────────────────
+  async trackPage(input: TrackPageInput): Promise<boolean> {
+    await this.visitorSessionModel.findOneAndUpdate(
+      { sessionId: input.sessionId },
+      {
+        $set: { lastSeenAt: new Date() },
+        $push: { pages: { path: input.path, visitedAt: new Date() } },
+      },
+    );
+    return true;
+  }
+
+  // ─── Ping to keep session alive ───────────────────────────────────────────────
+  async pingSession(sessionId: string): Promise<boolean> {
+    await this.visitorSessionModel.findOneAndUpdate(
+      { sessionId },
+      { $set: { lastSeenAt: new Date() } },
+    );
+    return true;
+  }
+
+  // ─── End session ─────────────────────────────────────────────────────────────
+  async endSession(input: EndSessionInput): Promise<boolean> {
+    await this.visitorSessionModel.findOneAndUpdate(
+      { sessionId: input.sessionId },
+      { $set: { endedAt: new Date(), lastSeenAt: new Date() } },
+    );
+    return true;
+  }
+
+  // ─── Get today's visitor sessions ────────────────────────────────────────────
+  async getTodaySessions(): Promise<VisitorSessionObject[]> {
+    const tzOffset = 5 * 60;
+    const today = new Date(Date.now() + tzOffset * 60 * 1000).toISOString().slice(0, 10);
+    const onlineThreshold = new Date(Date.now() - 2 * 60 * 1000); // 2 min ago
+
+    const sessions = await this.visitorSessionModel
+      .find({ date: today })
+      .sort({ startedAt: -1 })
+      .lean();
+
+    return sessions.map((s) => ({
+      sessionId: s.sessionId,
+      visitorId: s.visitorId,
+      device: s.device,
+      os: s.os,
+      browser: s.browser,
+      pages: (s.pages || []).map((p: any) => ({
+        path: p.path,
+        visitedAt: p.visitedAt?.toISOString?.() ?? '',
+      })),
+      startedAt: s.startedAt?.toISOString?.() ?? '',
+      lastSeenAt: s.lastSeenAt?.toISOString?.() ?? '',
+      endedAt: s.endedAt?.toISOString?.() ?? undefined,
+      isOnline: !s.endedAt && s.lastSeenAt > onlineThreshold,
+    }));
   }
 
   async sendBroadcastNotification(title: string, description: string): Promise<boolean> {

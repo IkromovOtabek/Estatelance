@@ -8,6 +8,7 @@ import { Post, PostSchema } from '../../schemas/Post.model';
 import { Announcement, AnnouncementSchema } from '../../schemas/Announcement.model';
 import { Notification, NotificationSchema } from '../../schemas/Notification.model';
 import { SiteVisit, SiteVisitSchema } from '../../schemas/SiteVisit.model';
+import { VisitorSession, VisitorSessionSchema } from '../../schemas/VisitorSession.model';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { AuthModule } from '../auth/auth.module';
       { name: Announcement.name, schema: AnnouncementSchema },
       { name: Notification.name, schema: NotificationSchema },
       { name: SiteVisit.name, schema: SiteVisitSchema },
+      { name: VisitorSession.name, schema: VisitorSessionSchema },
     ]),
     AuthModule,
   ],

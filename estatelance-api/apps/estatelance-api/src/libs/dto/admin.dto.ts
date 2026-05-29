@@ -83,9 +83,54 @@ export class DashboardStats {
 export class DailyVisitorStat {
   @Field(() => String) date: string;
   @Field(() => Int) visits: number;
-  @Field(() => Int) uniqueVisitors: number;
   @Field(() => Int) registrations: number;
   @Field(() => Int) logins: number;
+}
+
+// ─── Object: Page visit inside a session ─────────────────────────────────────
+@ObjectType()
+export class PageVisitObject {
+  @Field(() => String) path: string;
+  @Field(() => String) visitedAt: string;
+}
+
+// ─── Object: Visitor session detail ──────────────────────────────────────────
+@ObjectType()
+export class VisitorSessionObject {
+  @Field(() => String) sessionId: string;
+  @Field(() => String) visitorId: string;
+  @Field(() => String) device: string;
+  @Field(() => String) os: string;
+  @Field(() => String) browser: string;
+  @Field(() => [PageVisitObject]) pages: PageVisitObject[];
+  @Field(() => String) startedAt: string;
+  @Field(() => String) lastSeenAt: string;
+  @Field(() => String, { nullable: true }) endedAt?: string;
+  @Field(() => Boolean) isOnline: boolean;
+}
+
+// ─── Input: Start visitor session ────────────────────────────────────────────
+@InputType()
+export class StartSessionInput {
+  @IsNotEmpty() @IsString() @Field(() => String) sessionId: string;
+  @IsNotEmpty() @IsString() @Field(() => String) visitorId: string;
+  @IsNotEmpty() @IsString() @Field(() => String) device: string;
+  @IsNotEmpty() @IsString() @Field(() => String) os: string;
+  @IsNotEmpty() @IsString() @Field(() => String) browser: string;
+  @IsNotEmpty() @IsString() @Field(() => String) firstPage: string;
+}
+
+// ─── Input: Track page view within session ────────────────────────────────────
+@InputType()
+export class TrackPageInput {
+  @IsNotEmpty() @IsString() @Field(() => String) sessionId: string;
+  @IsNotEmpty() @IsString() @Field(() => String) path: string;
+}
+
+// ─── Input: End session ───────────────────────────────────────────────────────
+@InputType()
+export class EndSessionInput {
+  @IsNotEmpty() @IsString() @Field(() => String) sessionId: string;
 }
 
 // ─── Input: Track a site visit event ─────────────────────────────────────────
