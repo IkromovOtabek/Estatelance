@@ -54,6 +54,13 @@ import {
   PersonSimple,
   Broadcast,
   Trash,
+  ChartLineUp,
+  Circle,
+  UserPlus,
+  SignIn,
+  CaretDown,
+  CaretUp,
+  CalendarBlank,
 } from '@phosphor-icons/react';
 import {
   ADMIN_GET_ALL_USERS,
@@ -114,6 +121,9 @@ const AdminPage = () => {
   const [detailModal, setDetailModal] = useState<{ open: boolean; date: string; event: string; label: string }>({
     open: false, date: '', event: '', label: '',
   });
+
+  // Visitor stats panel toggle
+  const [showVisitorStats, setShowVisitorStats] = useState(false);
 
   // ── Delete user dialog ─────────────────────────────────────────────────────
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId: string; username: string }>({
@@ -529,93 +539,141 @@ const AdminPage = () => {
             <Typography color="text.secondary">No stats available.</Typography>
           )}
 
-          {/* ── Visitor Stats ── */}
-          <Box mt={4}>
-            <Typography fontWeight={700} fontSize={15} mb={2} color="#0f172a">
-              📊 Tashrif buyuruvchilar statistikasi
-            </Typography>
+          {/* ── Visitor Stats toggle button ── */}
+          <Box mt={3}>
+            <Button
+              variant="outlined"
+              startIcon={<ChartLineUp size={16} weight="bold" />}
+              endIcon={showVisitorStats ? <CaretUp size={14} /> : <CaretDown size={14} />}
+              onClick={() => setShowVisitorStats((v) => !v)}
+              sx={{
+                fontSize: 13, fontWeight: 600,
+                borderColor: '#4f46e5', color: '#4f46e5',
+                '&:hover': { bgcolor: '#ede9fe', borderColor: '#4338ca' },
+              }}
+            >
+              Tashrif buyuruvchilar statistikasi
+            </Button>
+          </Box>
 
-            {/* Today highlight */}
-            {todayStat && (
-              <Box sx={{ bgcolor: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 2, p: 2, mb: 3 }}>
-                <Typography fontWeight={700} fontSize={13} color="#16a34a" mb={1.5}>
-                  🟢 Bugun — {todayStr}
-                </Typography>
-                <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-                  <Box sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2, py: 1, border: '1px solid #e2e8f0' }}>
-                    <Typography fontSize={22} fontWeight={800} color="#4f46e5">{todayStat.visits}</Typography>
-                    <Typography fontSize={11} color="#64748b">Tashriflar</Typography>
-                  </Box>
-                  <Box sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2, py: 1, border: '1px solid #e2e8f0' }}>
-                    <Typography fontSize={22} fontWeight={800} color="#0891b2">{todayStat.uniqueVisitors}</Typography>
-                    <Typography fontSize={11} color="#64748b">Unikal</Typography>
-                  </Box>
-                  <Box
-                    onClick={() => { setDetailModal({ open: true, date: todayStr, event: 'register', label: "Ro'yxatdan o'tganlar" }); fetchUserDetails({ variables: { date: todayStr, event: 'register' } }); }}
-                    sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2, py: 1, border: '1px solid #e2e8f0', cursor: 'pointer', '&:hover': { bgcolor: '#dcfce7' } }}
-                  >
-                    <Typography fontSize={22} fontWeight={800} color="#16a34a">{todayStat.registrations}</Typography>
-                    <Typography fontSize={11} color="#64748b">Ro'yxatdan o'tdi ↗</Typography>
-                  </Box>
-                  <Box
-                    onClick={() => { setDetailModal({ open: true, date: todayStr, event: 'login', label: 'Login bo\'lganlar' }); fetchUserDetails({ variables: { date: todayStr, event: 'login' } }); }}
-                    sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2, py: 1, border: '1px solid #e2e8f0', cursor: 'pointer', '&:hover': { bgcolor: '#fef3c7' } }}
-                  >
-                    <Typography fontSize={22} fontWeight={800} color="#d97706">{todayStat.logins}</Typography>
-                    <Typography fontSize={11} color="#64748b">Login bo'ldi ↗</Typography>
-                  </Box>
-                </Stack>
-              </Box>
-            )}
+          {/* ── Visitor Stats panel ── */}
+          {showVisitorStats && (
+            <Box mt={2} sx={{ border: '1px solid #e2e8f0', borderRadius: 2, p: 2.5 }}>
 
-            {/* 14-day table */}
-            {visitorStats.length > 0 && (
-              <Box sx={{ overflowX: 'auto' }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Sana</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12, color: '#4f46e5' }}>Tashriflar</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12, color: '#0891b2' }}>Unikal</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12, color: '#16a34a' }}>Ro'yxatdan o'tdi</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12, color: '#d97706' }}>Login bo'ldi</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {[...visitorStats].reverse().map((s) => (
-                      <TableRow key={s.date} hover sx={s.date === todayStr ? { bgcolor: '#f0fdf4' } : {}}>
-                        <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', fontWeight: s.date === todayStr ? 700 : 400 }}>
-                          {s.date} {s.date === todayStr && <Chip label="bugun" size="small" sx={{ ml: 0.5, bgcolor: '#16a34a', color: '#fff', fontSize: 10, height: 18 }} />}
+              {/* Today highlight */}
+              {todayStat && (
+                <Box sx={{ bgcolor: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 2, p: 2, mb: 3 }}>
+                  <Stack direction="row" alignItems="center" spacing={1} mb={1.5}>
+                    <Circle size={10} color="#16a34a" weight="fill" />
+                    <Typography fontWeight={700} fontSize={13} color="#16a34a">
+                      Bugun — {todayStr}
+                    </Typography>
+                    <CalendarBlank size={14} color="#16a34a" />
+                  </Stack>
+                  <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                    <Box sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2.5, py: 1.5, border: '1px solid #e2e8f0' }}>
+                      <Stack direction="row" justifyContent="center" mb={0.5}><Eye size={16} color="#4f46e5" /></Stack>
+                      <Typography fontSize={24} fontWeight={800} color="#4f46e5" lineHeight={1}>{todayStat.visits}</Typography>
+                      <Typography fontSize={11} color="#64748b" mt={0.5}>Tashriflar</Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2.5, py: 1.5, border: '1px solid #e2e8f0' }}>
+                      <Stack direction="row" justifyContent="center" mb={0.5}><PersonSimple size={16} color="#0891b2" /></Stack>
+                      <Typography fontSize={24} fontWeight={800} color="#0891b2" lineHeight={1}>{todayStat.uniqueVisitors}</Typography>
+                      <Typography fontSize={11} color="#64748b" mt={0.5}>Unikal</Typography>
+                    </Box>
+                    <Box
+                      onClick={() => { setDetailModal({ open: true, date: todayStr, event: 'register', label: "Ro'yxatdan o'tganlar" }); fetchUserDetails({ variables: { date: todayStr, event: 'register' } }); }}
+                      sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2.5, py: 1.5, border: '1px solid #e2e8f0', cursor: 'pointer', '&:hover': { bgcolor: '#dcfce7', borderColor: '#86efac' } }}
+                    >
+                      <Stack direction="row" justifyContent="center" mb={0.5}><UserPlus size={16} color="#16a34a" /></Stack>
+                      <Typography fontSize={24} fontWeight={800} color="#16a34a" lineHeight={1}>{todayStat.registrations}</Typography>
+                      <Typography fontSize={11} color="#64748b" mt={0.5}>Ro'yxatdan o'tdi</Typography>
+                    </Box>
+                    <Box
+                      onClick={() => { setDetailModal({ open: true, date: todayStr, event: 'login', label: "Login bo'lganlar" }); fetchUserDetails({ variables: { date: todayStr, event: 'login' } }); }}
+                      sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2.5, py: 1.5, border: '1px solid #e2e8f0', cursor: 'pointer', '&:hover': { bgcolor: '#fef3c7', borderColor: '#fcd34d' } }}
+                    >
+                      <Stack direction="row" justifyContent="center" mb={0.5}><SignIn size={16} color="#d97706" /></Stack>
+                      <Typography fontSize={24} fontWeight={800} color="#d97706" lineHeight={1}>{todayStat.logins}</Typography>
+                      <Typography fontSize={11} color="#64748b" mt={0.5}>Login bo'ldi</Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+              )}
+
+              {/* 14-day table */}
+              {visitorStats.length > 0 && (
+                <Box sx={{ overflowX: 'auto' }}>
+                  <Stack direction="row" alignItems="center" spacing={1} mb={1.5}>
+                    <CalendarBlank size={15} color="#64748b" />
+                    <Typography fontSize={13} fontWeight={600} color="#374151">So'nggi 14 kun</Typography>
+                  </Stack>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                        <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Sana</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12 }}>
+                          <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5}>
+                            <Eye size={12} color="#4f46e5" /><span style={{ color: '#4f46e5' }}>Tashriflar</span>
+                          </Stack>
                         </TableCell>
-                        <TableCell align="center">
-                          <Chip label={s.visits} size="small" sx={{ bgcolor: '#ede9fe', color: '#4f46e5', fontWeight: 700, fontSize: 11 }} />
+                        <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12 }}>
+                          <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5}>
+                            <PersonSimple size={12} color="#0891b2" /><span style={{ color: '#0891b2' }}>Unikal</span>
+                          </Stack>
                         </TableCell>
-                        <TableCell align="center">
-                          <Chip label={s.uniqueVisitors} size="small" sx={{ bgcolor: '#e0f2fe', color: '#0891b2', fontWeight: 700, fontSize: 11 }} />
+                        <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12 }}>
+                          <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5}>
+                            <UserPlus size={12} color="#16a34a" /><span style={{ color: '#16a34a' }}>Ro'yxatdan</span>
+                          </Stack>
                         </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={s.registrations}
-                            size="small"
-                            onClick={() => { setDetailModal({ open: true, date: s.date, event: 'register', label: "Ro'yxatdan o'tganlar" }); fetchUserDetails({ variables: { date: s.date, event: 'register' } }); }}
-                            sx={{ bgcolor: '#dcfce7', color: '#16a34a', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={s.logins}
-                            size="small"
-                            onClick={() => { setDetailModal({ open: true, date: s.date, event: 'login', label: "Login bo'lganlar" }); fetchUserDetails({ variables: { date: s.date, event: 'login' } }); }}
-                            sx={{ bgcolor: '#fef3c7', color: '#d97706', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
-                          />
+                        <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12 }}>
+                          <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5}>
+                            <SignIn size={12} color="#d97706" /><span style={{ color: '#d97706' }}>Login</span>
+                          </Stack>
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Box>
-            )}
-          </Box>
+                    </TableHead>
+                    <TableBody>
+                      {[...visitorStats].reverse().map((s) => (
+                        <TableRow key={s.date} hover sx={s.date === todayStr ? { bgcolor: '#f0fdf4' } : {}}>
+                          <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', fontWeight: s.date === todayStr ? 700 : 400 }}>
+                            <Stack direction="row" alignItems="center" spacing={0.5}>
+                              {s.date === todayStr && <Circle size={8} color="#16a34a" weight="fill" />}
+                              <span>{s.date}</span>
+                              {s.date === todayStr && <Chip label="bugun" size="small" sx={{ bgcolor: '#16a34a', color: '#fff', fontSize: 10, height: 18 }} />}
+                            </Stack>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip label={s.visits} size="small" sx={{ bgcolor: '#ede9fe', color: '#4f46e5', fontWeight: 700, fontSize: 11 }} />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip label={s.uniqueVisitors} size="small" sx={{ bgcolor: '#e0f2fe', color: '#0891b2', fontWeight: 700, fontSize: 11 }} />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={s.registrations}
+                              size="small"
+                              onClick={() => { setDetailModal({ open: true, date: s.date, event: 'register', label: "Ro'yxatdan o'tganlar" }); fetchUserDetails({ variables: { date: s.date, event: 'register' } }); }}
+                              sx={{ bgcolor: '#dcfce7', color: '#16a34a', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={s.logins}
+                              size="small"
+                              onClick={() => { setDetailModal({ open: true, date: s.date, event: 'login', label: "Login bo'lganlar" }); fetchUserDetails({ variables: { date: s.date, event: 'login' } }); }}
+                              sx={{ bgcolor: '#fef3c7', color: '#d97706', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Box>
+              )}
+            </Box>
+          )}
         </Box>
       )}
 
@@ -1167,7 +1225,10 @@ const AdminPage = () => {
       {/* ── Dialog: Visitor User Details ─────────────────────────────────── */}
       <Dialog open={detailModal.open} onClose={() => setDetailModal({ open: false, date: '', event: '', label: '' })} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700, fontSize: 15, pb: 1 }}>
-          {detailModal.label} — {detailModal.date}
+          <Stack direction="row" alignItems="center" spacing={1}>
+            {detailModal.event === 'register' ? <UserPlus size={18} color="#16a34a" weight="bold" /> : <SignIn size={18} color="#d97706" weight="bold" />}
+            <span>{detailModal.label} — {detailModal.date}</span>
+          </Stack>
         </DialogTitle>
         <DialogContent dividers sx={{ p: 0 }}>
           {detailLoading ? (
