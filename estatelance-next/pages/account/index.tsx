@@ -197,6 +197,9 @@ const AccountPage = () => {
           const result = await updateProfile({ variables: { input: profileInput } });
           const updated = result?.data?.updateProfile;
           if (updated) {
+            if (updated.accessToken) {
+              saveToken(updated.accessToken);
+            }
             userVar({
               ...userVar(),
               fullName: updated.fullName ?? fullName,

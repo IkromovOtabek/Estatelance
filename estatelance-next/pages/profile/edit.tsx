@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useMutation, useQuery } from '@apollo/client';
 import { useReactiveVar } from '@apollo/client';
+import { saveToken } from '../../apollo/client';
 import {
   Alert,
   Avatar,
@@ -170,6 +171,9 @@ const EditProfilePage = () => {
       // JWT in localStorage still has old profileImage — patch userVar directly
       // so the header avatar updates immediately without requiring re-login.
       if (updated) {
+        if (updated.accessToken) {
+          saveToken(updated.accessToken);
+        }
         userVar({
           ...currentUser,
           fullName: updated.fullName ?? currentUser.fullName,
