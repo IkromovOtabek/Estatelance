@@ -708,3 +708,6 @@ const CreateJobPage = () => {
 };
 
 export default withLayoutBasic(CreateJobPage);
+
+// Disable static generation — useRouter requires client-side rendering
+export const getServerSideProps = async () => ({ props: {} });
