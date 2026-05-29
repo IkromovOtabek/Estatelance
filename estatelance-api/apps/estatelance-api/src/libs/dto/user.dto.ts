@@ -51,26 +51,33 @@ export class LoginInput {
 // and Float for auth_date (Unix timestamp).
 @InputType()
 export class TelegramLoginInput {
+  @IsNotEmpty()
   @Field(() => String)
-  id: string; // Telegram user ID — stored as string to support 64-bit IDs
+  id: string;
 
+  @IsNotEmpty()
   @Field(() => String)
   first_name: string;
 
+  @IsOptional()
   @Field(() => String, { nullable: true })
   last_name?: string;
 
+  @IsOptional()
   @Field(() => String, { nullable: true })
   username?: string;
 
+  @IsOptional()
   @Field(() => String, { nullable: true })
   photo_url?: string;
 
+  @IsNotEmpty()
   @Field(() => Float)
-  auth_date: number; // Unix timestamp — Float handles numbers beyond 32-bit range
+  auth_date: number;
 
+  @IsNotEmpty()
   @Field(() => String)
-  hash: string; // Telegram's security hash — we verify this on the backend
+  hash: string;
 }
 
 // ─── Input: Single Portfolio Item ────────────────────────────────────────────
