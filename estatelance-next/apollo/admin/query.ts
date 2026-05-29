@@ -88,8 +88,8 @@ export const ADMIN_GET_VISITOR_STATS = gql`
 `;
 
 export const ADMIN_GET_TODAY_SESSIONS = gql`
-  query AdminGetTodaySessions {
-    adminGetTodaySessions {
+  query AdminGetTodaySessions($date: String) {
+    adminGetTodaySessions(date: $date) {
       sessionId
       visitorId
       device
@@ -100,6 +100,7 @@ export const ADMIN_GET_TODAY_SESSIONS = gql`
       lastSeenAt
       endedAt
       isOnline
+      userName
     }
   }
 `;

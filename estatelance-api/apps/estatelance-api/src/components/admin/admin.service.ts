@@ -342,6 +342,19 @@ export class AdminService {
       userId: input.userId ?? null,
       date,
     });
+
+    // If login/register and we have userId + sessionId, tag the session with user info
+    if (input.userId && input.sessionId && (input.event === 'login' || input.event === 'register')) {
+      const user = await this.userModel.findById(input.userId, { fullName: 1, username: 1 }).lean();
+      if (user) {
+        const userName = (user as any).fullName || (user as any).username;
+        await this.visitorSessionModel.findOneAndUpdate(
+          { sessionId: input.sessionId },
+          { $set: { userId: input.userId, userName } },
+        );
+      }
+    }
+
     return true;
   }
 
@@ -456,14 +469,14 @@ export class AdminService {
     return true;
   }
 
-  // ─── Get today's visitor sessions ────────────────────────────────────────────
-  async getTodaySessions(): Promise<VisitorSessionObject[]> {
+  // ─── Get visitor sessions by date (defaults to today) ────────────────────────
+  async getTodaySessions(date?: string): Promise<VisitorSessionObject[]> {
     const tzOffset = 5 * 60;
-    const today = new Date(Date.now() + tzOffset * 60 * 1000).toISOString().slice(0, 10);
+    const dateStr = date ?? new Date(Date.now() + tzOffset * 60 * 1000).toISOString().slice(0, 10);
     const onlineThreshold = new Date(Date.now() - 2 * 60 * 1000); // 2 min ago
 
     const sessions = await this.visitorSessionModel
-      .find({ date: today })
+      .find({ date: dateStr })
       .sort({ startedAt: -1 })
       .lean();
 
@@ -481,6 +494,7 @@ export class AdminService {
       lastSeenAt: s.lastSeenAt?.toISOString?.() ?? '',
       endedAt: s.endedAt?.toISOString?.() ?? undefined,
       isOnline: !s.endedAt && s.lastSeenAt > onlineThreshold,
+      userName: (s as any).userName ?? undefined,
     }));
   }
 

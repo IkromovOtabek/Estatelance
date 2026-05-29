@@ -107,6 +107,7 @@ export class VisitorSessionObject {
   @Field(() => String) lastSeenAt: string;
   @Field(() => String, { nullable: true }) endedAt?: string;
   @Field(() => Boolean) isOnline: boolean;
+  @Field(() => String, { nullable: true }) userName?: string;
 }
 
 // ─── Input: Start visitor session ────────────────────────────────────────────
@@ -150,6 +151,11 @@ export class TrackVisitInput {
   @IsString()
   @Field(() => String, { nullable: true })
   userId?: string;
+
+  @IsOptional()
+  @IsString()
+  @Field(() => String, { nullable: true })
+  sessionId?: string;
 }
 
 // ─── Object: User detail for visitor stats drill-down ────────────────────────

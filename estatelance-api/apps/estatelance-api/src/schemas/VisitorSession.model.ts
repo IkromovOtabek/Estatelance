@@ -49,6 +49,13 @@ export class VisitorSession {
   @Prop({ type: Date, default: Date.now })
   startedAt: Date;
 
+  // Registered user info (set when login/register event fires in same session)
+  @Prop({ default: null })
+  userId: string | null;
+
+  @Prop({ default: null })
+  userName: string | null;
+
   // Auto-expire after 30 days
   @Prop({ type: Date, default: Date.now, expires: 60 * 60 * 24 * 30 })
   expireAt: Date;

@@ -177,6 +177,7 @@ export interface VisitorSessionItem {
   lastSeenAt: string;
   endedAt?: string;
   isOnline: boolean;
+  userName?: string;
 }
 
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────

@@ -230,12 +230,14 @@ export class AdminResolver {
     return this.adminService.endSession(input);
   }
 
-  // ─── Admin: Today's sessions ──────────────────────────────────────────────────
+  // ─── Admin: Sessions by date (defaults to today) ─────────────────────────────
   @UseGuards(RolesGuard)
   @Roles(UserType.ADMIN)
   @Query(() => [VisitorSessionObject])
-  async adminGetTodaySessions(): Promise<VisitorSessionObject[]> {
-    return this.adminService.getTodaySessions();
+  async adminGetTodaySessions(
+    @Args('date', { type: () => String, nullable: true, defaultValue: null }) date?: string,
+  ): Promise<VisitorSessionObject[]> {
+    return this.adminService.getTodaySessions(date ?? undefined);
   }
 
   // ─── Admin: User details for a day + event ───────────────────────────────────

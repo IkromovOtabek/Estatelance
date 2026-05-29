@@ -126,6 +126,9 @@ const AdminPage = () => {
   // Visitor stats panel toggle
   const [showVisitorStats, setShowVisitorStats] = useState(false);
 
+  // Session date filter (YYYY-MM-DD), null = today
+  const [sessionDate, setSessionDate] = useState<string>('');
+
   // ── Delete user dialog ─────────────────────────────────────────────────────
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId: string; username: string }>({
     open: false, userId: '', username: '',
@@ -187,9 +190,10 @@ const AdminPage = () => {
   });
 
   const { data: sessionsData, refetch: refetchSessions } = useQuery(ADMIN_GET_TODAY_SESSIONS, {
+    variables: { date: sessionDate || null },
     skip: !isAdmin || activeTab !== 0,
     fetchPolicy: 'network-only',
-    pollInterval: showVisitorStats ? 30_000 : 0, // auto-refresh every 30s when panel open
+    pollInterval: showVisitorStats && !sessionDate ? 30_000 : 0, // auto-refresh only for today
   });
 
   const [fetchUserDetails, { data: detailData, loading: detailLoading }] = useLazyQuery(
@@ -607,21 +611,49 @@ const AdminPage = () => {
                 </Box>
               )}
 
-            {/* Today sessions table */}
-            {todaySessions.length > 0 && (
-              <Box sx={{ overflowX: 'auto', mb: 3 }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Eye size={15} color="#4f46e5" />
-                    <Typography fontSize={13} fontWeight={600} color="#374151">Bugungi tashriflar ({todaySessions.length})</Typography>
-                    {onlineSessions.length > 0 && <Chip label={`${onlineSessions.length} online`} size="small" sx={{ bgcolor: '#16a34a', color: '#fff', fontSize: 10, height: 20 }} />}
-                  </Stack>
+            {/* Sessions filter + table */}
+            <Box sx={{ overflowX: 'auto', mb: 3 }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5} flexWrap="wrap" gap={1}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Eye size={15} color="#4f46e5" />
+                  <Typography fontSize={13} fontWeight={600} color="#374151">
+                    {sessionDate ? `${sessionDate} tashriflari` : 'Bugungi tashriflar'} ({todaySessions.length})
+                  </Typography>
+                  {!sessionDate && onlineSessions.length > 0 && (
+                    <Chip label={`${onlineSessions.length} online`} size="small" sx={{ bgcolor: '#16a34a', color: '#fff', fontSize: 10, height: 20 }} />
+                  )}
+                </Stack>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <CalendarBlank size={15} color="#64748b" />
+                  <TextField
+                    type="date"
+                    size="small"
+                    value={sessionDate}
+                    onChange={(e) => { setSessionDate(e.target.value); setTimeout(() => refetchSessions(), 0); }}
+                    inputProps={{ max: todayStr }}
+                    sx={{ '& .MuiInputBase-input': { fontSize: 12, py: 0.5, px: 1 }, width: 145 }}
+                  />
+                  {sessionDate && (
+                    <Button size="small" variant="text" sx={{ fontSize: 11, color: '#64748b' }}
+                      onClick={() => { setSessionDate(''); setTimeout(() => refetchSessions(), 0); }}>
+                      Bugun
+                    </Button>
+                  )}
                   <Button size="small" variant="text" sx={{ fontSize: 11 }} onClick={() => refetchSessions()}>Yangilash</Button>
                 </Stack>
+              </Stack>
+
+              {todaySessions.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4, color: '#94a3b8' }}>
+                  <PersonSimple size={32} color="#cbd5e1" />
+                  <Typography fontSize={13} mt={1}>Bu kunda tashrif yo'q</Typography>
+                </Box>
+              ) : (
                 <Table size="small">
                   <TableHead>
                     <TableRow sx={{ bgcolor: '#f8fafc' }}>
                       <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Holat</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Foydalanuvchi</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Qurilma</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>OS / Brauzer</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Sahifalar</TableCell>
@@ -638,6 +670,13 @@ const AdminPage = () => {
                             <Typography fontSize={11} color={s.isOnline ? '#16a34a' : '#94a3b8'} fontWeight={600}>{s.isOnline ? 'Online' : 'Chiqdi'}</Typography>
                           </Stack>
                         </TableCell>
+                        <TableCell>
+                          {s.userName ? (
+                            <Typography fontSize={11} fontWeight={600} color="#374151">{s.userName}</Typography>
+                          ) : (
+                            <Typography fontSize={11} color="#94a3b8" fontStyle="italic">Guest</Typography>
+                          )}
+                        </TableCell>
                         <TableCell><Typography fontSize={11}>{s.device}</Typography></TableCell>
                         <TableCell><Typography fontSize={11}>{s.os} / {s.browser}</Typography></TableCell>
                         <TableCell><Chip label={s.pages.length} size="small" sx={{ bgcolor: '#ede9fe', color: '#4f46e5', fontSize: 10 }} /></TableCell>
@@ -647,8 +686,8 @@ const AdminPage = () => {
                     ))}
                   </TableBody>
                 </Table>
-              </Box>
-            )}
+              )}
+            </Box>
 
               {/* 14-day table */}
               {visitorStats.length > 0 && (
@@ -1277,6 +1316,12 @@ const AdminPage = () => {
             </DialogTitle>
             <DialogContent dividers>
               <Stack spacing={1.5}>
+                <Box>
+                  <Typography fontSize={11} color="#94a3b8">Foydalanuvchi</Typography>
+                  <Typography fontSize={13} fontWeight={600} color={selectedSession.userName ? '#374151' : '#94a3b8'} fontStyle={selectedSession.userName ? 'normal' : 'italic'}>
+                    {selectedSession.userName ?? 'Guest'}
+                  </Typography>
+                </Box>
                 <Stack direction="row" spacing={3}>
                   <Box>
                     <Typography fontSize={11} color="#94a3b8">Qurilma</Typography>

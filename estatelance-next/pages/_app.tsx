@@ -66,8 +66,10 @@ function parseUserAgent(ua: string) {
 function trackEvent(event: 'visit' | 'register' | 'login', userId?: string) {
   const visitorId = getOrCreateVisitorId();
   if (!visitorId) return;
+  const sessionId = getOrCreateSessionId();
   const input: any = { visitorId, event };
   if (userId) input.userId = userId;
+  if (sessionId) input.sessionId = sessionId;
   apolloClient.mutate({ mutation: TRACK_VISIT, variables: { input } }).catch(() => {});
 }
 
