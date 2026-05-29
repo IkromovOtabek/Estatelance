@@ -70,6 +70,7 @@ export class UserService {
   // 2. Find or create a user account linked to this Telegram account
   // 3. Return a JWT token
   async loginWithTelegram(input: TelegramLoginInput): Promise<User> {
+    console.log('[loginWithTelegram] raw input:', JSON.stringify(input));
     // Build the TelegramAuthData object — only include fields that have real values.
     // Telegram's hash is computed only from fields that exist, so including
     // undefined fields (like last_name when the user has none) breaks verification.
