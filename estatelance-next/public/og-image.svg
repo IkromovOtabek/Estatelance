@@ -1,0 +1,56 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1b4b"/>
+      <stop offset="50%" style="stop-color:#312e81"/>
+      <stop offset="100%" style="stop-color:#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#818cf8"/>
+      <stop offset="100%" style="stop-color:#a78bfa"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Decorative circles -->
+  <circle cx="1050" cy="100" r="200" fill="#4f46e5" opacity="0.15"/>
+  <circle cx="150" cy="530" r="160" fill="#7c3aed" opacity="0.12"/>
+  <circle cx="600" cy="315" r="400" fill="#4338ca" opacity="0.05"/>
+
+  <!-- Accent line -->
+  <rect x="80" y="370" width="120" height="6" rx="3" fill="url(#accent)"/>
+
+  <!-- BuFu Logo Mark -->
+  <g transform="translate(80, 120)">
+    <!-- B -->
+    <text font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="110" fill="url(#logoGrad)">B</text>
+    <!-- u -->
+    <text x="78" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="110" fill="url(#logoGrad)">u</text>
+    <!-- F -->
+    <text x="158" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="110" fill="white">F</text>
+    <!-- u -->
+    <text x="228" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="110" fill="white">u</text>
+  </g>
+
+  <!-- Tagline -->
+  <text x="80" y="410" font-family="Arial, sans-serif" font-weight="400" font-size="32" fill="#a5b4fc" letter-spacing="3">BUILD FUTURE</text>
+
+  <!-- Description -->
+  <text x="80" y="470" font-family="Arial, sans-serif" font-weight="400" font-size="26" fill="#e2e8f0">O'zbekistondagi frilanserlar platformasi</text>
+  <text x="80" y="510" font-family="Arial, sans-serif" font-weight="400" font-size="22" fill="#94a3b8">Mutaxassis toping · Loyiha joylashtiring · Real-time chat</text>
+
+  <!-- Domain -->
+  <text x="1120" y="590" font-family="Arial, sans-serif" font-weight="600" font-size="24" fill="#6366f1" text-anchor="end">bufu.uz</text>
+
+  <!-- Decorative dots -->
+  <circle cx="980" cy="315" r="4" fill="#6366f1" opacity="0.6"/>
+  <circle cx="1000" cy="290" r="3" fill="#8b5cf6" opacity="0.5"/>
+  <circle cx="960" cy="340" r="5" fill="#4f46e5" opacity="0.4"/>
+  <circle cx="1020" cy="330" r="3" fill="#7c3aed" opacity="0.6"/>
+</svg>
