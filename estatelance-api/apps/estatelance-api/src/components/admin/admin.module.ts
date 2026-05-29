@@ -1,0 +1,25 @@
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { AdminResolver } from './admin.resolver';
+import { AdminService } from './admin.service';
+import { User, UserSchema } from '../../schemas/User.model';
+import { Job, JobSchema } from '../../schemas/Job.model';
+import { Post, PostSchema } from '../../schemas/Post.model';
+import { Announcement, AnnouncementSchema } from '../../schemas/Announcement.model';
+import { Notification, NotificationSchema } from '../../schemas/Notification.model';
+import { AuthModule } from '../auth/auth.module';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Job.name, schema: JobSchema },
+      { name: Post.name, schema: PostSchema },
+      { name: Announcement.name, schema: AnnouncementSchema },
+      { name: Notification.name, schema: NotificationSchema },
+    ]),
+    AuthModule,
+  ],
+  providers: [AdminResolver, AdminService],
+})
+export class AdminModule {}
