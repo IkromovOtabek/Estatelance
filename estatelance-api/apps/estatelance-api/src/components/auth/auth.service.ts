@@ -82,11 +82,6 @@ export class AuthService {
       .update(dataToCheck)
       .digest('hex');
 
-    // Debug log (remove after fixing)
-    console.log('[TelegramAuth] dataToCheck:', dataToCheck);
-    console.log('[TelegramAuth] computedHash:', computedHash);
-    console.log('[TelegramAuth] receivedHash:', data.hash);
-
     // Step 5: Compare computed hash with the hash Telegram sent
     if (computedHash !== data.hash) {
       throw new UnauthorizedException('Invalid Telegram authentication data');
