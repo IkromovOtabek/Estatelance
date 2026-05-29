@@ -109,10 +109,12 @@ export default function App({ Component, pageProps }: AppProps) {
     restoreUserSession();
 
     // Track visit event once per session
+    // If user is already logged in (token restored), pass userId so the session gets tagged with their name
     const sessionKey = '_tracked';
     if (!sessionStorage.getItem(sessionKey)) {
       sessionStorage.setItem(sessionKey, '1');
-      trackEvent('visit');
+      const restoredUser = userVar();
+      trackEvent('visit', restoredUser?._id || undefined);
     }
 
     // Start visitor session

@@ -343,8 +343,9 @@ export class AdminService {
       date,
     });
 
-    // If login/register and we have userId + sessionId, tag the session with user info
-    if (input.userId && input.sessionId && (input.event === 'login' || input.event === 'register')) {
+    // Tag the session with user info whenever userId + sessionId are provided
+    // This covers: login, register, and page restore (visit event with restored token)
+    if (input.userId && input.sessionId) {
       const user = await this.userModel.findById(input.userId, { fullName: 1, username: 1 }).lean();
       if (user) {
         const userName = (user as any).fullName || (user as any).username;
