@@ -22,6 +22,7 @@ export class AiService {
       // Strip markdown code blocks if present
       return text.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
     } catch (err: any) {
+      console.error('[AiService] Gemini error:', err?.message ?? err);
       throw new InternalServerErrorException('AI xizmati vaqtinchalik ishlamayapti');
     }
   }

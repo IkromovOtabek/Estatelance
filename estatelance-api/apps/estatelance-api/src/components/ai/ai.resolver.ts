@@ -14,6 +14,9 @@ export class AiResolver {
     @Args('action') action: string,
     @Args('context') context: string,
   ): Promise<string> {
-    return this.aiService.assist(action, context);
+    console.log(`[AiResolver] aiAssist called: action=${action}`);
+    const result = await this.aiService.assist(action, context);
+    console.log(`[AiResolver] aiAssist done: action=${action}, length=${result.length}`);
+    return result;
   }
 }
