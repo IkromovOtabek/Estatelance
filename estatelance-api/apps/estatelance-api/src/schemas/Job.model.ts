@@ -98,6 +98,14 @@ export class Job extends Document {
   @Field(() => String, { nullable: true })
   bumpedAt?: Date;
 
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostExpiresAt?: Date;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostPlan?: string; // BASIC | PRO | VIP
+
   // Auto-set by Mongoose timestamps
   @Field(() => String, { nullable: true })
   createdAt?: Date;

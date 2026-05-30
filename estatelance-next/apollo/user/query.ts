@@ -163,6 +163,8 @@ export const GET_MY_JOBS = gql`
       salaryTo
       requiredSkills
       bumpedAt
+      boostExpiresAt
+      boostPlan
       createdAt
     }
   }

@@ -149,10 +149,12 @@ export const DELETE_JOB = gql`
 `;
 
 export const BOOST_JOB = gql`
-  mutation BoostJob($jobId: String!) {
-    boostJob(jobId: $jobId) {
+  mutation BoostJob($jobId: String!, $plan: String!) {
+    boostJob(jobId: $jobId, plan: $plan) {
       _id
       bumpedAt
+      boostExpiresAt
+      boostPlan
     }
   }
 `;

@@ -62,6 +62,8 @@ export interface Job {
   bidCount: number;
   hiredFreelancerId?: string;
   bumpedAt?: string;
+  boostExpiresAt?: string;
+  boostPlan?: string;
   createdAt?: string;
   salaryFrom?: number;
   salaryTo?: number;

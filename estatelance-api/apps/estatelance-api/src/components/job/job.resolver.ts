@@ -61,8 +61,9 @@ export class JobResolver {
   async boostJob(
     @AuthUser('_id') agentId: string,
     @Args('jobId') jobId: string,
+    @Args('plan') plan: string,
   ): Promise<Job> {
-    return this.jobService.boostJob(agentId, jobId);
+    return this.jobService.boostJob(agentId, jobId, plan);
   }
 
   @UseGuards(ActiveUserGuard)

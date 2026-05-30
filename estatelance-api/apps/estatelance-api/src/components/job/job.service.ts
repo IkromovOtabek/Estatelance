@@ -112,13 +112,21 @@ export class JobService {
   }
 
   // ─── Boost (bump) a Job to top ────────────────────────────────────────────
-  async boostJob(agentId: string, jobId: string): Promise<Job> {
+  async boostJob(agentId: string, jobId: string, plan: string): Promise<Job> {
     const job = await this.jobModel.findOne({ _id: jobId, agentId });
     if (!job) throw new NotFoundException('Job not found or you do not own it');
     if (job.status !== JobStatus.OPEN) {
       throw new BadRequestException('Only open jobs can be boosted');
     }
-    job.bumpedAt = new Date();
+
+    const PLAN_DAYS: Record<string, number> = { BASIC: 3, PRO: 7, VIP: 30 };
+    const days = PLAN_DAYS[plan] ?? 3;
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+
+    job.bumpedAt = now;
+    job.boostExpiresAt = expiresAt;
+    job.boostPlan = plan;
     return job.save();
   }
 

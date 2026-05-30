@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import BoostModal from '../../libs/components/common/BoostModal';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -68,6 +69,9 @@ const MyWorksPage = () => {
 
   const [filterStatus, setFilterStatus] = useState<string>('');
 
+  // ── Boost modal state ───────────────────────────────────────────────────────
+  const [boostJob2, setBoostJob2] = useState<Job | null>(null);
+
   // ── Edit modal state ────────────────────────────────────────────────────────
   const [editJob, setEditJob] = useState<Job | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -113,13 +117,18 @@ const MyWorksPage = () => {
     }
   };
 
-  const handleBoost = async (job: Job) => {
+  const handleBoost = (job: Job) => {
+    setBoostJob2(job);
+  };
+
+  const handleBoostConfirm = async (plan: string) => {
+    if (!boostJob2) return;
     try {
-      await boostJob({ variables: { jobId: job._id } });
+      await boostJob({ variables: { jobId: boostJob2._id, plan } });
       refetch();
-      alert('✅ Ish ro\'yxat tepasiga chiqarildi!');
     } catch (err: any) {
       alert(err?.graphQLErrors?.[0]?.message ?? 'Boost da xato');
+      throw err;
     }
   };
 
@@ -169,6 +178,14 @@ const MyWorksPage = () => {
   return (
     <>
       <Head><title>Mening ishlarim — BuFu</title></Head>
+
+      {/* ── Boost Modal ───────────────────────────────────────────────────── */}
+      <BoostModal
+        open={!!boostJob2}
+        jobTitle={boostJob2?.title ?? ''}
+        onClose={() => setBoostJob2(null)}
+        onConfirm={handleBoostConfirm}
+      />
 
       {/* ── Edit Modal ────────────────────────────────────────────────────── */}
       <Dialog open={!!editJob} onClose={() => !editSaving && setEditJob(null)} maxWidth="sm" fullWidth>
@@ -314,7 +331,7 @@ const MyWorksPage = () => {
         <Stack spacing={2}>
           {jobs.map(job => {
             const cfg = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.OPEN;
-            const isBoosted = !!job.bumpedAt && (Date.now() - new Date(job.bumpedAt).getTime()) < 7 * 24 * 60 * 60 * 1000;
+            const isBoosted = !!job.boostExpiresAt && new Date(job.boostExpiresAt).getTime() > Date.now();
             const canEdit   = job.status === JobStatus.OPEN;
             const canDelete = job.status !== JobStatus.ACTIVE;
             const canBoost  = job.status === JobStatus.OPEN;
@@ -350,9 +367,9 @@ const MyWorksPage = () => {
                       {isBoosted && (
                         <Chip
                           size="small"
-                          icon={<RocketLaunch size={11} color="#7c3aed" weight="fill" />}
-                          label="Top"
-                          sx={{ fontSize: 11, height: 22, bgcolor: '#f5f3ff', color: '#7c3aed', fontWeight: 700 }}
+                          icon={<RocketLaunch size={11} color={job.boostPlan === 'VIP' ? '#b45309' : job.boostPlan === 'PRO' ? '#7c3aed' : '#4f46e5'} weight="fill" />}
+                          label={job.boostPlan === 'VIP' ? '⭐ VIP Top' : job.boostPlan === 'PRO' ? '⚡ Pro Top' : '🔵 Top'}
+                          sx={{ fontSize: 11, height: 22, bgcolor: job.boostPlan === 'VIP' ? '#fffbeb' : job.boostPlan === 'PRO' ? '#f5f3ff' : '#eef2ff', color: job.boostPlan === 'VIP' ? '#b45309' : job.boostPlan === 'PRO' ? '#7c3aed' : '#4f46e5', fontWeight: 700 }}
                         />
                       )}
                       <Typography fontSize={11} color="#94a3b8">{timeAgo(job.createdAt)}</Typography>
