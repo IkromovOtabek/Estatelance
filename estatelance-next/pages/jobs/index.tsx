@@ -158,10 +158,10 @@ const JobsPage = () => {
     return allJobs.filter(j => {
       if (salaryMin && (j.salaryFrom ?? j.budget) < Number(salaryMin)) return false;
       if (salaryMax && (j.salaryTo ?? j.budget) > Number(salaryMax)) return false;
-      if (expLevels.length && j.experience && !expLevels.includes(j.experience)) return false;
+      if (expLevels.length && j.experienceLevel && !expLevels.includes(j.experienceLevel)) return false;
       if (jobTypes.length && j.jobType && !jobTypes.includes(j.jobType)) return false;
       if (formats.length && j.workFormat?.length) {
-        if (!formats.includes(j.workFormat ?? '')) return false;
+        if (!j.workFormat.some((f: string) => formats.includes(f))) return false;
       }
       return true;
     });
@@ -488,9 +488,9 @@ const JobsPage = () => {
 
                     {/* Meta chips */}
                     <Stack direction="row" flexWrap="wrap" gap={0.75} mt={1.25}>
-                      {job.experience && (
+                      {job.experienceLevel && (
                         <Chip
-                          label={EXP_LABELS[job.experience] ?? job.experience}
+                          label={EXP_LABELS[job.experienceLevel] ?? job.experienceLevel}
                           size="small"
                           sx={{ bgcolor: '#f1f5f9', color: '#475569', fontSize: 11.5, fontWeight: 500, height: 24, borderRadius: 1.5 }}
                         />
@@ -510,7 +510,7 @@ const JobsPage = () => {
                           sx={{ bgcolor: '#f1f5f9', color: '#475569', fontSize: 11.5, fontWeight: 500, height: 24, borderRadius: 1.5 }}
                         />
                       ))}
-                      {!job.experience && !job.jobType && (
+                      {!job.experienceLevel && !job.jobType && (
                         <Chip
                           icon={<Box sx={{ display: 'flex', ml: 0.5 }}>{getCatIcon(job.category, 11)}</Box>}
                           label={JOB_CATEGORY_LABELS[job.category as JobCategory]}
