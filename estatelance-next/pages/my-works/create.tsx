@@ -180,7 +180,10 @@ const CreateJobPage = () => {
     }
   };
 
-  if (!user._id) { router.replace('/account'); return null; }
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => { setMounted(true); }, []);
+  React.useEffect(() => { if (mounted && !user._id) router.replace('/account'); }, [mounted, user._id]);
+  if (!mounted || !user._id) return null;
 
   return (
     <>
