@@ -318,7 +318,7 @@ const HomePage = () => {
           </Typography>
 
           <Typography color="#94a3b8" fontSize={{ xs: 14, md: 16 }} mb={1.5} lineHeight={1.75} maxWidth={560}>
-            Ko'chmas mulk sohasida — fotosuratdan tortib yuridik maslahatgacha — hamma uchun ish bor.
+            Foto, 3D render, dizayn, yuridik va boshqa sohalarda — hamma uchun ish bor.
             Tajriba talab qilinmaydi: ko'nikmangizni ro'yxatga oling va bugun birinchi buyurtmangizni oling.
           </Typography>
 
@@ -553,7 +553,7 @@ const HomePage = () => {
         <Stack direction="row" justifyContent="space-between" alignItems="flex-end" mb={2.5}>
           <Box>
             <Typography variant="h6" fontWeight={800} color="#0f172a">Qaysi sohada ishlashni xohlaysiz?</Typography>
-            <Typography fontSize={13} color="text.secondary">Ko'chmas mulkka ixtisoslashgan 6 ta yo'nalish</Typography>
+            <Typography fontSize={13} color="text.secondary">6 ta asosiy yo'nalish</Typography>
           </Box>
           <Link href="/browse" style={{ textDecoration: 'none' }}>
             <Button size="small" endIcon={<ArrowForwardIcon size={20} />} sx={{ color: '#4f46e5', fontSize: 13 }}>
@@ -598,7 +598,7 @@ const HomePage = () => {
               Bugun ro'yxatdan o'ting — bepul!
             </Typography>
             <Typography color="rgba(255,255,255,0.8)" fontSize={14} maxWidth={480}>
-              O'zbekistondagi ko'chmas mulk mutaxassislari bilan bog'laning.
+              O'zbekistondagi professional frilanserlar bilan bog'laning.
               Talabalar, yangi boshlovchilar va tajribali frilanserlar uchun mos.
             </Typography>
           </Box>

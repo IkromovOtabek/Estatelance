@@ -40,7 +40,7 @@ import { CREATE_BID, ACCEPT_BID, COMPLETE_JOB } from '../../apollo/user/mutation
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { Bid, Job } from '../../libs/types';
-import { BidStatus, JobCategory, JOB_CATEGORY_LABELS, JobStatus, PropertyType, PROPERTY_TYPE_LABELS, UserType } from '../../libs/enums';
+import { BidStatus, JobCategory, JOB_CATEGORY_LABELS, JobStatus, UserType } from '../../libs/enums';
 import { getCatIcon } from '../../libs/utils/jobCategoryIcons';
 
 function timeAgo(dateStr?: string): string {
@@ -291,20 +291,6 @@ const JobDetailPage = () => {
                 </Box>
               </Stack>
 
-              {job.propertyAddress && (
-                <>
-                  <Box sx={{ width: 1, bgcolor: '#e2e8f0', alignSelf: 'stretch' }} />
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <LocationOnIcon size={18} color="#ea580c" />
-                    </Box>
-                    <Box>
-                      <Typography fontSize={13} fontWeight={600} color="#0f172a" lineHeight={1.2}>{job.propertyAddress}</Typography>
-                      <Typography fontSize={11} color="#94a3b8">manzil</Typography>
-                    </Box>
-                  </Stack>
-                </>
-              )}
 
               <Box sx={{ width: 1, bgcolor: '#e2e8f0', alignSelf: 'stretch' }} />
 
@@ -327,15 +313,6 @@ const JobDetailPage = () => {
                 {job.description}
               </Typography>
 
-              {/* Property type chip */}
-              {job.propertyType && (
-                <Stack direction="row" alignItems="center" spacing={1} mt={2.5}>
-                  <BuildingIcon size={15} color="#64748b" />
-                  <Typography fontSize={13} color="#64748b">
-                    Mulk turi: <strong>{PROPERTY_TYPE_LABELS[job.propertyType as PropertyType] ?? job.propertyType}</strong>
-                  </Typography>
-                </Stack>
-              )}
 
               {/* Complete job button */}
               {isOwn && job.status === JobStatus.ACTIVE && (
@@ -592,7 +569,6 @@ const JobDetailPage = () => {
                   { label: 'Takliflar', value: `${job.bidCount} ta`, icon: <EnvelopeSimple size={16} color="#4f46e5" />, color: '#4f46e5' },
                   { label: 'Holati', value: status.label, icon: <CheckCircleIcon size={16} color={status.color} />, color: status.color },
                   { label: 'Kategoriya', value: JOB_CATEGORY_LABELS[job.category as JobCategory], icon: <Tag size={16} color="#0f172a" />, color: '#0f172a' },
-                  ...(job.propertyType ? [{ label: 'Mulk turi', value: PROPERTY_TYPE_LABELS[job.propertyType as PropertyType] ?? job.propertyType, icon: <House size={16} color="#0f172a" />, color: '#0f172a' }] : []),
                 ] as Array<{ label: string; value: string; icon: React.ReactElement; color: string }>).map(({ label, value, icon, color }) => (
                   <Stack key={label} direction="row" justifyContent="space-between" alignItems="center">
                     <Stack direction="row" spacing={1} alignItems="center">

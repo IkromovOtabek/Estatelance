@@ -10,7 +10,7 @@ import { CheckCircle, Circle, Rocket, Star, Lightning } from '@phosphor-icons/re
 import { CREATE_JOB } from '../../apollo/user/mutation';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
-import { JobCategory, JOB_CATEGORY_LABELS, PropertyType, PROPERTY_TYPE_LABELS } from '../../libs/enums';
+import { JobCategory, JOB_CATEGORY_LABELS } from '../../libs/enums';
 
 // ─── Step config ──────────────────────────────────────────────────────────────
 const STEPS = [
@@ -111,12 +111,11 @@ const CreateJobPage = () => {
   const [hoursPerDay, setHours]         = useState('');
   const [hasNightShift, setNightShift]  = useState(false);
   const [location, setLocation]         = useState('');
-  const [propertyAddress, setAddress]   = useState('');
+
   const [salaryFrom, setSalaryFrom]     = useState('');
   const [salaryTo, setSalaryTo]         = useState('');
   const [description, setDescription]  = useState('');
   const [category, setCategory]         = useState<JobCategory | ''>('');
-  const [propertyType, setPropertyType] = useState<PropertyType | ''>('');
   const [skillInput, setSkillInput]     = useState('');
   const [requiredSkills, setSkills]     = useState<string[]>([]);
   // Step 8: bid settings
@@ -158,8 +157,7 @@ const CreateJobPage = () => {
             title,
             description,
             category,
-            propertyType: propertyType || PropertyType.APARTMENT,
-            propertyAddress: propertyAddress || undefined,
+            propertyType: 'OTHER',
             budget: salaryFrom ? Number(salaryFrom) : 100,
             experienceLevel: experienceLevel || undefined,
             jobType,
@@ -294,28 +292,6 @@ const CreateJobPage = () => {
                 />
               </Box>
 
-              <Box mb={3}>
-                <Typography fontWeight={600} fontSize={15} mb={1} color="#0f172a">Aniq manzil</Typography>
-                <TextField
-                  value={propertyAddress}
-                  onChange={e => setAddress(e.target.value)}
-                  fullWidth placeholder="Ko'cha, bino, metro..."
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: 'white' } }}
-                />
-              </Box>
-
-              <Box>
-                <Typography fontWeight={600} fontSize={15} mb={1} color="#0f172a">Mulk turi</Typography>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Mulk turi</InputLabel>
-                  <Select value={propertyType} label="Mulk turi" onChange={e => setPropertyType(e.target.value as PropertyType)} sx={{ borderRadius: 2, bgcolor: 'white' }}>
-                    <MenuItem value="">— Tanlang —</MenuItem>
-                    {Object.values(PropertyType).map(pt => (
-                      <MenuItem key={pt} value={pt}>{PROPERTY_TYPE_LABELS[pt]}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
             </Box>
           )}
 
@@ -524,9 +500,9 @@ const CreateJobPage = () => {
                   </Stack>
                 )}
 
-                {(location || propertyAddress) && (
+                {location && (
                   <Typography fontSize={13} color="#64748b" mt={2}>
-                    📍 {[location, propertyAddress].filter(Boolean).join(', ')}
+                    📍 {location}
                   </Typography>
                 )}
               </Box>
@@ -536,7 +512,7 @@ const CreateJobPage = () => {
                 <Typography fontWeight={700} fontSize={13} color="#0f172a" mb={1.5}>Kiritilgan ma'lumotlar xulosa</Typography>
                 {[
                   { label: "Kategoriya", val: category ? JOB_CATEGORY_LABELS[category as JobCategory] : '—' },
-                  { label: "Manzil", val: [location, propertyAddress].filter(Boolean).join(', ') || '—' },
+                  { label: "Manzil", val: location || '—' },
                   { label: "To'lov", val: salaryFrom || salaryTo ? `$${salaryFrom || '?'} – $${salaryTo || '?'}` : '—' },
                   { label: "Jadval", val: workSchedule || '—' },
                   { label: "Ko'nikmalar", val: requiredSkills.join(', ') || '—' },

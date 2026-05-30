@@ -80,7 +80,7 @@ const ArticlesPage = () => {
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
         <Box>
           <Typography variant="h5" fontWeight={800}>Sohaviy maqolalar</Typography>
-          <Typography color="text.secondary" fontSize={14}>Ko'chmas mulk mutaxassislaridan maslahat va tahlillar</Typography>
+          <Typography color="text.secondary" fontSize={14}>Mutaxassislardan maslahat va tahlillar</Typography>
         </Box>
         {isLoggedIn && (
           <Button variant="contained" onClick={() => setShowWriteForm(!showWriteForm)} sx={{ bgcolor: '#4f46e5' }}>

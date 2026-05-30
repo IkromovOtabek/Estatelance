@@ -41,7 +41,7 @@ import { COMPLETE_JOB, DELETE_JOB, UPDATE_JOB, BOOST_JOB } from '../../apollo/us
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { Job } from '../../libs/types';
-import { JobCategory, JOB_CATEGORY_LABELS, JobStatus, PropertyType, PROPERTY_TYPE_LABELS } from '../../libs/enums';
+import { JobCategory, JOB_CATEGORY_LABELS, JobStatus } from '../../libs/enums';
 import { getCatIcon } from '../../libs/utils/jobCategoryIcons';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {

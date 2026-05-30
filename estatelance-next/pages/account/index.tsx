@@ -49,7 +49,7 @@ import { useMutation, useReactiveVar } from '@apollo/client';
 // ─── Kirish va Ro'yxatdan o'tish sahifasi ────────────────────────────────────
 
 const FEATURES = [
-  { icon: <House size={20} color="#a5b4fc" weight="fill" />, text: "Ko'chmas mulk uchun maxsus platforma" },
+  { icon: <House size={20} color="#a5b4fc" weight="fill" />, text: "Frilanserlar uchun maxsus platforma" },
   { icon: <Lightning size={20} color="#a5b4fc" weight="fill" />, text: "Tez ish toping yoki frilanser yollang" },
   { icon: <LockOutlinedIcon size={20} color="#a5b4fc" weight="fill" />, text: "Xavfsiz to'lov va shartnomalar" },
   { icon: <Globe size={20} color="#a5b4fc" weight="fill" />, text: "O'zbekiston bo'ylab 100+ mutaxassis" },
@@ -703,7 +703,7 @@ const AccountPage = () => {
             </Stack>
 
             <Typography variant="h4" fontWeight={800} color="white" sx={{ lineHeight: 1.25, mb: 1.5, mt: 4 }}>
-              O'zbekistondagi eng yaxshi ko'chmas mulk mutaxassislari
+              O'zbekistondagi eng yaxshi frilanserlar
             </Typography>
             <Typography color="#94a3b8" fontSize={15} lineHeight={1.7}>
               Frilanserlar bilan bog'laning, ishlar joylashtiring va loyihalaringizni muvaffaqiyatli amalga oshiring.

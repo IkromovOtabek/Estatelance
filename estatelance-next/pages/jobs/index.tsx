@@ -20,7 +20,7 @@ import { userVar } from '../../apollo/store';
 import { Job } from '../../libs/types';
 import {
   JobCategory, JOB_CATEGORY_LABELS,
-  JobStatus, PropertyType, PROPERTY_TYPE_LABELS, UserType,
+  JobStatus, UserType,
 } from '../../libs/enums';
 import { getCatIcon } from '../../libs/utils/jobCategoryIcons';
 
