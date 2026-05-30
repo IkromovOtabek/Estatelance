@@ -57,7 +57,6 @@ const NAV_LINKS = [
   { label: 'Maqolalar', href: '/articles' },
   { label: 'E\'lonlar', href: '/announcements' },
   { label: 'Xabarlar', href: '/messages' },
-  { label: 'AI Tavsiya', href: '/ai-match' },
 ];
 
 // ─── Notification type icons ──────────────────────────────────────────────────

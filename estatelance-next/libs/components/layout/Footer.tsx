@@ -9,7 +9,6 @@ const QUICK_LINKS = [
   { label: 'Ish e\'lonlari', href: '/jobs' },
   { label: 'Maqolalar', href: '/articles' },
   { label: 'E\'lonlar', href: '/announcements' },
-  { label: 'AI Tavsiya', href: '/ai-match' },
 ];
 
 const CATEGORIES = [
