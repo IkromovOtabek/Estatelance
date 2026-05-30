@@ -20,17 +20,13 @@ export class AuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const { req } = GqlExecutionContext.create(context).getContext();
     const token = this.extractToken(req);
-    if (!token) {
-      console.warn('[AuthGuard] No token provided');
-      return false;
-    }
+    if (!token) return false;
 
     try {
       const secret = this.configService.get<string>('JWT_SECRET');
       req.user = this.jwtService.verify(token, { secret });
       return true;
-    } catch (err: any) {
-      console.warn('[AuthGuard] Token invalid:', err?.message);
+    } catch {
       return false;
     }
   }

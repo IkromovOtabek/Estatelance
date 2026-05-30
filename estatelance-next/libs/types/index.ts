@@ -61,13 +61,17 @@ export interface Job {
   agentAvatar?: string;
   bidCount: number;
   hiredFreelancerId?: string;
+  bumpedAt?: string;
   createdAt?: string;
   salaryFrom?: number;
   salaryTo?: number;
-  experience?: string;
+  experienceLevel?: string;
   jobType?: string;
-  workFormat?: string;
+  workFormat?: string[];
+  workSchedule?: string;
+  hoursPerDay?: string;
   location?: string;
+  requiredSkills?: string[];
 }
 
 // ─── Bid Types ────────────────────────────────────────────────────────────────

@@ -93,6 +93,11 @@ export class Job extends Document {
   @Field(() => String, { nullable: true })
   hiredFreelancerId?: string;
 
+  // Set when owner boosts the job to top
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  bumpedAt?: Date;
+
   // Auto-set by Mongoose timestamps
   @Field(() => String, { nullable: true })
   createdAt?: Date;

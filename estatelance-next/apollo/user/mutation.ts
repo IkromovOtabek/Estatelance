@@ -118,6 +118,45 @@ export const COMPLETE_JOB = gql`
   }
 `;
 
+export const UPDATE_JOB = gql`
+  mutation UpdateJob($jobId: String!, $input: UpdateJobInput!) {
+    updateJob(jobId: $jobId, input: $input) {
+      _id
+      title
+      description
+      budget
+      status
+      category
+      propertyType
+      propertyAddress
+      experienceLevel
+      jobType
+      workFormat
+      workSchedule
+      hoursPerDay
+      location
+      salaryFrom
+      salaryTo
+      requiredSkills
+    }
+  }
+`;
+
+export const DELETE_JOB = gql`
+  mutation DeleteJob($jobId: String!) {
+    deleteJob(jobId: $jobId)
+  }
+`;
+
+export const BOOST_JOB = gql`
+  mutation BoostJob($jobId: String!) {
+    boostJob(jobId: $jobId) {
+      _id
+      bumpedAt
+    }
+  }
+`;
+
 // ─── Bid Mutations ────────────────────────────────────────────────────────────
 
 export const CREATE_BID = gql`

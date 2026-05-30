@@ -68,6 +68,71 @@ export class CreateJobInput {
   requiredSkills?: string[];
 }
 
+// ─── Input: Update an existing Job ───────────────────────────────────────────
+@InputType()
+export class UpdateJobInput {
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  title?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  description?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  propertyAddress?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  propertyType?: PropertyType;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  category?: JobCategory;
+
+  @IsOptional()
+  @Min(10)
+  @Field(() => Float, { nullable: true })
+  budget?: number;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  experienceLevel?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  jobType?: string;
+
+  @IsOptional()
+  @Field(() => [String], { nullable: true })
+  workFormat?: string[];
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  workSchedule?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  hoursPerDay?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  location?: string;
+
+  @IsOptional()
+  @Field(() => Float, { nullable: true })
+  salaryFrom?: number;
+
+  @IsOptional()
+  @Field(() => Float, { nullable: true })
+  salaryTo?: number;
+
+  @IsOptional()
+  @Field(() => [String], { nullable: true })
+  requiredSkills?: string[];
+}
+
 // ─── Input: Filter and search jobs ───────────────────────────────────────────
 @InputType()
 export class GetJobsInput extends PaginationInput {

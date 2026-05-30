@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Job } from '../../schemas/Job.model';
 import { User } from '../../schemas/User.model';
-import { CreateJobInput, GetJobsInput } from '../../libs/dto/job.dto';
+import { CreateJobInput, GetJobsInput, UpdateJobInput } from '../../libs/dto/job.dto';
 import { JobStatus, NotificationType } from '../../libs/enums/common.enums';
 import { NotificationService } from '../notification/notification.service';
 
@@ -50,7 +50,7 @@ export class JobService {
     }
 
     const skip = (input.page - 1) * input.limit;
-    return this.jobModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(input.limit);
+    return this.jobModel.find(filter).sort({ bumpedAt: -1, createdAt: -1 }).skip(skip).limit(input.limit);
   }
 
   // ─── Get All Jobs by a Specific Agent ─────────────────────────────────────
@@ -87,6 +87,39 @@ export class JobService {
     }
 
     return job;
+  }
+
+  // ─── Update a Job ─────────────────────────────────────────────────────────
+  async updateJob(agentId: string, jobId: string, input: UpdateJobInput): Promise<Job> {
+    const job = await this.jobModel.findOne({ _id: jobId, agentId });
+    if (!job) throw new NotFoundException('Job not found or you do not own it');
+    if (job.status === JobStatus.COMPLETED || job.status === JobStatus.CANCELLED) {
+      throw new BadRequestException('Completed or cancelled jobs cannot be edited');
+    }
+    Object.assign(job, input);
+    return job.save();
+  }
+
+  // ─── Delete a Job ─────────────────────────────────────────────────────────
+  async deleteJob(agentId: string, jobId: string): Promise<boolean> {
+    const job = await this.jobModel.findOne({ _id: jobId, agentId });
+    if (!job) throw new NotFoundException('Job not found or you do not own it');
+    if (job.status === JobStatus.ACTIVE) {
+      throw new BadRequestException('Active jobs cannot be deleted. Complete or cancel first.');
+    }
+    await this.jobModel.deleteOne({ _id: jobId });
+    return true;
+  }
+
+  // ─── Boost (bump) a Job to top ────────────────────────────────────────────
+  async boostJob(agentId: string, jobId: string): Promise<Job> {
+    const job = await this.jobModel.findOne({ _id: jobId, agentId });
+    if (!job) throw new NotFoundException('Job not found or you do not own it');
+    if (job.status !== JobStatus.OPEN) {
+      throw new BadRequestException('Only open jobs can be boosted');
+    }
+    job.bumpedAt = new Date();
+    return job.save();
   }
 
   // Used internally by BidService when a bid is accepted

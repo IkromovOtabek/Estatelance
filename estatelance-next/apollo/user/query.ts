@@ -152,7 +152,17 @@ export const GET_MY_JOBS = gql`
       status
       bidCount
       propertyType
+      propertyAddress
       location
+      experienceLevel
+      jobType
+      workFormat
+      workSchedule
+      hoursPerDay
+      salaryFrom
+      salaryTo
+      requiredSkills
+      bumpedAt
       createdAt
     }
   }

@@ -41,7 +41,6 @@ import {
 import { loginWithPassword, signupWithPassword, loginWithTelegram } from '../../libs/auth';
 import { saveToken } from '../../apollo/client';
 import TelegramLoginButton from '../../libs/components/common/TelegramLoginButton';
-import AiButton from '../../libs/components/common/AiButton';
 import { UPDATE_PROFILE } from '../../apollo/user/mutation';
 import { JobCategory, JOB_CATEGORY_LABELS, UserType } from '../../libs/enums';
 import { userVar } from '../../apollo/store';
@@ -600,12 +599,6 @@ const AccountPage = () => {
                     <Typography fontSize={12} color="#64748b">
                       {onboardingRole === UserType.FREELANCER ? 'Tajribangiz haqida' : 'Qanday ishchi izlayapsiz?'}
                     </Typography>
-                    <AiButton
-                      action="bio"
-                      context={`Tur: ${onboardingRole === UserType.FREELANCER ? 'Frilanser' : 'Agent/Ish beruvchi'}\nIsm: ${onboardingFullName || 'aniqlanmagan'}\nManzil: ${onboardingLocation || 'aniqlanmagan'}\nKo'nikmalar: ${onboardingSkills.join(', ') || 'aniqlanmagan'}`}
-                      onApply={setOnboardingBio}
-                      label="AI bio yozib bersin"
-                    />
                   </Stack>
                   <TextField
                     value={onboardingBio}
@@ -1060,12 +1053,6 @@ const AccountPage = () => {
                           <Typography fontSize={12} color="#64748b">
                             {selectedRole === UserType.FREELANCER ? 'Tajribangiz haqida' : 'Qanday ishchi izlayapsiz?'}
                           </Typography>
-                          <AiButton
-                            action="bio"
-                            context={`Tur: ${selectedRole === UserType.FREELANCER ? 'Frilanser' : 'Agent/Ish beruvchi'}\nIsm: ${fullName || 'aniqlanmagan'}\nManzil: ${location || 'aniqlanmagan'}\nKo'nikmalar: ${skills.join(', ') || 'aniqlanmagan'}`}
-                            onApply={setBio}
-                            label="AI bio yozib bersin"
-                          />
                         </Stack>
                         <TextField
                           value={bio}
