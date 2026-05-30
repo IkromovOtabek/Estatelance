@@ -13,7 +13,7 @@ export class AiService {
 
   async assist(action: string, context: string): Promise<string> {
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
       const prompt = this.buildPrompt(action, context);
       const result = await model.generateContent(prompt);
