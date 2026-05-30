@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { CheckCircle, Circle, Rocket, Star, Lightning } from '@phosphor-icons/react';
 import { CREATE_JOB } from '../../apollo/user/mutation';
+import AiButton from '../../libs/components/common/AiButton';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { JobCategory, JOB_CATEGORY_LABELS, PropertyType, PROPERTY_TYPE_LABELS } from '../../libs/enums';
@@ -206,7 +207,19 @@ const CreateJobPage = () => {
               <SectionTitle title="Asosiy ma'lumot" />
 
               <Box mb={4}>
-                <Typography fontWeight={600} fontSize={15} mb={1} color="#0f172a">Ish nomi *</Typography>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+                  <Typography fontWeight={600} fontSize={15} color="#0f172a">Ish nomi *</Typography>
+                  <AiButton
+                    action="job_title"
+                    context={title || 'ish nomi kiritilmagan'}
+                    onApply={(text) => {
+                      // Take first line if multiple suggestions
+                      const first = text.split('\n').find(l => l.trim());
+                      setTitle(first?.replace(/^\d+[\.\)]\s*/, '').trim() ?? text);
+                    }}
+                    label="AI sarlavha taklif qilsin"
+                  />
+                </Stack>
                 <TextField
                   value={title}
                   onChange={e => setTitle(e.target.value)}
@@ -317,7 +330,23 @@ const CreateJobPage = () => {
           {/* ── Step 5: To'lov ───────────────────────────────────────────── */}
           {step === 5 && (
             <Box>
-              <SectionTitle title="To'lov miqdori" sub="Dollar ($) hisobida kiriting" />
+              <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+                <Box>
+                  <Typography fontWeight={800} fontSize={18} color="#0f172a">To'lov miqdori</Typography>
+                  <Typography fontSize={13} color="#94a3b8" mt={0.25}>Dollar ($) hisobida kiriting</Typography>
+                </Box>
+                <AiButton
+                  action="job_budget"
+                  context={`Ish nomi: ${title}\nKategoriya: ${category || 'aniqlanmagan'}\nTajriba: ${experienceLevel || 'aniqlanmagan'}\nIsh formati: ${workFormat.join(', ') || 'aniqlanmagan'}`}
+                  onApply={(text) => {
+                    const minMatch = text.match(/MIN:\s*(\d+)/i);
+                    const maxMatch = text.match(/MAX:\s*(\d+)/i);
+                    if (minMatch) setSalaryFrom(minMatch[1]);
+                    if (maxMatch) setSalaryTo(maxMatch[1]);
+                  }}
+                  label="AI budget taklif qilsin"
+                />
+              </Stack>
 
               <Stack direction="row" spacing={2} alignItems="center">
                 <Box flex={1}>
@@ -354,7 +383,29 @@ const CreateJobPage = () => {
           {/* ── Step 6: Tavsif ───────────────────────────────────────────── */}
           {step === 6 && (
             <Box>
-              <SectionTitle title="Ish tavsifi *" sub="Batafsil ma'lumot qanchalik ko'p bo'lsa, shunchalik yaxshi frilanserlar topiladi" />
+              <Stack direction="row" alignItems="flex-start" justifyContent="space-between" mb={2}>
+                <Box>
+                  <Typography fontWeight={800} fontSize={18} color="#0f172a">Ish tavsifi *</Typography>
+                  <Typography fontSize={13} color="#94a3b8" mt={0.25}>Batafsil ma'lumot qanchalik ko'p bo'lsa, shunchalik yaxshi frilanserlar topiladi</Typography>
+                </Box>
+                <Stack direction="row" spacing={1}>
+                  <AiButton
+                    action="job_description"
+                    context={`Ish nomi: ${title}\nKategoriya: ${category || 'aniqlanmagan'}\nTajriba: ${experienceLevel || 'aniqlanmagan'}\nTo'lov: $${salaryFrom || '?'} – $${salaryTo || '?'}\nKo'nikmalar: ${requiredSkills.join(', ') || 'aniqlanmagan'}`}
+                    onApply={setDescription}
+                    label="AI tavsif yozsin"
+                  />
+                  {description.length > 50 && (
+                    <AiButton
+                      action="job_improve"
+                      context={description}
+                      onApply={setDescription}
+                      label="AI tavsifni yaxshilaysin"
+                      compact
+                    />
+                  )}
+                </Stack>
+              </Stack>
               <TextField
                 value={description}
                 onChange={e => setDescription(e.target.value)}

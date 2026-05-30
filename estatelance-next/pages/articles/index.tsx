@@ -10,6 +10,7 @@ import { CREATE_POST, TOGGLE_LIKE_POST, ADD_COMMENT } from '../../apollo/user/mu
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { Post } from '../../libs/types';
+import AiButton from '../../libs/components/common/AiButton';
 
 const ArticlesPage = () => {
   const user = useReactiveVar(userVar);
@@ -93,8 +94,62 @@ const ArticlesPage = () => {
         <Box className="card-base" sx={{ p: 4, mb: 4 }}>
           <form onSubmit={handleCreatePost}>
             <Stack spacing={2}>
-              <TextField label="Sarlavha *" value={postTitle} onChange={e => setPostTitle(e.target.value)} fullWidth size="small" required />
-              <TextField label="Mazmun *" value={postBody} onChange={e => setPostBody(e.target.value)} fullWidth size="small" multiline rows={5} required />
+              {/* Title + AI */}
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <TextField
+                  label="Sarlavha *" value={postTitle}
+                  onChange={e => setPostTitle(e.target.value)}
+                  fullWidth size="small" required
+                />
+                <AiButton
+                  action="post_title"
+                  context={postTitle || 'frilanserlik, ko\'chmas mulk'}
+                  onApply={(text) => {
+                    const first = text.split('\n').find(l => l.trim());
+                    setPostTitle(first?.replace(/^\d+[\.\)]\s*/, '').trim() ?? text);
+                  }}
+                  label="AI sarlavha taklif qilsin"
+                />
+              </Stack>
+
+              {/* Body + AI */}
+              <Box>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.5}>
+                  <Typography fontSize={13} color="#64748b">Mazmun *</Typography>
+                  <Stack direction="row" spacing={0.75}>
+                    <AiButton
+                      action="post_body"
+                      context={postTitle || 'frilanserlik haqida maqola'}
+                      onApply={setPostBody}
+                      label="AI maqola yozsin"
+                    />
+                    {postBody.length > 50 && (
+                      <AiButton
+                        action="post_improve"
+                        context={postBody}
+                        onApply={setPostBody}
+                        label="AI matnni yaxshilaysin"
+                        compact
+                      />
+                    )}
+                    {postBody.length > 100 && (
+                      <AiButton
+                        action="post_summarize"
+                        context={postBody}
+                        onApply={(text) => setPostBody(prev => prev + '\n\n---\n' + text)}
+                        label="AI xulosa qo'shsin"
+                        compact
+                      />
+                    )}
+                  </Stack>
+                </Stack>
+                <TextField
+                  value={postBody} onChange={e => setPostBody(e.target.value)}
+                  fullWidth size="small" multiline rows={5} required
+                  placeholder="Maqola matni..."
+                />
+              </Box>
+
               <TextField label="Muqova rasm URL (ixtiyoriy)" value={postImageUrl} onChange={e => setPostImageUrl(e.target.value)} fullWidth size="small" />
               <Button type="submit" variant="contained" disabled={creating} sx={{ bgcolor: '#4f46e5', alignSelf: 'flex-start' }}>
                 {creating ? 'Joylashtirilmoqda...' : 'Maqolani e\'lon qilish'}

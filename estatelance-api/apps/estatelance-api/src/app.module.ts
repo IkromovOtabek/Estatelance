@@ -12,6 +12,7 @@ import { PostModule } from './components/post/post.module';
 import { MessageModule } from './components/message/message.module';
 import { NotificationModule } from './components/notification/notification.module';
 import { AdminModule } from './components/admin/admin.module';
+import { AiModule } from './components/ai/ai.module';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -46,6 +47,7 @@ const isProd = process.env.NODE_ENV === 'production';
     MessageModule,
     NotificationModule,
     AdminModule,
+    AiModule,
   ],
 })
 export class AppModule {}
