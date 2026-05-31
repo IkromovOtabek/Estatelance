@@ -6,6 +6,7 @@ import { useReactiveVar } from '@apollo/client';
 import { Alert, Avatar, Box, Button, CircularProgress, Divider, Snackbar, Stack, TextField, Typography } from '@mui/material';
 import { Heart as FavoriteIcon, Heart as FavoriteBorderIcon, Eye as VisibilityIcon } from '@phosphor-icons/react';
 import { GET_POSTS, GET_POST_BY_ID } from '../../apollo/user/query';
+// GET_POSTS imported for refetchQueries
 import { CREATE_POST, TOGGLE_LIKE_POST, ADD_COMMENT } from '../../apollo/user/mutation';
 import { apolloClient } from '../../apollo/client';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
@@ -88,13 +89,23 @@ const ArticlesPage = () => {
 
   const handleComment = async (postId: string) => {
     const text = commentText[postId]?.trim();
-    if (!text || !isLoggedIn) return;
+    if (!text) return;
+    if (!user._id) {
+      setCommentError("Izoh yozish uchun tizimga kiring.");
+      return;
+    }
     setCommentSending(prev => ({ ...prev, [postId]: true }));
     try {
-      await addComment({ variables: { input: { postId, text } }, refetchQueries: ['GetPosts'] });
-      setCommentText(prev => ({ ...prev, [postId]: '' }));
+      const result = await addComment({
+        variables: { input: { postId, text } },
+        refetchQueries: [{ query: GET_POSTS, variables: { page: 1, limit: 20 } }],
+      });
+      if (result?.data) {
+        setCommentText(prev => ({ ...prev, [postId]: '' }));
+      }
     } catch (err: any) {
-      setCommentError(err?.graphQLErrors?.[0]?.message ?? 'Comment yuborishda xato. Qayta urinib ko\'ring.');
+      const msg = err?.graphQLErrors?.[0]?.message ?? err?.networkError?.message ?? err?.message ?? "Izoh yuborishda xatolik. Qayta urinib ko'ring.";
+      setCommentError(msg);
     } finally {
       setCommentSending(prev => ({ ...prev, [postId]: false }));
     }

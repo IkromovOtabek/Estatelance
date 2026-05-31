@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { AppProps } from 'next/app';
 import { useRouter } from 'next/router';
 import { ApolloProvider } from '@apollo/client';
 import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { ThemeProvider } from 'next-themes';
+import { ThemeProvider, useTheme as useNextTheme } from 'next-themes';
 import { useReactiveVar } from '@apollo/client';
 import { apolloClient } from '../apollo/client';
 import { restoreUserSession } from '../libs/auth';
@@ -76,73 +76,138 @@ function trackEvent(event: 'visit' | 'register' | 'login', userId?: string) {
 
 export { trackEvent };
 
-const theme = createTheme({
+// ─── Shared component overrides (outline reset) ───────────────────────────────
+const sharedComponents = {
+  MuiButtonBase: {
+    styleOverrides: {
+      root: {
+        outline: 'none !important',
+        '&:focus': { outline: 'none !important' },
+        '&:focus-visible': { outline: 'none !important', boxShadow: '0 0 0 3px rgba(99,102,241,0.3)' },
+      },
+    },
+  },
+  MuiButton: {
+    styleOverrides: {
+      root: { outline: 'none', boxShadow: 'none', '&:focus': { outline: 'none' }, '&:active': { boxShadow: 'none' } },
+    },
+  },
+  MuiIconButton: {
+    styleOverrides: {
+      root: { outline: 'none', '&:focus': { outline: 'none' }, '&:focus-visible': { boxShadow: '0 0 0 3px rgba(99,102,241,0.3)' } },
+    },
+  },
+  MuiTab: {
+    styleOverrides: { root: { outline: 'none', '&:focus': { outline: 'none' } } },
+  },
+  MuiMenuItem: {
+    styleOverrides: { root: { outline: 'none', '&:focus': { outline: 'none' } } },
+  },
+} as const;
+
+// ─── Light MUI Theme ──────────────────────────────────────────────────────────
+const lightMuiTheme = createTheme({
   palette: {
+    mode: 'light',
     primary: { main: '#4f46e5', dark: '#4338ca', light: '#818cf8' },
     secondary: { main: '#0ea5e9' },
-    background: { default: '#f8fafc' },
+    background: { default: '#f8fafc', paper: '#ffffff' },
     text: { primary: '#0f172a', secondary: '#64748b' },
+    divider: '#e2e8f0',
   },
-  typography: {
-    fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
-    button: { textTransform: 'none' },
-  },
+  typography: { fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif', button: { textTransform: 'none' } },
   shape: { borderRadius: 8 },
   components: {
-    // Barcha MUI tugmalardan qora outline olib tashlash
-    MuiButtonBase: {
+    ...sharedComponents,
+    MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          outline: 'none !important',
-          '&:focus': { outline: 'none !important' },
-          '&:focus-visible': {
-            outline: 'none !important',
-            boxShadow: '0 0 0 3px rgba(79,70,229,0.25)',
-          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#4f46e5', borderWidth: '1.5px' },
         },
       },
     },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          outline: 'none',
-          boxShadow: 'none',
-          '&:focus': { outline: 'none' },
-          '&:active': { boxShadow: 'none' },
-        },
-      },
+  },
+});
+
+// ─── Dark MUI Theme ───────────────────────────────────────────────────────────
+const darkMuiTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: { main: '#818cf8', dark: '#6366f1', light: '#a5b4fc' },
+    secondary: { main: '#38bdf8' },
+    background: { default: '#0f172a', paper: '#1e293b' },
+    text: { primary: '#f1f5f9', secondary: '#94a3b8' },
+    divider: '#334155',
+    action: {
+      hover: 'rgba(255,255,255,0.06)',
+      selected: 'rgba(129,140,248,0.12)',
     },
-    MuiIconButton: {
+  },
+  typography: { fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif', button: { textTransform: 'none' } },
+  shape: { borderRadius: 8 },
+  components: {
+    ...sharedComponents,
+    MuiPaper: {
       styleOverrides: {
-        root: {
-          outline: 'none',
-          '&:focus': { outline: 'none' },
-          '&:focus-visible': { boxShadow: '0 0 0 3px rgba(79,70,229,0.25)' },
-        },
+        root: { backgroundImage: 'none', backgroundColor: '#1e293b', border: '1px solid #334155' },
       },
     },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: '#4f46e5',
-            borderWidth: '1.5px',
-          },
+          backgroundColor: '#1e293b',
+          '& .MuiOutlinedInput-notchedOutline': { borderColor: '#475569' },
+          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1' },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#818cf8', borderWidth: '1.5px' },
         },
       },
     },
-    MuiTab: {
-      styleOverrides: {
-        root: { outline: 'none', '&:focus': { outline: 'none' } },
-      },
+    MuiInputLabel: {
+      styleOverrides: { root: { color: '#94a3b8', '&.Mui-focused': { color: '#818cf8' } } },
     },
-    MuiMenuItem: {
-      styleOverrides: {
-        root: { outline: 'none', '&:focus': { outline: 'none' } },
-      },
+    MuiSelect: {
+      styleOverrides: { icon: { color: '#94a3b8' } },
+    },
+    MuiAppBar: {
+      styleOverrides: { root: { backgroundImage: 'none' } },
+    },
+    MuiDrawer: {
+      styleOverrides: { paper: { backgroundColor: '#0f172a', backgroundImage: 'none', borderColor: '#1e293b' } },
+    },
+    MuiTooltip: {
+      styleOverrides: { tooltip: { backgroundColor: '#334155', color: '#f1f5f9', fontSize: 12 } },
+    },
+    MuiChip: {
+      styleOverrides: { root: { backgroundColor: '#334155', color: '#e2e8f0' } },
+    },
+    MuiSkeleton: {
+      styleOverrides: { root: { backgroundColor: '#334155' } },
+    },
+    MuiAlert: {
+      styleOverrides: { root: { backgroundColor: '#1e293b' } },
+    },
+    MuiDivider: {
+      styleOverrides: { root: { borderColor: '#334155' } },
+    },
+    MuiTableCell: {
+      styleOverrides: { root: { color: '#e2e8f0', borderColor: '#334155' } },
     },
   },
 });
+
+// ─── Dynamic MUI Provider (reacts to next-themes) ─────────────────────────────
+function DynamicMuiProvider({ children }: { children: React.ReactNode }) {
+  const { resolvedTheme } = useNextTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const muiTheme = mounted && resolvedTheme === 'dark' ? darkMuiTheme : lightMuiTheme;
+  return (
+    <MuiThemeProvider theme={muiTheme}>
+      <CssBaseline />
+      {children}
+    </MuiThemeProvider>
+  );
+}
 
 function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -215,15 +280,14 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       <ApolloProvider client={apolloClient}>
-        <MuiThemeProvider theme={theme}>
-          <CssBaseline />
+        <DynamicMuiProvider>
           <OnboardingGuard>
             <Component {...pageProps} />
           </OnboardingGuard>
           <AnnouncementBanner />
           <SpamModal />
           <ChatWidget />
-        </MuiThemeProvider>
+        </DynamicMuiProvider>
       </ApolloProvider>
     </ThemeProvider>
   );

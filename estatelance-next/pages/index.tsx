@@ -175,16 +175,16 @@ const FreelancerCard = ({ freelancer }: { freelancer: User }) => {
   const displayName = freelancer.fullName ?? freelancer.username ?? '';
   return (
     <Link href={`/profile/${freelancer._id}`} className="no-underline block">
-      <div className="min-w-[280px] bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-lg hover:border-indigo-200 transition-all cursor-pointer">
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-lg hover:border-indigo-200 transition-all cursor-pointer">
         <div className="relative w-20 h-20 mx-auto mb-4">
           {freelancer.profileImage ? (
             <img
               src={freelancer.profileImage}
               alt={displayName}
-              className="w-full h-full rounded-2xl object-cover border-2 border-white shadow-sm"
+              className="w-full h-full rounded-full object-cover border-3 border-white shadow-md"
             />
           ) : (
-            <div className="w-full h-full rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-600 text-2xl font-bold border-2 border-white shadow-sm">
+            <div className="w-full h-full rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold shadow-md">
               {displayName[0]?.toUpperCase() ?? 'U'}
             </div>
           )}
@@ -276,7 +276,7 @@ const HomePage = () => {
     .slice(0, 6);
   const topFreelancers: User[] = [...(freelancersData?.getFreelancers ?? [])]
     .sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0))
-    .slice(0, 6);
+    .slice(0, 5);
 
   return (
     <>
@@ -535,7 +535,7 @@ const HomePage = () => {
               <p className="text-slate-500 text-sm">Hozircha frilanserlar yo'q</p>
             </div>
           ) : (
-            <div className="flex overflow-x-auto gap-6 pb-4" style={{ scrollbarWidth: 'thin' }}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
               {topFreelancers.map((f) => (
                 <FreelancerCard key={f._id} freelancer={f} />
               ))}

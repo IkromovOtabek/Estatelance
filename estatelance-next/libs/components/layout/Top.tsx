@@ -169,7 +169,7 @@ const Top = () => {
 
   // ── Mobile Drawer content ─────────────────────────────────────────────────
   const mobileDrawer = (
-    <Box sx={{ width: 280, height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ width: 280, height: '100%', display: 'flex', flexDirection: 'column', bgcolor: isDark ? '#0f172a' : '#ffffff' }}>
       {/* Drawer header */}
       <Box sx={{
         px: 2.5, py: 2,
@@ -206,7 +206,7 @@ const Top = () => {
 
       {/* User info (if logged in) */}
       {isLoggedIn && (
-        <Box sx={{ px: 2.5, py: 2, bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+        <Box sx={{ px: 2.5, py: 2, bgcolor: isDark ? '#1e293b' : '#f8fafc', borderBottom: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
               src={user.profileImage || undefined}
@@ -237,9 +237,9 @@ const Top = () => {
                 <ListItemButton
                   sx={{
                     mx: 1, borderRadius: 2,
-                    bgcolor: isActive ? '#eef2ff' : 'transparent',
-                    color: isActive ? '#4f46e5' : '#374151',
-                    '&:hover': { bgcolor: isActive ? '#eef2ff' : '#f1f5f9' },
+                    bgcolor: isActive ? (isDark ? 'rgba(129,140,248,0.15)' : '#eef2ff') : 'transparent',
+                    color: isActive ? (isDark ? '#a5b4fc' : '#4f46e5') : (isDark ? '#cbd5e1' : '#374151'),
+                    '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9' },
                     py: 1.2,
                   }}
                 >
@@ -277,7 +277,7 @@ const Top = () => {
       </List>
 
       {/* Bottom actions */}
-      <Box sx={{ p: 2, borderTop: '1px solid #e2e8f0' }}>
+      <Box sx={{ p: 2, borderTop: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}` }}>
         {isLoggedIn ? (
           <Stack spacing={1}>
             <Button
@@ -320,10 +320,11 @@ const Top = () => {
         position="sticky"
         elevation={0}
         sx={{
-          bgcolor: 'rgba(255,255,255,0.95)',
+          bgcolor: isDark ? 'rgba(15,23,42,0.97)' : 'rgba(255,255,255,0.95)',
           backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid #e2e8f0',
-          color: '#0f172a',
+          borderBottom: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
+          color: isDark ? '#f1f5f9' : '#0f172a',
+          transition: 'background-color 0.25s ease, border-color 0.25s ease',
         }}
       >
         <Toolbar sx={{ maxWidth: 1280, width: '100%', mx: 'auto', px: { xs: 2, lg: 4 }, minHeight: { xs: 56, sm: 64 } }}>
@@ -334,11 +335,11 @@ const Top = () => {
             sx={{
               display: { xs: 'flex', lg: 'none' },
               mr: 1,
-              color: '#374151',
-              border: '1px solid #e2e8f0',
+              color: isDark ? '#94a3b8' : '#374151',
+              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
               borderRadius: 2,
               width: 36, height: 36,
-              '&:hover': { bgcolor: '#f1f5f9' },
+              '&:hover': { bgcolor: isDark ? '#1e293b' : '#f1f5f9' },
             }}
           >
             <MenuIcon size={20} />
@@ -367,14 +368,14 @@ const Top = () => {
               {/* Wordmark */}
               <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
                 <Typography sx={{ fontWeight: 800, fontSize: 17, lineHeight: 1, letterSpacing: -0.5 }}>
-                  <span style={{ color: '#1e1b4b' }}>Bu</span><span style={{ color: '#6366f1' }}>Fu</span>
+                  <span style={{ color: isDark ? '#e0e7ff' : '#1e1b4b' }}>Bu</span><span style={{ color: isDark ? '#a5b4fc' : '#6366f1' }}>Fu</span>
                 </Typography>
                 <Typography sx={{ fontSize: 9, color: '#8b5cf6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>
                   Build Future
                 </Typography>
               </Box>
               <Typography sx={{ display: { xs: 'block', sm: 'none' }, fontWeight: 800, fontSize: 17, letterSpacing: -0.5 }}>
-                <span style={{ color: '#1e1b4b' }}>Bu</span><span style={{ color: '#6366f1' }}>Fu</span>
+                <span style={{ color: isDark ? '#e0e7ff' : '#1e1b4b' }}>Bu</span><span style={{ color: isDark ? '#a5b4fc' : '#6366f1' }}>Fu</span>
               </Typography>
             </Stack>
           </Link>
@@ -401,11 +402,11 @@ const Top = () => {
                     }}
                   >
                     <Button size="small" sx={{
-                      color: isActive ? '#4f46e5' : '#64748b',
-                      bgcolor: isActive ? '#eef2ff' : 'transparent',
+                      color: isActive ? (isDark ? '#a5b4fc' : '#4f46e5') : (isDark ? '#94a3b8' : '#64748b'),
+                      bgcolor: isActive ? (isDark ? 'rgba(129,140,248,0.15)' : '#eef2ff') : 'transparent',
                       fontWeight: isActive ? 700 : 500,
                       fontSize: 13, px: 1.5, borderRadius: 2,
-                      '&:hover': { bgcolor: '#f1f5f9', color: '#0f172a' },
+                      '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.07)' : '#f1f5f9', color: isDark ? '#f1f5f9' : '#0f172a' },
                       transition: 'all 0.15s',
                     }}>
                       {link.label}
@@ -461,11 +462,11 @@ const Top = () => {
                     color: notifOpen ? '#4f46e5' : unreadCount > 0 ? '#4f46e5' : '#64748b',
                     bgcolor: notifOpen ? '#eef2ff' : unreadCount > 0 ? '#eef2ff' : 'transparent',
                     border: '1px solid',
-                    borderColor: notifOpen ? '#c7d2fe' : unreadCount > 0 ? '#c7d2fe' : '#e2e8f0',
+                    borderColor: notifOpen ? '#c7d2fe' : unreadCount > 0 ? '#c7d2fe' : (isDark ? '#334155' : '#e2e8f0'),
                     borderRadius: 2,
                     width: 36, height: 36,
                     transition: 'all 0.2s',
-                    '&:hover': { bgcolor: '#f1f5f9', color: '#4f46e5', borderColor: '#c7d2fe' },
+                    '&:hover': { bgcolor: isDark ? '#1e293b' : '#f1f5f9', color: isDark ? '#a5b4fc' : '#4f46e5', borderColor: '#c7d2fe' },
                   }}
                 >
                   <NotificationsNoneIcon
@@ -715,12 +716,12 @@ const Top = () => {
                   sx: {
                     minWidth: 200, mt: 1,
                     borderRadius: 2.5,
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                    border: '1px solid #e2e8f0',
+                    boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',
+                    border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
                   },
                 }}
               >
-                <Box sx={{ px: 2, py: 1.5, bgcolor: '#f8fafc' }}>
+                <Box sx={{ px: 2, py: 1.5, bgcolor: isDark ? '#0f172a' : '#f8fafc' }}>
                   {user.fullName && (
                     <Typography fontSize={13} fontWeight={700} color="#0f172a">{user.fullName}</Typography>
                   )}

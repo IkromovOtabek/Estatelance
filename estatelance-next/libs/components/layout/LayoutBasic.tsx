@@ -11,7 +11,7 @@ import Footer from './Footer';
 const withLayoutBasic = <P extends object>(WrappedPage: ComponentType<P>) => {
   const LayoutWrapper = (props: P) => {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default', transition: 'background-color 0.25s ease' }}>
         <Top />
         <Box
           component="main"

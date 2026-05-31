@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { ArrowLeft, ChartBar, Users, Gear, Eye, CheckCircle, Image, Megaphone, RocketLaunch } from '@phosphor-icons/react';
+import {
+  ArrowLeft, ChartBar, Users, Gear, Eye, CheckCircle,
+  Image, Megaphone, RocketLaunch, Link as LinkIcon,
+  UploadSimple, Play, X, FilmStrip
+} from '@phosphor-icons/react';
 
 type AdType = 'BANNER' | 'SPONSORED_JOB' | 'FEATURED_FREELANCER';
+type MediaType = 'image' | 'video' | 'url';
 
 const CreateAdPage = () => {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [adType, setAdType] = useState<AdType>('BANNER');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -18,10 +25,31 @@ const CreateAdPage = () => {
   const [targetAudience, setTargetAudience] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Media states
+  const [mediaType, setMediaType] = useState<MediaType>('url');
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string>('');
+  const [mediaUrlInput, setMediaUrlInput] = useState('');
+
   const audiences = ['Frilanserlar', 'Ish beruvchilar', 'Junior mutaxassislar', 'Senior mutaxassislar', "IT soha mutaxassislari", 'Dizaynerlar'];
 
   const toggleAudience = (a: string) => {
     setTargetAudience(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMediaFile(file);
+    const url = URL.createObjectURL(file);
+    setMediaPreview(url);
+    setMediaType(file.type.startsWith('video') ? 'video' : 'image');
+  };
+
+  const removeMedia = () => {
+    setMediaFile(null);
+    setMediaPreview('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,7 +89,7 @@ const CreateAdPage = () => {
                 key={item.href}
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                  item.active
+                  (item as any).active
                     ? 'bg-indigo-50 text-indigo-600 border-r-4 border-indigo-600'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
@@ -137,16 +165,134 @@ const CreateAdPage = () => {
                   className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
                 />
               </div>
+
+              {/* Target Link */}
               <div>
-                <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Havola (URL)</label>
+                <label className="text-xs font-semibold text-slate-700 mb-1.5 block flex items-center gap-1.5">
+                  <LinkIcon size={13} /> Havola URL *
+                  <span className="text-slate-400 font-normal">(foydalanuvchilar bosganida ochiladi)</span>
+                </label>
                 <input
                   type="url"
+                  required
                   value={targetUrl}
                   onChange={e => setTargetUrl(e.target.value)}
                   placeholder="https://bufu.uz/jobs/..."
                   className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 />
+                <p className="text-xs text-slate-400 mt-1">Bu havolani bosgan foydalanuvchilar soni statistikada "kliklar" sifatida hisoblanadi.</p>
               </div>
+            </div>
+
+            {/* Media Upload */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6">
+              <h3 className="text-sm font-bold text-slate-900 mb-1">Reklama mediya materyali</h3>
+              <p className="text-xs text-slate-400 mb-4">Rasm yoki video yuklang, yoki URL kiriting</p>
+
+              {/* Media type tabs */}
+              <div className="flex gap-2 mb-4">
+                {[
+                  { key: 'url' as MediaType, label: 'URL kiriting', icon: <LinkIcon size={14} /> },
+                  { key: 'image' as MediaType, label: 'Rasm yuklash', icon: <Image size={14} /> },
+                  { key: 'video' as MediaType, label: 'Video yuklash', icon: <FilmStrip size={14} /> },
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => { setMediaType(tab.key); removeMedia(); setMediaUrlInput(''); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                      mediaType === tab.key
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                    }`}
+                  >
+                    {tab.icon} {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* URL input */}
+              {mediaType === 'url' && (
+                <div>
+                  <input
+                    type="url"
+                    value={mediaUrlInput}
+                    onChange={e => { setMediaUrlInput(e.target.value); setMediaPreview(e.target.value); }}
+                    placeholder="https://example.com/banner.jpg yoki video URL"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  />
+                  {mediaPreview && (
+                    <div className="mt-3 relative rounded-xl overflow-hidden border border-slate-200 bg-slate-100" style={{ height: 200 }}>
+                      <img
+                        src={mediaPreview}
+                        alt="preview"
+                        className="w-full h-full object-cover"
+                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => { setMediaPreview(''); setMediaUrlInput(''); }}
+                        className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black/80"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* File upload */}
+              {(mediaType === 'image' || mediaType === 'video') && (
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept={mediaType === 'image' ? 'image/*' : 'video/*'}
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  {!mediaPreview ? (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full border-2 border-dashed border-slate-300 rounded-xl p-10 flex flex-col items-center gap-3 hover:border-indigo-400 hover:bg-indigo-50/40 transition-all text-slate-500"
+                    >
+                      <UploadSimple size={32} color="#94a3b8" />
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-slate-700">
+                          {mediaType === 'image' ? 'Rasm yuklash uchun bosing' : 'Video yuklash uchun bosing'}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {mediaType === 'image' ? 'PNG, JPG, GIF, WebP — max 10MB' : 'MP4, MOV, WebM — max 100MB'}
+                        </p>
+                      </div>
+                    </button>
+                  ) : (
+                    <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-100" style={{ maxHeight: 300 }}>
+                      {mediaType === 'image' ? (
+                        <img src={mediaPreview} alt="preview" className="w-full object-cover max-h-72" />
+                      ) : (
+                        <div className="relative">
+                          <video src={mediaPreview} controls className="w-full max-h-72" />
+                          <div className="absolute top-2 left-2 bg-black/60 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Play size={10} weight="fill" /> Video
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={removeMedia}
+                        className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 hover:bg-black/80"
+                      >
+                        <X size={14} />
+                      </button>
+                      <div className="absolute bottom-2 left-2 right-2 bg-black/50 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg truncate">
+                        {mediaFile?.name}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Budget & Schedule */}
