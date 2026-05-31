@@ -1,28 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { useMutation, useQuery } from '@apollo/client';
-import { useReactiveVar } from '@apollo/client';
+import { useMutation, useQuery, useReactiveVar } from '@apollo/client';
 import {
-  Avatar,
-  Box,
-  Button,
-  CircularProgress,
-  Divider,
-  IconButton,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import { PaperPlaneTilt as SendIcon, ArrowSquareOut as OpenInNewIcon, ChatCircle, EnvelopeSimple, Check, Hand } from '@phosphor-icons/react';
+  PaperPlaneTilt as SendIcon,
+  ArrowSquareOut as OpenInNewIcon,
+  ChatCircle,
+  EnvelopeSimple,
+  Check,
+  Hand,
+  MagnifyingGlass,
+} from '@phosphor-icons/react';
 import { GET_MY_CONVERSATIONS, GET_CONVERSATION } from '../../apollo/user/query';
 import { SEND_MESSAGE, MARK_MESSAGES_READ } from '../../apollo/user/mutation';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { Message } from '../../libs/types';
 
-// ─── Conversation summary ─────────────────────────────────────────────────────
+// ─── Conversation summary ──────────────────────────────────────────────────────
 interface ConversationSummary {
   otherUserId: string;
   otherUserName: string;
@@ -50,19 +45,13 @@ function buildConversationList(messages: Message[], myId: string): ConversationS
   });
 }
 
-// ─── Robust time formatter — no locale dependency ─────────────────────────────
-// Fixes "Invalid Date" caused by unsupported 'uz' locale in toLocaleTimeString()
 function safeTime(iso?: string | null): string {
   if (!iso) return '';
   try {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '';
-    const h = String(d.getHours()).padStart(2, '0');
-    const m = String(d.getMinutes()).padStart(2, '0');
-    return `${h}:${m}`;
-  } catch {
-    return '';
-  }
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  } catch { return ''; }
 }
 
 function safeDate(iso?: string | null): string {
@@ -74,15 +63,25 @@ function safeDate(iso?: string | null): string {
     const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
     if (diffDays === 0) return safeTime(iso);
     if (diffDays === 1) return 'Kecha';
-    if (diffDays < 7) {
-      const days = ['Yak', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sha'];
-      return days[d.getDay()];
-    }
+    if (diffDays < 7) return ['Yak', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sha'][d.getDay()];
     return `${d.getDate()}/${d.getMonth() + 1}`;
-  } catch {
-    return '';
-  }
+  } catch { return ''; }
 }
+
+// ─── Tiny Avatar component ─────────────────────────────────────────────────────
+const AvatarEl = ({
+  src, name, size = 'md', onClick, className = '',
+}: { src?: string; name?: string; size?: 'sm' | 'md'; onClick?: () => void; className?: string }) => {
+  const sz = size === 'sm' ? 'w-7 h-7 text-xs' : 'w-10 h-10 text-sm';
+  return (
+    <div
+      onClick={onClick}
+      className={`${sz} rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold overflow-hidden flex-shrink-0 ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''} ${className}`}
+    >
+      {src ? <img src={src} alt={name} className="w-full h-full object-cover" /> : (name?.[0]?.toUpperCase() ?? '?')}
+    </div>
+  );
+};
 
 // ─── Messages Page ─────────────────────────────────────────────────────────────
 const MessagesPage = () => {
@@ -92,14 +91,14 @@ const MessagesPage = () => {
   useEffect(() => { setMounted(true); }, []);
   const isLoggedIn = mounted && !!user._id;
 
-  const [selectedUserId,    setSelectedUserId]    = useState<string | null>(null);
-  const [selectedUserName,  setSelectedUserName]  = useState('');
-  const [selectedUsername,  setSelectedUsername]  = useState('');
+  const [selectedUserId,     setSelectedUserId]    = useState<string | null>(null);
+  const [selectedUserName,   setSelectedUserName]  = useState('');
+  const [selectedUsername,   setSelectedUsername]  = useState('');
   const [selectedUserAvatar, setSelectedUserAvatar] = useState<string | undefined>();
   const [messageText, setMessageText] = useState('');
+  const [search, setSearch] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // ── Auto-select from query param ───────────────────────────────────────────
   useEffect(() => {
     if (router.isReady && router.query.userId) {
       setSelectedUserId(router.query.userId as string);
@@ -107,7 +106,6 @@ const MessagesPage = () => {
     }
   }, [router.isReady, router.query.userId]);
 
-  // ── Queries ────────────────────────────────────────────────────────────────
   const { data: convData, loading: convLoading, refetch: refetchConvs } = useQuery(GET_MY_CONVERSATIONS, {
     skip: !isLoggedIn,
     fetchPolicy: 'cache-and-network',
@@ -122,16 +120,19 @@ const MessagesPage = () => {
   });
 
   const [sendMessage, { loading: sending }] = useMutation(SEND_MESSAGE);
-  const [markAsRead]  = useMutation(MARK_MESSAGES_READ);
+  const [markAsRead] = useMutation(MARK_MESSAGES_READ);
 
   const rawConvMessages: Message[] = convData?.getMyConversations ?? [];
   const conversations = buildConversationList(rawConvMessages, user._id);
   const messages: Message[] = msgData?.getConversation ?? [];
 
-  // Sync avatar + username from conversations once data arrives
+  const filteredConvs = conversations.filter(c =>
+    !search || c.otherUserName.toLowerCase().includes(search.toLowerCase())
+  );
+
   useEffect(() => {
     if (selectedUserId && conversations.length > 0) {
-      const found = conversations.find((c) => c.otherUserId === selectedUserId);
+      const found = conversations.find(c => c.otherUserId === selectedUserId);
       if (found) {
         if (found.otherUserAvatar) setSelectedUserAvatar(found.otherUserAvatar);
         if (found.otherUsername)   setSelectedUsername(found.otherUsername);
@@ -139,7 +140,6 @@ const MessagesPage = () => {
     }
   }, [conversations, selectedUserId]);
 
-  // Sync username from messages (fallback)
   useEffect(() => {
     if (messages.length > 0 && !selectedUsername) {
       const msg = messages[0];
@@ -184,9 +184,9 @@ const MessagesPage = () => {
 
   if (!isLoggedIn) {
     return (
-      <Box sx={{ textAlign: 'center', py: 10 }}>
-        <Typography color="text.secondary">Xabarlarni ko'rish uchun tizimga kiring.</Typography>
-      </Box>
+      <div className="text-center py-16 text-slate-500">
+        Xabarlarni ko'rish uchun tizimga kiring.
+      </div>
     );
   }
 
@@ -194,320 +194,218 @@ const MessagesPage = () => {
     <>
       <Head><title>Xabarlar — BuFu</title></Head>
 
-      <Box sx={{
-        display: 'flex',
-        height: 'calc(100vh - 130px)',
-        border: '1px solid #e2e8f0',
-        borderRadius: 3,
-        overflow: 'hidden',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-      }}>
+      <div className="flex bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm" style={{ height: 'calc(100vh - 130px)' }}>
 
         {/* ══ LEFT: Conversation list ══ */}
-        <Box sx={{
-          width: 300,
-          borderRight: '1px solid #e2e8f0',
-          display: 'flex',
-          flexDirection: 'column',
-          flexShrink: 0,
-        }}>
-          <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid #f1f5f9', bgcolor: '#fafafa' }}>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <ChatCircle size={18} color="#4f46e5" weight="fill" />
-              <Typography fontWeight={800} fontSize={16} color="#0f172a">Xabarlar</Typography>
-            </Stack>
-          </Box>
+        <div className="w-72 flex flex-col flex-shrink-0 border-r border-slate-200">
+          {/* Header */}
+          <div className="px-4 py-3.5 border-b border-slate-100 flex items-center gap-2">
+            <ChatCircle size={18} color="#4f46e5" weight="fill" />
+            <span className="font-extrabold text-base text-slate-900">Xabarlar</span>
+          </div>
 
-          <Box sx={{ flex: 1, overflowY: 'auto' }}>
+          {/* Search */}
+          <div className="px-3 py-2.5 border-b border-slate-100">
+            <div className="relative">
+              <MagnifyingGlass size={14} color="#94a3b8" className="absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Qidirish..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+          </div>
+
+          {/* List */}
+          <div className="flex-1 overflow-y-auto">
             {convLoading && conversations.length === 0 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-                <CircularProgress size={24} sx={{ color: '#4f46e5' }} />
-              </Box>
+              <div className="flex justify-center pt-8">
+                <div className="w-6 h-6 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+              </div>
             )}
             {!convLoading && conversations.length === 0 && (
-              <Box sx={{ p: 3, textAlign: 'center', mt: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-                  <EnvelopeSimple size={40} color="#94a3b8" />
-                </Box>
-                <Typography fontSize={13} fontWeight={600} color="#0f172a">Yozishmalar yo'q</Typography>
-                <Typography fontSize={12} color="text.secondary" mt={0.5}>
-                  Freelancer profiliga kiring va "Message" tugmasini bosing
-                </Typography>
-              </Box>
+              <div className="text-center px-4 pt-10">
+                <EnvelopeSimple size={36} color="#94a3b8" className="mx-auto mb-2" />
+                <p className="text-sm font-semibold text-slate-700">Yozishmalar yo'q</p>
+                <p className="text-xs text-slate-400 mt-1">Frilanser profiliga kiring va "Xabar" tugmasini bosing</p>
+              </div>
             )}
 
-            {conversations.map((conv) => {
+            {filteredConvs.map(conv => {
               const isActive = selectedUserId === conv.otherUserId;
               return (
-                <Box
+                <div
                   key={conv.otherUserId}
                   onClick={() => handleSelectConversation(conv)}
-                  sx={{
-                    px: 2, py: 1.5,
-                    cursor: 'pointer',
-                    bgcolor: isActive ? '#eef2ff' : 'transparent',
-                    borderLeft: isActive ? '3px solid #4f46e5' : '3px solid transparent',
-                    '&:hover': { bgcolor: isActive ? '#eef2ff' : '#f8fafc' },
-                    transition: 'all 0.15s',
-                  }}
+                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-l-2 transition-all ${
+                    isActive
+                      ? 'bg-indigo-50 border-indigo-600'
+                      : 'border-transparent hover:bg-slate-50'
+                  }`}
                 >
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Box sx={{ position: 'relative', flexShrink: 0 }}>
-                      <Avatar
-                        src={conv.otherUserAvatar || undefined}
-                        sx={{
-                          width: 42, height: 42,
-                          bgcolor: '#4f46e5', fontSize: 16,
-                          border: isActive ? '2px solid #4f46e5' : '2px solid transparent',
-                        }}
-                      >
-                        {conv.otherUserName?.[0]?.toUpperCase()}
-                      </Avatar>
-                      {conv.isUnread && (
-                        <Box sx={{
-                          position: 'absolute', top: 0, right: 0,
-                          width: 11, height: 11, borderRadius: '50%',
-                          bgcolor: '#ef4444', border: '2px solid white',
-                        }} />
-                      )}
-                    </Box>
-
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography
-                          fontWeight={conv.isUnread ? 800 : 600}
-                          fontSize={13}
-                          color={isActive ? '#4f46e5' : '#0f172a'}
-                          noWrap sx={{ maxWidth: 130 }}
-                        >
-                          {conv.otherUserName}
-                        </Typography>
-                        <Typography fontSize={10} color="#94a3b8" flexShrink={0} ml={0.5}>
-                          {safeDate(conv.lastMessageTime)}
-                        </Typography>
-                      </Stack>
-                      <Typography
-                        fontSize={12}
-                        color={conv.isUnread ? '#4f46e5' : 'text.secondary'}
-                        fontWeight={conv.isUnread ? 600 : 400}
-                        noWrap
-                      >
-                        {conv.iMine && <Check size={11} style={{ marginRight: 2, flexShrink: 0 }} />}{conv.lastMessageText}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </Box>
+                  <div className="relative flex-shrink-0">
+                    <AvatarEl src={conv.otherUserAvatar} name={conv.otherUserName} />
+                    {conv.isUnread && (
+                      <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className={`text-sm truncate ${conv.isUnread ? 'font-extrabold' : 'font-semibold'} ${isActive ? 'text-indigo-600' : 'text-slate-900'}`}>
+                        {conv.otherUserName}
+                      </p>
+                      <span className="text-[10px] text-slate-400 flex-shrink-0 ml-1">{safeDate(conv.lastMessageTime)}</span>
+                    </div>
+                    <p className={`text-xs truncate mt-0.5 flex items-center gap-0.5 ${conv.isUnread ? 'font-semibold text-indigo-600' : 'text-slate-400'}`}>
+                      {conv.iMine && <Check size={10} />}
+                      {conv.lastMessageText}
+                    </p>
+                  </div>
+                </div>
               );
             })}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {/* ══ RIGHT: Chat area ══ */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: '#f8fafc' }}>
+        <div className="flex flex-col flex-1 overflow-hidden bg-slate-50">
 
           {!selectedUserId ? (
-            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Box sx={{ textAlign: 'center', px: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                  <ChatCircle size={56} color="#c7d2fe" weight="fill" />
-                </Box>
-                <Typography fontWeight={700} fontSize={16} color="#0f172a" mb={0.5}>Suhbatni tanlang</Typography>
-                <Typography color="text.secondary" fontSize={13}>
-                  Chapdan biron suhbatni tanlang yoki freelancer profilidan xabar yuboring
-                </Typography>
-              </Box>
-            </Box>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center px-6">
+                <ChatCircle size={52} color="#c7d2fe" weight="fill" className="mx-auto mb-3" />
+                <p className="font-bold text-slate-800 mb-1">Suhbatni tanlang</p>
+                <p className="text-sm text-slate-400">Chapdan biron suhbatni tanlang yoki frilanser profilidan xabar yuboring</p>
+              </div>
+            </div>
           ) : (
             <>
               {/* Chat Header */}
-              <Box sx={{
-                px: 2.5, py: 1.5,
-                borderBottom: '1px solid #e2e8f0',
-                bgcolor: 'white',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-              }}>
-                <Stack direction="row" alignItems="center" spacing={1.5}>
-                  <Tooltip title="Profilga o'tish">
-                    <Avatar
-                      src={selectedUserAvatar || undefined}
-                      onClick={() => router.push(`/profile/${selectedUserId}`)}
-                      sx={{
-                        width: 38, height: 38, bgcolor: '#4f46e5', fontSize: 15,
-                        cursor: 'pointer', '&:hover': { opacity: 0.85 }, transition: 'opacity 0.15s',
-                      }}
-                    >
-                      {selectedUserName?.[0]?.toUpperCase()}
-                    </Avatar>
-                  </Tooltip>
-
-                  <Box sx={{ flex: 1 }}>
-                    {/* ── Ismga bosganda profil pagega o'tadi ── */}
-                    <Typography
-                      fontWeight={700} fontSize={14} color="#0f172a"
-                      onClick={() => router.push(`/profile/${selectedUserId}`)}
-                      sx={{
-                        cursor: 'pointer', display: 'inline-block',
-                        '&:hover': { color: '#4f46e5' }, transition: 'color 0.15s',
-                      }}
-                    >
-                      {selectedUserName}
-                    </Typography>
-                    {/* @username — "Profilni ko'rish uchun bosing" o'rniga */}
-                    {selectedUsername && (
-                      <Typography fontSize={12} color="#94a3b8">
-                        @{selectedUsername}
-                      </Typography>
-                    )}
-                  </Box>
-
-                  <Tooltip title="Profilga o'tish">
-                    <IconButton
-                      size="small"
-                      onClick={() => router.push(`/profile/${selectedUserId}`)}
-                      sx={{ color: '#4f46e5', bgcolor: '#eef2ff', '&:hover': { bgcolor: '#e0e7ff' } }}
-                    >
-                      <OpenInNewIcon size={20} />
-                    </IconButton>
-                  </Tooltip>
-                </Stack>
-              </Box>
+              <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 shadow-sm">
+                <AvatarEl
+                  src={selectedUserAvatar}
+                  name={selectedUserName}
+                  onClick={() => router.push(`/profile/${selectedUserId}`)}
+                />
+                <div className="flex-1 min-w-0">
+                  <p
+                    onClick={() => router.push(`/profile/${selectedUserId}`)}
+                    className="font-bold text-sm text-slate-900 cursor-pointer hover:text-indigo-600 transition-colors"
+                  >
+                    {selectedUserName}
+                  </p>
+                  {selectedUsername && (
+                    <p className="text-xs text-slate-400">@{selectedUsername}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => router.push(`/profile/${selectedUserId}`)}
+                  className="w-8 h-8 bg-indigo-50 hover:bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 transition-colors"
+                >
+                  <OpenInNewIcon size={16} />
+                </button>
+              </div>
 
               {/* Messages */}
-              <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5 }}>
+              <div className="flex-1 overflow-y-auto px-4 py-4">
                 {msgLoading && messages.length === 0 ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', pt: 6 }}>
-                    <CircularProgress size={24} sx={{ color: '#4f46e5' }} />
-                  </Box>
+                  <div className="flex justify-center pt-8">
+                    <div className="w-6 h-6 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                  </div>
                 ) : (
-                  <Stack spacing={0.75}>
+                  <div className="space-y-2">
                     {messages.length === 0 && (
-                      <Box sx={{ textAlign: 'center', py: 6 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-                          <Hand size={36} color="#94a3b8" weight="fill" />
-                        </Box>
-                        <Typography fontSize={13} color="text.secondary">Hali xabar yo'q. Salomlashing!</Typography>
-                      </Box>
+                      <div className="text-center py-10">
+                        <Hand size={32} color="#94a3b8" weight="fill" className="mx-auto mb-2" />
+                        <p className="text-sm text-slate-400">Hali xabar yo'q. Salomlashing!</p>
+                      </div>
                     )}
 
                     {messages.map((msg, idx) => {
                       const isMine = msg.senderId === user._id;
                       const prevMsg = messages[idx - 1];
-                      // Show avatar only on first message in a consecutive group from same sender
-                      const showAvatar = !isMine && (
-                        !prevMsg || prevMsg.senderId !== msg.senderId
-                      );
+                      const showAvatar = !isMine && (!prevMsg || prevMsg.senderId !== msg.senderId);
 
                       return (
-                        <Stack
+                        <div
                           key={msg._id}
-                          direction="row"
-                          justifyContent={isMine ? 'flex-end' : 'flex-start'}
-                          alignItems="flex-end"
-                          spacing={1}
+                          className={`flex items-end gap-2 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}
                         >
-                          {/* Other person's small avatar */}
+                          {/* Other person's avatar */}
                           {!isMine && (
-                            <Box sx={{ width: 28, flexShrink: 0 }}>
+                            <div className="w-7 flex-shrink-0">
                               {showAvatar && (
-                                <Tooltip title={selectedUserName}>
-                                  <Avatar
-                                    src={selectedUserAvatar || undefined}
-                                    onClick={() => router.push(`/profile/${selectedUserId}`)}
-                                    sx={{
-                                      width: 26, height: 26, bgcolor: '#4f46e5',
-                                      fontSize: 10, cursor: 'pointer',
-                                      '&:hover': { opacity: 0.8 },
-                                    }}
-                                  >
-                                    {selectedUserName?.[0]?.toUpperCase()}
-                                  </Avatar>
-                                </Tooltip>
+                                <AvatarEl
+                                  src={selectedUserAvatar}
+                                  name={selectedUserName}
+                                  size="sm"
+                                  onClick={() => router.push(`/profile/${selectedUserId}`)}
+                                />
                               )}
-                            </Box>
+                            </div>
                           )}
 
                           {/* Bubble */}
-                          <Box
-                            sx={{
-                              maxWidth: '65%',
-                              px: 1.75, py: 0.75,
-                              borderRadius: isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                              bgcolor: isMine ? '#4f46e5' : 'white',
-                              color: isMine ? 'white' : '#0f172a',
-                              boxShadow: isMine
-                                ? '0 2px 8px rgba(79,70,229,0.25)'
-                                : '0 1px 4px rgba(0,0,0,0.07)',
-                            }}
+                          <div
+                            className={`max-w-[65%] px-3.5 py-2 text-sm leading-relaxed shadow-sm ${
+                              isMine
+                                ? 'bg-indigo-600 text-white rounded-2xl rounded-br-md'
+                                : 'bg-white text-slate-900 rounded-2xl rounded-bl-md border border-slate-200'
+                            }`}
                           >
-                            <Typography fontSize={13} lineHeight={1.5}>{msg.text}</Typography>
-                            {/* ── Vaqt — "Invalid Date" bo'lmasligi uchun safeTime() ishlatiladi ── */}
-                            <Typography fontSize={10} sx={{ opacity: 0.55, mt: 0.25, textAlign: 'right' }}>
+                            {msg.text}
+                            <div className={`flex items-center justify-end gap-0.5 mt-0.5 text-[10px] opacity-60`}>
                               {safeTime(msg.createdAt)}
                               {isMine && (
-                                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', ml: 0.5, verticalAlign: 'middle' }}>
+                                <span className="flex items-center">
                                   {msg.isRead
                                     ? <><Check size={9} /><Check size={9} style={{ marginLeft: -3 }} /></>
                                     : <Check size={9} />}
-                                </Box>
+                                </span>
                               )}
-                            </Typography>
-                          </Box>
-                        </Stack>
+                            </div>
+                          </div>
+                        </div>
                       );
                     })}
                     <div ref={bottomRef} />
-                  </Stack>
+                  </div>
                 )}
-              </Box>
+              </div>
 
               {/* Input */}
-              <Box sx={{ p: 2, bgcolor: 'white', borderTop: '1px solid #e2e8f0' }}>
-                <form onSubmit={handleSend}>
-                  <Stack direction="row" spacing={1} alignItems="flex-end">
-                    <TextField
-                      size="small"
-                      fullWidth
-                      multiline
-                      maxRows={4}
-                      placeholder="Xabar yozing... (Enter — yuborish)"
-                      value={messageText}
-                      onChange={(e) => setMessageText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSend(e as any);
-                        }
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 3, bgcolor: '#f8fafc',
-                          '&:hover fieldset':   { borderColor: '#4f46e5' },
-                          '&.Mui-focused fieldset': { borderColor: '#4f46e5' },
-                        },
-                      }}
-                    />
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      disabled={sending || !messageText.trim()}
-                      sx={{
-                        bgcolor: '#4f46e5', minWidth: 44, height: 40,
-                        borderRadius: 2.5,
-                        '&:hover': { bgcolor: '#4338ca' },
-                        '&:disabled': { bgcolor: '#c7d2fe' },
-                      }}
-                    >
-                      {sending
-                        ? <CircularProgress size={16} sx={{ color: 'white' }} />
-                        : <SendIcon size={20} />}
-                    </Button>
-                  </Stack>
+              <div className="px-4 py-3 bg-white border-t border-slate-200">
+                <form onSubmit={handleSend} className="flex items-end gap-2">
+                  <textarea
+                    rows={1}
+                    placeholder="Xabar yozing... (Enter — yuborish)"
+                    value={messageText}
+                    onChange={e => setMessageText(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend(e as any);
+                      }
+                    }}
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 max-h-32"
+                  />
+                  <button
+                    type="submit"
+                    disabled={sending || !messageText.trim()}
+                    className="w-10 h-10 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-200 rounded-xl flex items-center justify-center text-white transition-colors flex-shrink-0"
+                  >
+                    {sending
+                      ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      : <SendIcon size={18} />}
+                  </button>
                 </form>
-              </Box>
+              </div>
             </>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
     </>
   );
 };

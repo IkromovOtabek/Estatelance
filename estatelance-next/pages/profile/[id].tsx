@@ -7,9 +7,6 @@ import { useReactiveVar } from '@apollo/client';
 import {
   Alert,
   Avatar,
-  Box,
-  Button,
-  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -28,6 +25,8 @@ import {
   ToggleButtonGroup,
   Tooltip,
   Typography,
+  Button,
+  Chip,
 } from '@mui/material';
 import {
   Star as StarIcon,
@@ -48,62 +47,100 @@ import {
   CheckCircle,
   Timer,
   Image as ImageIcon,
+  Copy as CopyIcon,
+  Lightning as BoltIcon,
+  Envelope as MailIcon,
+  MapPin,
+  Translate,
+  CalendarBlank,
 } from '@phosphor-icons/react';
 import { GET_USER_BY_ID, GET_MY_PROFILE, CHECK_IS_FOLLOWING } from '../../apollo/user/query';
 import { TOGGLE_FOLLOW, UPDATE_PROFILE } from '../../apollo/user/mutation';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
-import { User } from '../../libs/types';
+import { User, PortfolioItem as PortfolioItemType } from '../../libs/types';
 import { FreelancerAvailability, JOB_CATEGORY_LABELS, JobCategory, UserType } from '../../libs/enums';
 
-interface PortfolioItem { title: string; imageUrl: string; description: string; }
+type TabKey = 'umumiy' | 'portfolio' | 'sharhlar' | 'konikmalar';
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'umumiy', label: 'Umumiy' },
+  { key: 'portfolio', label: 'Portfolio' },
+  { key: 'sharhlar', label: 'Sharhlar' },
+  { key: 'konikmalar', label: "Ko'nikmalar" },
+];
+
+interface PortfolioItem {
+  title: string;
+  imageUrl: string;
+  description: string;
+}
+
+const StarRating = ({ rating, size = 16 }: { rating: number; size?: number }) => (
+  <div className="flex items-center gap-0.5">
+    {Array.from({ length: 5 }).map((_, i) => (
+      <svg
+        key={i}
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill={i < Math.round(rating) ? '#f59e0b' : '#e2e8f0'}
+      >
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+      </svg>
+    ))}
+  </div>
+);
 
 const ProfilePage = () => {
   const router = useRouter();
   const userId = router.query.id as string;
   const currentUser = useReactiveVar(userVar);
   const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabKey>('umumiy');
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => { setMounted(true); }, []);
-  const isLoggedIn   = mounted && !!currentUser._id;
+  const isLoggedIn = mounted && !!currentUser._id;
   const isOwnProfile = mounted && currentUser._id === userId;
   const isFreelancer = isOwnProfile && currentUser.userType === UserType.FREELANCER;
 
-  const [followLoading, setFollowLoading]             = useState(false);
-  const [isFollowing, setIsFollowing]                 = useState(false);
-  const [localFollowerCount, setLocalFollowerCount]   = useState<number | null>(null);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [localFollowerCount, setLocalFollowerCount] = useState<number | null>(null);
 
   // Edit dialog state
-  const [editOpen, setEditOpen]             = useState(false);
-  const [saving, setSaving]                 = useState(false);
-  const [saveError, setSaveError]           = useState('');
-  const [saveSuccess, setSaveSuccess]       = useState('');
+  const [editOpen, setEditOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState('');
   const [avatarUploading, setAvatarUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const portfolioFileInputRef = useRef<HTMLInputElement>(null);
   const [portfolioUploadingIdx, setPortfolioUploadingIdx] = useState<number | null>(null);
 
   // Edit form fields
-  const [fullName, setFullName]                 = useState('');
-  const [bio, setBio]                           = useState('');
-  const [location, setLocation]                 = useState('');
-  const [profileImage, setProfileImage]         = useState('');
-  const [availability, setAvailability]         = useState<FreelancerAvailability>(FreelancerAvailability.AVAILABLE);
+  const [fullName, setFullName] = useState('');
+  const [bio, setBio] = useState('');
+  const [location, setLocation] = useState('');
+  const [profileImage, setProfileImage] = useState('');
+  const [availability, setAvailability] = useState<FreelancerAvailability>(FreelancerAvailability.AVAILABLE);
   const [freelancerCategory, setFreelancerCategory] = useState('');
-  const [hourlyRate, setHourlyRate]             = useState('');
-  const [skillInput, setSkillInput]             = useState('');
-  const [skills, setSkills]                     = useState<string[]>([]);
-  const [portfolio, setPortfolio]               = useState<PortfolioItem[]>([]);
+  const [hourlyRate, setHourlyRate] = useState('');
+  const [skillInput, setSkillInput] = useState('');
+  const [skills, setSkills] = useState<string[]>([]);
+  const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
 
   // Queries
   const { data, loading, refetch } = useQuery(GET_USER_BY_ID, { variables: { userId }, skip: !userId });
-  const { data: myProfileData }    = useQuery(GET_MY_PROFILE, { skip: !isOwnProfile, fetchPolicy: 'network-only' });
-  const { data: followCheckData }  = useQuery(CHECK_IS_FOLLOWING, {
+  const { data: myProfileData } = useQuery(GET_MY_PROFILE, { skip: !isOwnProfile, fetchPolicy: 'network-only' });
+  const { data: followCheckData } = useQuery(CHECK_IS_FOLLOWING, {
     variables: { targetUserId: userId },
     skip: !isLoggedIn || !userId || isOwnProfile,
     fetchPolicy: 'network-only',
   });
 
-  const [toggleFollow]  = useMutation(TOGGLE_FOLLOW);
+  const [toggleFollow] = useMutation(TOGGLE_FOLLOW);
   const [updateProfile] = useMutation(UPDATE_PROFILE);
 
   const profile: User | null = data?.getUserById ?? null;
@@ -155,7 +192,7 @@ const ProfilePage = () => {
       const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ base64: compressed, fileName: file.name }) });
       const json = await res.json();
       if (json.url) setProfileImage(json.url);
-      else setSaveError('Rasm yuklashda xatolik. Qayta urinib ko\'ring.');
+      else setSaveError("Rasm yuklashda xatolik. Qayta urinib ko'ring.");
     } catch { setSaveError('Rasm yuklashda xatolik.'); }
     finally { setAvatarUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
   };
@@ -209,7 +246,7 @@ const ProfilePage = () => {
       const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ base64: compressed, fileName: file.name }) });
       const json = await res.json();
       if (json.url) updatePortfolioItem(idx, 'imageUrl', json.url);
-      else setSaveError('Portfel rasmi yuklanmadi. Qayta urinib ko\'ring.');
+      else setSaveError("Portfel rasmi yuklanmadi. Qayta urinib ko'ring.");
     } catch { setSaveError('Portfel rasmi yuklanmadi.'); }
     finally { setPortfolioUploadingIdx(null); if (portfolioFileInputRef.current) portfolioFileInputRef.current.value = ''; }
   };
@@ -217,10 +254,10 @@ const ProfilePage = () => {
   const handleSave = async () => {
     setSaveError(''); setSaveSuccess(''); setSaving(true);
     const input: any = {};
-    if (fullName.trim())  input.fullName = fullName.trim();
+    if (fullName.trim()) input.fullName = fullName.trim();
     if (bio.trim() !== undefined) input.bio = bio.trim();
-    if (location.trim())  input.location = location.trim();
-    if (profileImage)     input.profileImage = profileImage;
+    if (location.trim()) input.location = location.trim();
+    if (profileImage) input.profileImage = profileImage;
     if (isFreelancer) {
       input.availability = availability;
       if (freelancerCategory) input.freelancerCategory = freelancerCategory;
@@ -239,7 +276,7 @@ const ProfilePage = () => {
       refetch();
       setTimeout(() => { setEditOpen(false); setSaveSuccess(''); }, 1200);
     } catch (err: any) {
-      setSaveError(err?.graphQLErrors?.[0]?.message ?? 'Saqlashda xatolik. Qayta urinib ko\'ring.');
+      setSaveError(err?.graphQLErrors?.[0]?.message ?? "Saqlashda xatolik. Qayta urinib ko'ring.");
     } finally { setSaving(false); }
   };
 
@@ -261,7 +298,6 @@ const ProfilePage = () => {
 
   const handleMessageClick = () => {
     if (!profile) return;
-    // Open floating chat widget instead of navigating to full messages page
     window.dispatchEvent(new CustomEvent('openChat', {
       detail: {
         userId: profile._id,
@@ -271,416 +307,509 @@ const ProfilePage = () => {
     }));
   };
 
+  const handleCopyProfile = () => {
+    if (!profile) return;
+    navigator.clipboard.writeText(`${window.location.origin}/profile/${profile._id}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   // Loading
   if (loading || !userId) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 14 }}>
-        <Stack alignItems="center" spacing={2}>
-          <CircularProgress sx={{ color: '#4f46e5' }} />
-          <Typography fontSize={13} color="text.secondary">Profil yuklanmoqda...</Typography>
-        </Stack>
-      </Box>
+      <div className="flex justify-center items-center py-32">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-slate-500">Profil yuklanmoqda...</p>
+        </div>
+      </div>
     );
   }
 
   if (!profile) {
     return (
-      <Box sx={{ textAlign: 'center', py: 14 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-          <UserIcon size={56} color="#94a3b8" />
-        </Box>
-        <Typography variant="h6" fontWeight={700} mb={1}>Foydalanuvchi topilmadi</Typography>
-        <Typography fontSize={14} color="text.secondary" mb={3}>Bu profil o'chirilgan yoki mavjud emas</Typography>
+      <div className="text-center py-32">
+        <div className="flex justify-center mb-4">
+          <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
+            <UserIcon size={40} color="#94a3b8" />
+          </div>
+        </div>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Foydalanuvchi topilmadi</h2>
+        <p className="text-sm text-slate-500 mb-6">Bu profil o&apos;chirilgan yoki mavjud emas</p>
         <Link href="/browse">
-          <Button variant="contained" sx={{ bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' }, borderRadius: 2 }}>
-            Frilanserlarni ko'rish
-          </Button>
+          <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors cursor-pointer">
+            Frilanserlarni ko&apos;rish
+          </span>
         </Link>
-      </Box>
+      </div>
     );
   }
 
   const categoryLabel = profile.freelancerCategory ? JOB_CATEGORY_LABELS[profile.freelancerCategory as JobCategory] : null;
-  const isAvailable   = profile.availability === FreelancerAvailability.AVAILABLE;
+  const isAvailable = profile.availability === FreelancerAvailability.AVAILABLE;
   const displayFollowerCount = localFollowerCount ?? profile.followerCount ?? 0;
-
-  // ─── Skill badge colors ────────────────────────────────────────────────────
-  const SKILL_COLORS = [
-    { bg: '#eef2ff', color: '#4338ca' },
-    { bg: '#f0fdf4', color: '#166534' },
-    { bg: '#fff7ed', color: '#9a3412' },
-    { bg: '#fdf4ff', color: '#7e22ce' },
-    { bg: '#ecfdf5', color: '#065f46' },
-    { bg: '#eff6ff', color: '#1e40af' },
-  ];
+  const memberSince = profile.createdAt
+    ? new Date(profile.createdAt).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long' })
+    : null;
 
   return (
     <>
-      <Head><title>{profile.fullName ?? profile.username} — BuFu</title></Head>
+      <Head>
+        <title>{profile.fullName ?? profile.username} — BuFu</title>
+      </Head>
 
-      {/* ── Back link ── */}
-      <Box mb={2}>
-        <Button
-          size="small"
-          startIcon={<ArrowLeftIcon size={16} />}
+      {/* Back button */}
+      <div className="mb-4">
+        <button
           onClick={() => router.back()}
-          sx={{ color: '#64748b', fontSize: 13, px: 1.5, borderRadius: 2, '&:hover': { bgcolor: '#f1f5f9', color: '#0f172a' } }}
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100"
         >
+          <ArrowLeftIcon size={16} />
           Orqaga
-        </Button>
-      </Box>
+        </button>
+      </div>
 
-      <Grid container spacing={3} alignItems="flex-start">
+      {/* ── Cover Banner ── */}
+      <div className="relative h-48 md:h-56 rounded-2xl overflow-hidden mb-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-indigo-600 to-violet-600" />
+        <div className="absolute inset-0 opacity-20"
+          style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #fff 0%, transparent 50%), radial-gradient(circle at 80% 20%, #c4b5fd 0%, transparent 40%)' }}
+        />
+        {isOwnProfile && (
+          <button
+            onClick={openEditDialog}
+            className="absolute top-4 right-4 w-9 h-9 rounded-xl bg-white/15 text-white flex items-center justify-center hover:bg-white/25 transition-colors backdrop-blur-sm border border-white/20"
+          >
+            <EditIcon size={16} />
+          </button>
+        )}
+      </div>
 
-        {/* ════ CHAP: Profil kartasi ════ */}
-        <Grid item xs={12} md={4}>
+      {/* ── Main Content ── */}
+      <div className="grid grid-cols-12 gap-6 -mt-16 relative z-10 pb-16">
 
-          {/* Profile card */}
-          <Box sx={{
-            bgcolor: 'white', border: '1px solid #e2e8f0',
-            borderRadius: 3, overflow: 'hidden',
-            mb: 2,
-          }}>
-            {/* Gradient header */}
-            <Box sx={{
-              height: 100,
-              background: 'linear-gradient(135deg, #1e1b4b 0%, #4f46e5 60%, #7c3aed 100%)',
-              position: 'relative',
-            }}>
-              {isOwnProfile && (
-                <Tooltip title="Profilni tahrirlash">
-                  <IconButton
-                    onClick={openEditDialog}
-                    sx={{
-                      position: 'absolute', top: 10, right: 10,
-                      bgcolor: 'rgba(255,255,255,0.15)', color: 'white',
-                      width: 32, height: 32,
-                      '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
-                    }}
-                  >
-                    <EditIcon size={16} />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </Box>
+        {/* ════ LEFT: Profile Details ════ */}
+        <div className="col-span-12 lg:col-span-8 space-y-5">
 
-            <Box sx={{ px: 3, pb: 3 }}>
+          {/* ── Profile Header Card ── */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row gap-5 items-start">
+
               {/* Avatar */}
-              <Box sx={{ mt: -5, mb: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                  <Avatar
-                    src={profile.profileImage}
-                    sx={{
-                      width: 80, height: 80,
-                      border: '3px solid white',
-                      bgcolor: '#4f46e5', fontSize: 28, fontWeight: 700,
-                      boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
-                      cursor: isOwnProfile ? 'pointer' : 'default',
-                    }}
-                    onClick={isOwnProfile ? openEditDialog : undefined}
-                  >
-                    {(profile.fullName ?? profile.username)?.[0]?.toUpperCase()}
-                  </Avatar>
-                  {/* Availability dot */}
-                  <Box sx={{
-                    position: 'absolute', bottom: 4, right: 4,
-                    width: 14, height: 14, borderRadius: '50%',
-                    bgcolor: isAvailable ? '#22c55e' : '#f59e0b',
-                    border: '2.5px solid white',
-                    boxShadow: isAvailable ? '0 0 0 3px rgba(34,197,94,0.2)' : '0 0 0 3px rgba(245,158,11,0.2)',
-                  }} />
-                </Box>
+              <div className="relative flex-shrink-0">
+                <div
+                  className="w-28 h-28 rounded-xl overflow-hidden border-4 border-white shadow-lg cursor-pointer"
+                  onClick={isOwnProfile ? openEditDialog : undefined}
+                >
+                  {profile.profileImage ? (
+                    <img src={profile.profileImage} alt={profile.fullName ?? profile.username} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-indigo-600 flex items-center justify-center text-white text-3xl font-bold">
+                      {(profile.fullName ?? profile.username)?.[0]?.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div
+                  className={`absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full border-[3px] border-white shadow-sm ${isAvailable ? 'bg-green-500 animate-pulse' : 'bg-amber-400'}`}
+                />
+              </div>
+
+              {/* Info */}
+              <div className="flex-grow min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <h1 className="text-2xl font-extrabold text-slate-900 leading-tight">
+                    {profile.fullName ?? profile.username}
+                  </h1>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="#4f46e5">
+                    <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                  {categoryLabel && (
+                    <span className="px-2.5 py-0.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">
+                      {categoryLabel}
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-slate-500 text-sm mb-1">@{profile.username}</p>
 
                 {/* Availability badge */}
-                <Box sx={{
-                  px: 1.5, py: 0.5, borderRadius: 10,
-                  bgcolor: isAvailable ? '#f0fdf4' : '#fef9c3',
-                  border: `1px solid ${isAvailable ? '#bbf7d0' : '#fde68a'}`,
-                  color: isAvailable ? '#16a34a' : '#d97706',
-                  fontSize: 12, fontWeight: 700,
-                }}>
-                  <Stack direction="row" alignItems="center" spacing={0.5}>
-                    {isAvailable ? <CheckCircle size={13} weight="fill" /> : <Timer size={13} weight="fill" />}
-                    <span>{isAvailable ? "Bo'sh" : 'Band'}</span>
-                  </Stack>
-                </Box>
-              </Box>
+                <div className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full mb-4 ${isAvailable ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-green-500' : 'bg-amber-400'}`} />
+                  {isAvailable ? "Yangi loyiha uchun bo'sh" : 'Band'}
+                </div>
 
-              {/* Name */}
-              <Typography variant="h6" fontWeight={800} color="#0f172a" mb={0.25}>
-                {profile.fullName ?? profile.username}
-              </Typography>
-              <Typography fontSize={13} color="#94a3b8" mb={1}>@{profile.username}</Typography>
+                {/* Stats row */}
+                <div className="grid grid-cols-3 gap-4 py-4 border-y border-slate-100">
+                  <div>
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                      </svg>
+                      <span className="text-xl font-extrabold text-slate-900">
+                        {profile.averageRating?.toFixed(1) ?? '5.0'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Reyting</p>
+                  </div>
+                  <div>
+                    <p className="text-xl font-extrabold text-slate-900 mb-0.5">{profile.completedJobCount ?? 0}</p>
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Bajarilgan</p>
+                  </div>
+                  <div>
+                    <p className="text-xl font-extrabold text-indigo-600 mb-0.5">
+                      {profile.hourlyRate ? `$${profile.hourlyRate}` : '—'}
+                    </p>
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Soatlik</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-              {/* Category */}
-              {categoryLabel && (
-                <Chip
-                  label={categoryLabel}
-                  size="small"
-                  sx={{ bgcolor: '#eef2ff', color: '#4f46e5', fontSize: 11, fontWeight: 600, mb: 1.5 }}
-                />
+            {/* Bio */}
+            {profile.bio && (
+              <div className="mt-5">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Men haqimda</h3>
+                <p className="text-sm text-slate-600 leading-relaxed">{profile.bio}</p>
+              </div>
+            )}
+          </div>
+
+          {/* ── Tabs ── */}
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            {/* Tab nav */}
+            <div className="flex border-b border-slate-100">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex-1 py-3.5 text-sm font-semibold transition-all relative ${
+                    activeTab === tab.key
+                      ? 'text-indigo-600'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {tab.label}
+                  {activeTab === tab.key && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab content */}
+            <div className="p-6">
+
+              {/* ── Umumiy tab ── */}
+              {activeTab === 'umumiy' && (
+                <div className="space-y-6">
+                  {/* Stats grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: 'Kuzatuvchilar', value: displayFollowerCount, color: 'text-indigo-600' },
+                      { label: 'Kuzatmoqda', value: profile.followingCount ?? 0, color: 'text-cyan-600' },
+                      { label: "Ko'rishlar", value: profile.profileViewCount ?? 0, color: 'text-violet-600' },
+                      { label: 'Bajarilgan', value: profile.completedJobCount ?? 0, color: 'text-emerald-600' },
+                    ].map(({ label, value, color }) => (
+                      <div key={label} className="bg-slate-50 rounded-xl p-3.5 text-center border border-slate-100">
+                        <p className={`text-2xl font-black ${color} leading-none mb-1`}>{value}</p>
+                        <p className="text-[11px] text-slate-400 font-medium">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Bio if not shown above */}
+                  {!profile.bio && (
+                    <div className="text-center py-8 text-slate-400 text-sm">
+                      Bio mavjud emas
+                    </div>
+                  )}
+
+                  {/* Skills preview */}
+                  {profile.skills && profile.skills.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-700 mb-3">Asosiy ko&apos;nikmalar</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {profile.skills.slice(0, 6).map((skill) => (
+                          <span
+                            key={skill}
+                            className="px-3 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-lg border border-indigo-100"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                        {profile.skills.length > 6 && (
+                          <button
+                            onClick={() => setActiveTab('konikmalar')}
+                            className="px-3 py-1.5 bg-slate-100 text-slate-500 text-xs font-semibold rounded-lg hover:bg-slate-200 transition-colors"
+                          >
+                            +{profile.skills.length - 6} ko&apos;proq
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
 
-              {/* Location */}
-              {profile.location && (
-                <Stack direction="row" alignItems="center" spacing={0.5} mb={1.5}>
-                  <LocationOnIcon size={14} color="#94a3b8" />
-                  <Typography fontSize={13} color="#64748b">{profile.location}</Typography>
-                </Stack>
+              {/* ── Portfolio tab ── */}
+              {activeTab === 'portfolio' && (
+                <div>
+                  {profile.portfolio && profile.portfolio.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {profile.portfolio.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="group border border-slate-200 rounded-xl overflow-hidden hover:border-indigo-300 hover:shadow-lg transition-all duration-200"
+                        >
+                          {item.imageUrl ? (
+                            <div className="h-44 overflow-hidden bg-slate-100">
+                              <img
+                                src={item.imageUrl}
+                                alt={item.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                          ) : (
+                            <div className="h-32 bg-slate-100 flex items-center justify-center">
+                              <ImageIcon size={36} color="#94a3b8" />
+                            </div>
+                          )}
+                          <div className="p-4">
+                            <h4 className="text-sm font-bold text-slate-800 mb-1">{item.title}</h4>
+                            {item.description && (
+                              <p className="text-xs text-slate-500 leading-relaxed">{item.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <ImageIcon size={40} color="#cbd5e1" />
+                      <p className="mt-3 text-sm text-slate-400">Portfolio bo&apos;sh</p>
+                    </div>
+                  )}
+                </div>
               )}
 
-              {/* Bio */}
-              {profile.bio && (
-                <Typography fontSize={13} color="#475569" lineHeight={1.65} mb={2.5}>
-                  {profile.bio}
-                </Typography>
+              {/* ── Sharhlar tab ── */}
+              {activeTab === 'sharhlar' && (
+                <div>
+                  {profile.reviews && profile.reviews.length > 0 ? (
+                    <div className="space-y-1">
+                      {/* Rating summary */}
+                      <div className="flex items-center gap-6 p-4 bg-slate-50 rounded-xl mb-5 border border-slate-100">
+                        <div className="text-center">
+                          <p className="text-4xl font-black text-slate-900">{profile.averageRating?.toFixed(1) ?? '5.0'}</p>
+                          <StarRating rating={profile.averageRating ?? 5} size={14} />
+                          <p className="text-xs text-slate-400 mt-1">{profile.reviews.length} sharh</p>
+                        </div>
+                        <div className="flex-grow space-y-1.5">
+                          {[5, 4, 3, 2, 1].map((star) => {
+                            const count = (profile.reviews ?? []).filter(r => Math.round(r.rating) === star).length;
+                            const pct = profile.reviews!.length > 0 ? (count / profile.reviews!.length) * 100 : 0;
+                            return (
+                              <div key={star} className="flex items-center gap-2">
+                                <span className="text-xs text-slate-500 w-3 text-right">{star}</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="#f59e0b">
+                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                                <div className="flex-grow bg-slate-200 rounded-full h-1.5">
+                                  <div
+                                    className="bg-amber-400 h-1.5 rounded-full transition-all"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs text-slate-400 w-4">{count}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Review list */}
+                      <div className="space-y-5">
+                        {profile.reviews.map((review, idx) => (
+                          <div key={idx}>
+                            {idx > 0 && <div className="border-t border-slate-100 mb-5" />}
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm flex items-center justify-center flex-shrink-0">
+                                {review.authorName?.[0]?.toUpperCase()}
+                              </div>
+                              <div className="flex-grow">
+                                <div className="flex items-center justify-between mb-1">
+                                  <p className="text-sm font-semibold text-slate-800">{review.authorName}</p>
+                                  <StarRating rating={review.rating} size={13} />
+                                </div>
+                                <p className="text-sm text-slate-600 leading-relaxed italic">&ldquo;{review.reviewText}&rdquo;</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <StarIcon size={40} color="#cbd5e1" />
+                      <p className="mt-3 text-sm text-slate-400">Sharhlar yo&apos;q</p>
+                    </div>
+                  )}
+                </div>
               )}
 
-              {/* Hourly rate */}
-              {profile.hourlyRate && (
-                <Box sx={{
-                  display: 'inline-flex', alignItems: 'center', gap: 1,
-                  bgcolor: '#f0fdf4', border: '1px solid #bbf7d0',
-                  borderRadius: 2, px: 1.75, py: 0.75, mb: 2,
-                }}>
-                  <Typography fontSize={16} fontWeight={900} color="#16a34a">${profile.hourlyRate}</Typography>
-                  <Typography fontSize={12} color="#64748b">/soat</Typography>
-                </Box>
+              {/* ── Ko'nikmalar tab ── */}
+              {activeTab === 'konikmalar' && (
+                <div>
+                  {profile.skills && profile.skills.length > 0 ? (
+                    <>
+                      <h4 className="text-sm font-semibold text-slate-700 mb-4">Barcha ko&apos;nikmalar</h4>
+                      <div className="flex flex-wrap gap-2.5">
+                        {profile.skills.map((skill) => (
+                          <span
+                            key={skill}
+                            className="px-4 py-2 bg-indigo-50 text-indigo-700 text-sm font-semibold rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-12">
+                      <p className="text-sm text-slate-400">Ko&apos;nikmalar qo&apos;shilmagan</p>
+                    </div>
+                  )}
+                </div>
               )}
 
-              {/* Action buttons */}
-              {!isOwnProfile && isLoggedIn && (
-                <Stack spacing={1.5}>
-                  <Button
-                    variant={isFollowing ? 'outlined' : 'contained'}
-                    startIcon={isFollowing ? <PersonRemoveIcon size={18} /> : <PersonAddIcon size={18} />}
+            </div>
+          </div>
+        </div>
+
+        {/* ════ RIGHT: Sticky Action Card ════ */}
+        <div className="col-span-12 lg:col-span-4">
+          <div className="sticky top-6 space-y-4">
+
+            {/* Action card */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              {/* Availability */}
+              <div className="mb-6">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Xizmat mavjudligi</p>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isAvailable ? 'bg-green-500' : 'bg-amber-400'}`} />
+                  <span className={`text-sm font-semibold ${isAvailable ? 'text-green-600' : 'text-amber-600'}`}>
+                    {isAvailable ? "Yangi loyiha uchun bo'sh" : 'Hozir band'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              {!isOwnProfile && isLoggedIn ? (
+                <div className="space-y-3">
+                  <button
                     onClick={handleToggleFollow}
                     disabled={followLoading}
-                    fullWidth
-                    sx={isFollowing
-                      ? { borderRadius: 2, color: '#64748b', borderColor: '#e2e8f0', fontWeight: 600 }
-                      : { borderRadius: 2, bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' }, fontWeight: 700 }}
+                    className={`w-full py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 ${
+                      isFollowing
+                        ? 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                        : 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-xl hover:-translate-y-0.5'
+                    }`}
                   >
-                    {isFollowing ? 'Kuzatmayapman' : 'Kuzatish'}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<MessageIcon size={18} />}
-                    fullWidth
+                    {isFollowing ? <PersonRemoveIcon size={18} /> : <PersonAddIcon size={18} />}
+                    {isFollowing ? 'Kuzatmayapman' : 'Ish taklif qilish'}
+                  </button>
+                  <button
                     onClick={handleMessageClick}
-                    sx={{ borderRadius: 2, color: '#4f46e5', borderColor: '#c7d2fe', fontWeight: 600 }}
+                    className="w-full py-3.5 rounded-xl text-sm font-semibold border border-indigo-200 text-indigo-600 flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all duration-200 active:scale-95"
                   >
+                    <MailIcon size={18} />
                     Xabar yuborish
-                  </Button>
-                </Stack>
-              )}
-
-              {isOwnProfile && (
-                <Button
-                  variant="outlined" fullWidth
-                  startIcon={<EditIcon size={18} />}
+                  </button>
+                </div>
+              ) : isOwnProfile ? (
+                <button
                   onClick={openEditDialog}
-                  sx={{ borderRadius: 2, color: '#4f46e5', borderColor: '#c7d2fe', fontWeight: 600 }}
+                  className="w-full py-3.5 rounded-xl text-sm font-semibold border border-indigo-200 text-indigo-600 flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all duration-200"
                 >
+                  <EditIcon size={18} />
                   Profilni tahrirlash
-                </Button>
+                </button>
+              ) : (
+                <Link href="/login">
+                  <button className="w-full py-3.5 rounded-xl text-sm font-bold bg-indigo-600 text-white flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors">
+                    <BoltIcon size={18} />
+                    Ish taklif qilish
+                  </button>
+                </Link>
               )}
-            </Box>
-          </Box>
 
-          {/* Stats card */}
-          <Box sx={{ bgcolor: 'white', border: '1px solid #e2e8f0', borderRadius: 3, p: 2.5 }}>
-            <Grid container spacing={0}>
-              {[
-                { label: 'Kuzatuvchilar', value: displayFollowerCount, icon: <FollowersIcon size={16} color="#4f46e5" />, color: '#4f46e5' },
-                { label: 'Kuzatmoqda',   value: profile.followingCount ?? 0, icon: <PersonAddIcon size={16} color="#0891b2" />, color: '#0891b2' },
-                { label: 'Bajarilgan',   value: profile.completedJobCount ?? 0, icon: <WorkIcon size={16} color="#16a34a" />, color: '#16a34a' },
-                { label: 'Ko\'rishlar',  value: profile.profileViewCount ?? 0, icon: <EyeIcon size={16} color="#7c3aed" />, color: '#7c3aed' },
-              ].map(({ label, value, icon, color }, idx) => (
-                <Grid item xs={6} key={label}>
-                  <Box sx={{
-                    textAlign: 'center', p: 1.5,
-                    borderRight: idx % 2 === 0 ? '1px solid #f1f5f9' : 'none',
-                    borderBottom: idx < 2 ? '1px solid #f1f5f9' : 'none',
-                  }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 0.5 }}>{icon}</Box>
-                    <Typography fontWeight={900} fontSize={22} color={color} lineHeight={1}>{value}</Typography>
-                    <Typography fontSize={11} color="#94a3b8" mt={0.25}>{label}</Typography>
-                  </Box>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        </Grid>
+              {/* Meta info */}
+              <div className="mt-6 pt-5 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500">Javob vaqti</span>
+                  <span className="text-sm font-semibold text-slate-800">~2 soat</span>
+                </div>
+                {profile.location && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Joylashuv</span>
+                    <span className="text-sm font-semibold text-slate-800 flex items-center gap-1">
+                      <MapPin size={13} className="text-slate-400" />
+                      {profile.location}
+                    </span>
+                  </div>
+                )}
+                {memberSince && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">A&apos;zo bo&apos;lgan</span>
+                    <span className="text-sm font-semibold text-slate-800 flex items-center gap-1">
+                      <CalendarBlank size={13} className="text-slate-400" />
+                      {memberSince}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
 
-        {/* ════ O'NG: Tafsilotlar ════ */}
-        <Grid item xs={12} md={8}>
+            {/* Share card */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Profilni ulashish</p>
+                <p className="text-sm font-semibold text-slate-700 truncate">
+                  bufu.uz/{profile.username}
+                </p>
+              </div>
+              <button
+                onClick={handleCopyProfile}
+                className="ml-3 flex-shrink-0 p-2.5 bg-white border border-slate-200 rounded-xl text-indigo-600 hover:bg-indigo-50 transition-colors"
+                title="Nusxa olish"
+              >
+                <CopyIcon size={18} />
+              </button>
+            </div>
+            {copied && (
+              <p className="text-xs text-center text-green-600 font-medium -mt-2">Nusxa olindi!</p>
+            )}
 
-          {/* Metrics bar */}
-          <Box sx={{
-            bgcolor: 'white', border: '1px solid #e2e8f0', borderRadius: 3,
-            mb: 2.5, p: 2.5,
-            display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
-            gap: 0,
-          }}>
-            {[
-              {
-                label: 'Reyting',
-                value: <Stack direction="row" alignItems="center" spacing={0.5} justifyContent="center">
-                  <StarIcon size={20} color="#f59e0b" weight="fill" />
-                  <Typography fontWeight={900} fontSize={22} color="#0f172a">{profile.averageRating?.toFixed(1) ?? '5.0'}</Typography>
-                </Stack>,
-              },
-              {
-                label: 'Soatlik narx',
-                value: <Typography fontWeight={900} fontSize={22} color="#4f46e5">
-                  {profile.hourlyRate ? `$${profile.hourlyRate}` : '—'}
-                </Typography>,
-              },
-              {
-                label: 'Bajarilgan',
-                value: <Typography fontWeight={900} fontSize={22} color="#16a34a">{profile.completedJobCount ?? 0}</Typography>,
-              },
-              {
-                label: 'Holati',
-                value: <Box sx={{
-                  display: 'inline-block', px: 1.5, py: 0.4, borderRadius: 10,
-                  bgcolor: isAvailable ? '#dcfce7' : '#fef9c3',
-                  color: isAvailable ? '#16a34a' : '#ca8a04',
-                  fontSize: 13, fontWeight: 700,
-                }}>
-                  {isAvailable ? 'Bo\'sh' : 'Band'}
-                </Box>,
-              },
-            ].map(({ label, value }, idx) => (
-              <Box key={label} sx={{
-                textAlign: 'center', py: 1.5, px: 1,
-                borderRight: idx < 3 ? '1px solid #f1f5f9' : 'none',
-              }}>
-                {value}
-                <Typography fontSize={11} color="#94a3b8" mt={0.5} textTransform="uppercase" letterSpacing={0.4}>{label}</Typography>
-              </Box>
-            ))}
-          </Box>
+          </div>
+        </div>
+      </div>
 
-          {/* Ko'nikmalar */}
-          {profile.skills && profile.skills.length > 0 && (
-            <Box sx={{ bgcolor: 'white', border: '1px solid #e2e8f0', borderRadius: 3, p: 3, mb: 2.5 }}>
-              <Typography fontWeight={700} fontSize={15} color="#0f172a" mb={2}>Ko&apos;nikmalar</Typography>
-              <Stack direction="row" flexWrap="wrap" gap={1}>
-                {profile.skills.map((skill, idx) => {
-                  const c = SKILL_COLORS[idx % SKILL_COLORS.length];
-                  return (
-                    <Box key={skill} sx={{
-                      px: 1.5, py: 0.5, borderRadius: 10,
-                      bgcolor: c.bg, color: c.color,
-                      fontSize: 12, fontWeight: 600,
-                      border: `1px solid ${c.color}22`,
-                    }}>
-                      {skill}
-                    </Box>
-                  );
-                })}
-              </Stack>
-            </Box>
-          )}
-
-          {/* Portfel */}
-          {profile.portfolio && profile.portfolio.length > 0 && (
-            <Box sx={{ bgcolor: 'white', border: '1px solid #e2e8f0', borderRadius: 3, p: 3, mb: 2.5 }}>
-              <Typography fontWeight={700} fontSize={15} color="#0f172a" mb={2}>Portfel</Typography>
-              <Grid container spacing={2}>
-                {profile.portfolio.map((item, idx) => (
-                  <Grid item xs={12} sm={6} key={idx}>
-                    <Box sx={{
-                      border: '1px solid #e2e8f0', borderRadius: 2.5, overflow: 'hidden',
-                      transition: 'all 0.18s',
-                      '&:hover': { borderColor: '#c7d2fe', boxShadow: '0 4px 16px rgba(79,70,229,0.1)', transform: 'translateY(-2px)' },
-                    }}>
-                      {item.imageUrl ? (
-                        <Box sx={{ height: 160, overflow: 'hidden', position: 'relative', bgcolor: '#f1f5f9' }}>
-                          <img
-                            src={item.imageUrl} alt={item.title}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                          />
-                        </Box>
-                      ) : (
-                        <Box sx={{ height: 120, bgcolor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <ImageIcon size={36} color="#94a3b8" />
-                        </Box>
-                      )}
-                      <Box sx={{ p: 2 }}>
-                        <Typography fontWeight={700} fontSize={14} color="#0f172a" mb={0.25}>{item.title}</Typography>
-                        {item.description && (
-                          <Typography fontSize={12} color="#64748b" lineHeight={1.5}>{item.description}</Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          )}
-
-          {/* Sharhlar */}
-          {profile.reviews && profile.reviews.length > 0 && (
-            <Box sx={{ bgcolor: 'white', border: '1px solid #e2e8f0', borderRadius: 3, p: 3 }}>
-              <Stack direction="row" alignItems="center" spacing={1} mb={2.5}>
-                <Typography fontWeight={700} fontSize={15} color="#0f172a">Sharhlar</Typography>
-                <Box sx={{
-                  bgcolor: '#eef2ff', color: '#4f46e5',
-                  fontSize: 11, fontWeight: 800,
-                  px: 1, py: 0.1, borderRadius: 10,
-                }}>
-                  {profile.reviews.length}
-                </Box>
-              </Stack>
-              <Stack spacing={2.5}>
-                {profile.reviews.map((review, idx) => (
-                  <Box key={idx}>
-                    {idx > 0 && <Divider sx={{ mb: 2.5 }} />}
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Avatar sx={{ width: 36, height: 36, bgcolor: '#eef2ff', color: '#4f46e5', fontSize: 14, fontWeight: 700 }}>
-                          {review.authorName?.[0]?.toUpperCase()}
-                        </Avatar>
-                        <Box>
-                          <Typography fontWeight={600} fontSize={13} color="#0f172a">{review.authorName}</Typography>
-                          <Stack direction="row" spacing={0.25} mt={0.25}>
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <StarIcon key={i} size={12} color={i < review.rating ? '#f59e0b' : '#e2e8f0'} weight={i < review.rating ? 'fill' : 'regular'} />
-                            ))}
-                          </Stack>
-                        </Box>
-                      </Stack>
-                    </Stack>
-                    <Typography fontSize={13.5} color="#475569" lineHeight={1.7}>{review.reviewText}</Typography>
-                  </Box>
-                ))}
-              </Stack>
-            </Box>
-          )}
-        </Grid>
-      </Grid>
-
-      {/* ── Profilni tahrirlash dialogi ── */}
+      {/* ── Edit Profile Dialog ── */}
       <Dialog
         open={editOpen}
         onClose={() => setEditOpen(false)}
         maxWidth="sm" fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        {/* Onboarding banner */}
         {isFreelancer && router.query.onboard === 'true' && (
-          <Box sx={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', px: 3, py: 2 }}>
-            <Typography fontWeight={800} fontSize={15} color="white">
+          <div className="bg-gradient-to-r from-indigo-700 to-violet-600 px-6 py-4">
+            <p className="text-white font-extrabold text-base">
               Xush kelibsiz, {currentUser.fullName ?? currentUser.username}!
-            </Typography>
-            <Typography fontSize={12} color="rgba(255,255,255,0.85)" mt={0.5}>
+            </p>
+            <p className="text-white/80 text-xs mt-0.5">
               Freelancer profilingizni to&apos;ldiring — mijozlar sizi osonroq topishadi
-            </Typography>
-          </Box>
+            </p>
+          </div>
         )}
 
         <DialogTitle sx={{ fontWeight: 800, pb: 1, fontSize: 16 }}>
@@ -688,16 +817,16 @@ const ProfilePage = () => {
         </DialogTitle>
 
         <DialogContent dividers sx={{ pt: 2 }}>
-          {saveError   && <Alert severity="error"   sx={{ mb: 2, borderRadius: 2 }}>{saveError}</Alert>}
+          {saveError && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{saveError}</Alert>}
           {saveSuccess && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>{saveSuccess}</Alert>}
 
           <Stack spacing={3}>
             {/* Avatar */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <div className="flex items-center gap-4">
               <input ref={fileInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleFileChange} />
               <input ref={portfolioFileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePortfolioFileChange} />
 
-              <Box sx={{ position: 'relative', flexShrink: 0 }}>
+              <div className="relative flex-shrink-0">
                 <Avatar src={profileImage || undefined} sx={{ width: 80, height: 80, bgcolor: '#4f46e5', fontSize: 28 }}>
                   {(fullName || currentUser.username)?.[0]?.toUpperCase()}
                 </Avatar>
@@ -707,24 +836,23 @@ const ProfilePage = () => {
                 >
                   {avatarUploading ? <CircularProgress size={14} sx={{ color: 'white' }} /> : <PhotoCameraIcon size={14} />}
                 </IconButton>
-              </Box>
+              </div>
 
-              <Box flex={1}>
+              <div className="flex-1">
                 <Typography fontWeight={600} fontSize={14}>{fullName || currentUser.username}</Typography>
                 <Typography fontSize={12} color="text.secondary" mb={0.75}>
-                  {avatarUploading ? 'Yuklanmoqda...' : 'Rasm o\'zgartirish uchun bosing'}
+                  {avatarUploading ? 'Yuklanmoqda...' : "Rasm o'zgartirish uchun bosing"}
                 </Typography>
                 <Button size="small" variant="outlined" startIcon={<PhotoCameraIcon size={18} />}
                   onClick={handleAvatarPick} disabled={avatarUploading}
                   sx={{ fontSize: 11, borderColor: '#e2e8f0', color: '#4f46e5', py: 0.5, borderRadius: 1.5 }}>
                   Rasm tanlash
                 </Button>
-              </Box>
-            </Box>
+              </div>
+            </div>
 
             <Divider />
 
-            {/* Asosiy ma'lumotlar */}
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth size="small" label="To'liq ism" placeholder="Otabek Ikromov"
@@ -746,7 +874,6 @@ const ProfilePage = () => {
               </Grid>
             </Grid>
 
-            {/* Frilanser sozlamalari */}
             {isFreelancer && (
               <>
                 <Divider><Typography fontSize={12} color="text.secondary">Frilanser sozlamalari</Typography></Divider>
@@ -790,7 +917,7 @@ const ProfilePage = () => {
                 </Grid>
 
                 {/* Ko'nikmalar */}
-                <Box>
+                <div>
                   <Typography fontSize={13} fontWeight={600} color="text.secondary" mb={1}>Ko&apos;nikmalar</Typography>
                   <Stack direction="row" spacing={1} mb={1.5}>
                     <TextField size="small" placeholder="Masalan: AutoCAD, 3D Max"
@@ -812,10 +939,10 @@ const ProfilePage = () => {
                       <Typography fontSize={12} color="text.secondary">Ko&apos;nikma qo&apos;shilmagan</Typography>
                     )}
                   </Stack>
-                </Box>
+                </div>
 
                 {/* Portfel */}
-                <Box>
+                <div>
                   <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.5}>
                     <Typography fontSize={13} fontWeight={600} color="text.secondary">Portfel</Typography>
                     <Button size="small" variant="outlined" startIcon={<AddIcon size={18} />}
@@ -826,59 +953,44 @@ const ProfilePage = () => {
                   </Stack>
 
                   {portfolio.length === 0 ? (
-                    <Box
-                      sx={{ py: 3, textAlign: 'center', border: '2px dashed #e2e8f0', borderRadius: 2, cursor: 'pointer', '&:hover': { borderColor: '#c7d2fe', bgcolor: '#fafafe' } }}
+                    <div
+                      className="py-8 text-center border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-indigo-300 hover:bg-slate-50 transition-colors"
                       onClick={addPortfolioItem}
                     >
-                      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 0.5 }}>
-                        <ImageIcon size={30} color="#94a3b8" />
-                      </Box>
-                      <Typography fontSize={13} color="text.secondary">Portfel yo&apos;q. Qo&apos;shish uchun bosing.</Typography>
-                    </Box>
+                      <ImageIcon size={30} color="#94a3b8" style={{ margin: '0 auto 6px' }} />
+                      <p className="text-sm text-slate-400">Portfel yo&apos;q. Qo&apos;shish uchun bosing.</p>
+                    </div>
                   ) : (
                     <Stack spacing={2}>
                       {portfolio.map((item, idx) => (
-                        <Box key={idx} sx={{ p: 2, border: '1px solid #e2e8f0', borderRadius: 2 }}>
-                          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.5}>
+                        <div key={idx} className="p-4 border border-slate-200 rounded-xl">
+                          <div className="flex justify-between items-center mb-3">
                             <Typography fontSize={12} fontWeight={600} color="#64748b">#{idx + 1} element</Typography>
                             <IconButton size="small" onClick={() => removePortfolioItem(idx)}
                               sx={{ color: '#dc2626', '&:hover': { bgcolor: '#fef2f2' } }}>
                               <DeleteIcon size={18} />
                             </IconButton>
-                          </Stack>
-                          {/* Image picker */}
-                          <Box
-                            sx={{
-                              width: '100%', height: 110, borderRadius: 2, mb: 1.5,
-                              border: '2px dashed #e2e8f0', overflow: 'hidden',
-                              position: 'relative', cursor: 'pointer', bgcolor: '#f8fafc',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              '&:hover': { borderColor: '#c7d2fe', bgcolor: '#fafafe' },
-                            }}
+                          </div>
+                          <div
+                            className="w-full h-28 rounded-xl mb-3 border-2 border-dashed border-slate-200 overflow-hidden relative cursor-pointer bg-slate-50 flex items-center justify-center hover:border-indigo-300 hover:bg-slate-100 transition-colors"
                             onClick={() => handlePortfolioImagePick(idx)}
                           >
                             {portfolioUploadingIdx === idx ? (
                               <CircularProgress size={28} sx={{ color: '#4f46e5' }} />
                             ) : item.imageUrl ? (
                               <>
-                                <Box component="img" src={item.imageUrl} alt=""
-                                  sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                  onError={(e: any) => { e.target.style.display = 'none'; }} />
-                                <Box sx={{
-                                  position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,0.35)',
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  opacity: 0, transition: 'opacity 0.2s', '&:hover': { opacity: 1 },
-                                }}>
+                                <img src={item.imageUrl} alt="" className="w-full h-full object-cover absolute inset-0" />
+                                <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
                                   <PhotoCameraIcon size={28} color="#fff" />
-                                </Box>
+                                </div>
                               </>
                             ) : (
-                              <Stack alignItems="center" spacing={0.5}>
+                              <div className="flex flex-col items-center gap-1">
                                 <PhotoCameraIcon size={28} color="#94a3b8" />
-                                <Typography fontSize={11} color="text.secondary">Rasm tanlash</Typography>
-                              </Stack>
+                                <span className="text-xs text-slate-400">Rasm tanlash</span>
+                              </div>
                             )}
-                          </Box>
+                          </div>
                           <Grid container spacing={1}>
                             <Grid item xs={12}>
                               <TextField fullWidth size="small" label="Sarlavha"
@@ -893,11 +1005,11 @@ const ProfilePage = () => {
                                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }} />
                             </Grid>
                           </Grid>
-                        </Box>
+                        </div>
                       ))}
                     </Stack>
                   )}
-                </Box>
+                </div>
               </>
             )}
           </Stack>

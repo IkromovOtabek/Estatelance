@@ -4,38 +4,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useQuery, useMutation, useReactiveVar } from '@apollo/client';
-import {
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  IconButton,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import {
-  Plus,
-  Briefcase,
-  ClipboardText,
-  CheckCircle,
-  Clock,
-  XCircle,
-  CurrencyDollar,
-  Users,
-  ArrowRight,
-  Lock,
-  Pencil,
-  Trash,
-  RocketLaunch,
-  X,
-} from '@phosphor-icons/react';
 import { GET_MY_JOBS } from '../../apollo/user/query';
 import { COMPLETE_JOB, DELETE_JOB, UPDATE_JOB, BOOST_JOB } from '../../apollo/user/mutation';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
@@ -44,17 +12,26 @@ import { Job } from '../../libs/types';
 import { JobCategory, JOB_CATEGORY_LABELS, JobStatus } from '../../libs/enums';
 import { getCatIcon } from '../../libs/utils/jobCategoryIcons';
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  OPEN:      { label: 'Ochiq',     color: '#4f46e5', bg: '#eef2ff', icon: <Clock size={13} weight="fill" /> },
-  ACTIVE:    { label: 'Faol',      color: '#0891b2', bg: '#e0f2fe', icon: <Briefcase size={13} weight="fill" /> },
-  COMPLETED: { label: 'Tugagan',   color: '#16a34a', bg: '#dcfce7', icon: <CheckCircle size={13} weight="fill" /> },
-  CANCELLED: { label: 'Bekor',     color: '#dc2626', bg: '#fee2e2', icon: <XCircle size={13} weight="fill" /> },
+// ── Status config ─────────────────────────────────────────────────────────────
+type StatusCfg = {
+  label: string;
+  badgeClass: string;
+  dotClass: string;
+};
+
+const STATUS_CONFIG: Record<string, StatusCfg> = {
+  OPEN:      { label: 'Ochiq',    badgeClass: 'bg-indigo-100 text-indigo-700',  dotClass: 'bg-indigo-500' },
+  ACTIVE:    { label: 'Faol',     badgeClass: 'bg-green-100 text-green-700',    dotClass: 'bg-green-500' },
+  COMPLETED: { label: 'Tugagan',  badgeClass: 'bg-slate-100 text-slate-600',    dotClass: 'bg-slate-400' },
+  CANCELLED: { label: 'Bekor',    badgeClass: 'bg-red-100 text-red-700',        dotClass: 'bg-red-500' },
 };
 
 function timeAgo(dateStr?: string): string {
   if (!dateStr) return '';
-  const ms = typeof dateStr === 'string' && /^\d+$/.test(dateStr)
-    ? parseInt(dateStr) : new Date(dateStr).getTime();
+  const ms =
+    typeof dateStr === 'string' && /^\d+$/.test(dateStr)
+      ? parseInt(dateStr)
+      : new Date(dateStr).getTime();
   const m = Math.floor((Date.now() - ms) / 60000);
   if (m < 1) return 'hozirgina';
   if (m < 60) return `${m} daq oldin`;
@@ -63,16 +40,123 @@ function timeAgo(dateStr?: string): string {
   return `${Math.floor(h / 24)} kun oldin`;
 }
 
+// ── Edit Modal (pure Tailwind) ────────────────────────────────────────────────
+interface EditModalProps {
+  open: boolean;
+  saving: boolean;
+  title: string;
+  description: string;
+  budget: string;
+  onTitle: (v: string) => void;
+  onDescription: (v: string) => void;
+  onBudget: (v: string) => void;
+  onClose: () => void;
+  onSave: () => void;
+}
+
+function EditModal({
+  open, saving, title, description, budget,
+  onTitle, onDescription, onBudget, onClose, onSave,
+}: EditModalProps) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={() => !saving && onClose()}
+      />
+      {/* Panel */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100">
+          <h2 className="text-base font-bold text-slate-900">Ishni tahrirlash</h2>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors disabled:opacity-50"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Sarlavha</label>
+            <input
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+              value={title}
+              onChange={e => onTitle(e.target.value)}
+              placeholder="Ish sarlavhasi..."
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Tavsif</label>
+            <textarea
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all resize-none"
+              rows={4}
+              value={description}
+              onChange={e => onDescription(e.target.value)}
+              placeholder="Ish haqida batafsil..."
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Byudjet ($)</label>
+            <input
+              type="number"
+              min={10}
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+              value={budget}
+              onChange={e => onBudget(e.target.value)}
+              placeholder="100"
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-6 pb-5">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+          >
+            Bekor
+          </button>
+          <button
+            onClick={onSave}
+            disabled={saving || !title.trim() || !description.trim()}
+            className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                Saqlanmoqda...
+              </>
+            ) : 'Saqlash'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 const MyWorksPage = () => {
   const router = useRouter();
   const user = useReactiveVar(userVar);
 
   const [filterStatus, setFilterStatus] = useState<string>('');
 
-  // ── Boost modal state ───────────────────────────────────────────────────────
+  // Boost modal state
   const [boostJob2, setBoostJob2] = useState<Job | null>(null);
 
-  // ── Edit modal state ────────────────────────────────────────────────────────
+  // Edit modal state
   const [editJob, setEditJob] = useState<Job | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -92,12 +176,13 @@ const MyWorksPage = () => {
   const allJobs: Job[] = data?.getMyJobs ?? [];
   const jobs = filterStatus ? allJobs.filter(j => j.status === filterStatus) : allJobs;
 
-  // ── Stats ────────────────────────────────────────────────────────────────────
+  // Stats
   const stats = {
     total:      allJobs.length,
     open:       allJobs.filter(j => j.status === JobStatus.OPEN).length,
     active:     allJobs.filter(j => j.status === JobStatus.ACTIVE).length,
     completed:  allJobs.filter(j => j.status === JobStatus.COMPLETED).length,
+    cancelled:  allJobs.filter(j => j.status === JobStatus.CANCELLED).length,
     totalBudget: allJobs.reduce((s, j) => s + (j.budget ?? 0), 0),
     totalBids:  allJobs.reduce((s, j) => s + (j.bidCount ?? 0), 0),
   };
@@ -117,9 +202,7 @@ const MyWorksPage = () => {
     }
   };
 
-  const handleBoost = (job: Job) => {
-    setBoostJob2(job);
-  };
+  const handleBoost = (job: Job) => setBoostJob2(job);
 
   const handleBoostConfirm = async (plan: string) => {
     if (!boostJob2) return;
@@ -162,24 +245,40 @@ const MyWorksPage = () => {
     }
   };
 
-  // ── Access guard ─────────────────────────────────────────────────────────────
+  // Access guard
   if (!user._id) {
     return (
-      <Box sx={{ textAlign: 'center', py: 12 }}>
-        <Lock size={40} color="#94a3b8" />
-        <Typography fontSize={16} fontWeight={700} mt={2} mb={1}>Kirish talab etiladi</Typography>
-        <Button variant="contained" onClick={() => router.push('/account')} sx={{ bgcolor: '#4f46e5' }}>
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+          <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <p className="text-base font-bold text-slate-700 mb-1">Kirish talab etiladi</p>
+        <p className="text-sm text-slate-400 mb-4">Ish e'lonlaringizni ko'rish uchun tizimga kiring.</p>
+        <button
+          onClick={() => router.push('/account')}
+          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-colors"
+        >
           Kirish
-        </Button>
-      </Box>
+        </button>
+      </div>
     );
   }
+
+  const TABS = [
+    { value: '',           label: 'Barchasi',   count: stats.total },
+    { value: 'ACTIVE',     label: 'Faol',       count: stats.active },
+    { value: 'OPEN',       label: 'Kutilmoqda', count: stats.open },
+    { value: 'COMPLETED',  label: 'Tugagan',    count: stats.completed },
+    { value: 'CANCELLED',  label: 'Bekor',      count: stats.cancelled },
+  ];
 
   return (
     <>
       <Head><title>Mening ishlarim — BuFu</title></Head>
 
-      {/* ── Boost Modal ───────────────────────────────────────────────────── */}
+      {/* ── Boost Modal ───────────────────────────────────────────────── */}
       <BoostModal
         open={!!boostJob2}
         jobTitle={boostJob2?.title ?? ''}
@@ -187,148 +286,147 @@ const MyWorksPage = () => {
         onConfirm={handleBoostConfirm}
       />
 
-      {/* ── Edit Modal ────────────────────────────────────────────────────── */}
-      <Dialog open={!!editJob} onClose={() => !editSaving && setEditJob(null)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography fontWeight={700}>Ishni tahrirlash</Typography>
-          <IconButton size="small" onClick={() => setEditJob(null)} disabled={editSaving}>
-            <X size={18} />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent>
-          <Stack spacing={2.5} pt={1}>
-            <TextField
-              label="Sarlavha"
-              value={editTitle}
-              onChange={e => setEditTitle(e.target.value)}
-              fullWidth
-              size="small"
-            />
-            <TextField
-              label="Tavsif"
-              value={editDescription}
-              onChange={e => setEditDescription(e.target.value)}
-              fullWidth
-              size="small"
-              multiline
-              rows={4}
-            />
-            <TextField
-              label="Byudjet ($)"
-              value={editBudget}
-              onChange={e => setEditBudget(e.target.value)}
-              fullWidth
-              size="small"
-              type="number"
-              inputProps={{ min: 10 }}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setEditJob(null)} disabled={editSaving} sx={{ color: '#64748b' }}>
-            Bekor
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleEditSave}
-            disabled={editSaving || !editTitle.trim() || !editDescription.trim()}
-            sx={{ bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' } }}
-          >
-            {editSaving ? <CircularProgress size={18} sx={{ color: 'white' }} /> : 'Saqlash'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* ── Edit Modal ────────────────────────────────────────────────── */}
+      <EditModal
+        open={!!editJob}
+        saving={editSaving}
+        title={editTitle}
+        description={editDescription}
+        budget={editBudget}
+        onTitle={setEditTitle}
+        onDescription={setEditDescription}
+        onBudget={setEditBudget}
+        onClose={() => !editSaving && setEditJob(null)}
+        onSave={handleEditSave}
+      />
 
-      {/* ── Header ────────────────────────────────────────────────────────── */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h5" fontWeight={800} color="#0f172a">Mening ishlarim</Typography>
-          <Typography fontSize={13} color="text.secondary">
-            Siz joylagan barcha ish e'lonlari
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<Plus size={18} weight="bold" />}
+      {/* ── Page Header ───────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900">Mening ishlarim</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Platformadagi barcha ish e'lonlaringiz boshqaruvi</p>
+        </div>
+        <button
           onClick={() => router.push('/my-works/create')}
-          sx={{ bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' }, borderRadius: 2, fontWeight: 700 }}
+          className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all hover:-translate-y-0.5 active:scale-95"
         >
-          Ish qo'shish
-        </Button>
-      </Stack>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+          </svg>
+          Yangi ish e'lon qilish
+        </button>
+      </div>
 
-      {/* ── Stats cards ───────────────────────────────────────────────────── */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 2, mb: 3 }}>
-        {[
-          { label: 'Jami ishlar',    value: stats.total,                          color: '#4f46e5', icon: <ClipboardText size={20} color="#4f46e5" weight="fill" /> },
-          { label: 'Ochiq',          value: stats.open,                           color: '#4f46e5', icon: <Clock size={20} color="#4f46e5" weight="fill" /> },
-          { label: 'Faol',           value: stats.active,                         color: '#0891b2', icon: <Briefcase size={20} color="#0891b2" weight="fill" /> },
-          { label: 'Tugagan',        value: stats.completed,                      color: '#16a34a', icon: <CheckCircle size={20} color="#16a34a" weight="fill" /> },
-          { label: 'Jami budget',    value: `$${stats.totalBudget.toLocaleString()}`, color: '#059669', icon: <CurrencyDollar size={20} color="#059669" weight="fill" /> },
-          { label: 'Jami takliflar', value: stats.totalBids,                      color: '#7c3aed', icon: <Users size={20} color="#7c3aed" weight="fill" /> },
-        ].map(s => (
-          <Box key={s.label} sx={{
-            p: 2, bgcolor: 'white', borderRadius: 2.5, border: '1px solid #e2e8f0',
-            boxShadow: '0 1px 4px rgba(0,0,0,.04)',
-          }}>
-            <Box mb={0.5}>{s.icon}</Box>
-            <Typography fontSize={24} fontWeight={900} color={s.color} lineHeight={1}>{s.value}</Typography>
-            <Typography fontSize={12} color="text.secondary" mt={0.5}>{s.label}</Typography>
-          </Box>
-        ))}
-      </Box>
+      {/* ── Stats Row ─────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+        {/* Total jobs */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow group">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">Jami</span>
+          </div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Jami e'lonlar</p>
+          <p className="text-3xl font-black text-slate-900 mt-1">{stats.total}</p>
+        </div>
 
-      {/* ── Filter tabs ───────────────────────────────────────────────────── */}
-      <Stack direction="row" spacing={1} mb={2.5} flexWrap="wrap">
-        {[
-          { value: '',          label: `Hammasi (${stats.total})` },
-          { value: 'OPEN',      label: `Ochiq (${stats.open})` },
-          { value: 'ACTIVE',    label: `Faol (${stats.active})` },
-          { value: 'COMPLETED', label: `Tugagan (${stats.completed})` },
-        ].map(f => (
-          <Button
-            key={f.value}
-            size="small"
-            variant={filterStatus === f.value ? 'contained' : 'outlined'}
-            onClick={() => setFilterStatus(f.value)}
-            sx={{
-              fontSize: 12, borderRadius: 2,
-              bgcolor: filterStatus === f.value ? '#4f46e5' : 'transparent',
-              borderColor: '#e2e8f0',
-              color: filterStatus === f.value ? 'white' : '#64748b',
-              '&:hover': { bgcolor: filterStatus === f.value ? '#4338ca' : '#f1f5f9' },
-            }}
+        {/* Total bids */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow group">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">+{stats.totalBids}</span>
+          </div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Jami takliflar</p>
+          <p className="text-3xl font-black text-slate-900 mt-1">{stats.totalBids}</p>
+        </div>
+
+        {/* Active jobs */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow group">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">Faol</span>
+          </div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Faol ishlar</p>
+          <p className="text-3xl font-black text-slate-900 mt-1">{stats.active}</p>
+        </div>
+      </div>
+
+      {/* ── Tabs ──────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-0 border-b border-slate-200 mb-6 overflow-x-auto">
+        {TABS.map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => setFilterStatus(tab.value)}
+            className={`flex items-center gap-1.5 pb-3 px-4 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors ${
+              filterStatus === tab.value
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+            }`}
           >
-            {f.label}
-          </Button>
-        ))}
-      </Stack>
-
-      {/* ── Jobs list ─────────────────────────────────────────────────────── */}
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-          <CircularProgress sx={{ color: '#4f46e5' }} />
-        </Box>
-      ) : jobs.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 10, bgcolor: 'white', borderRadius: 3, border: '1px solid #e2e8f0' }}>
-          <ClipboardText size={40} color="#94a3b8" />
-          <Typography fontWeight={700} mt={2} mb={0.5} color="#475569">
-            {filterStatus ? "Bu holatda ish yo'q" : "Hali ish joylashtirilmagan"}
-          </Typography>
-          {!filterStatus && (
-            <Button
-              variant="contained"
-              startIcon={<Plus size={16} />}
-              onClick={() => router.push('/my-works/create')}
-              sx={{ mt: 2, bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' }, borderRadius: 2 }}
+            {tab.label}
+            <span
+              className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
+                filterStatus === tab.value
+                  ? 'bg-indigo-100 text-indigo-700'
+                  : 'bg-slate-100 text-slate-500'
+              }`}
             >
-              Birinchi ishni joylash
-            </Button>
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* ── Content ───────────────────────────────────────────────────── */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <svg className="w-8 h-8 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+          </svg>
+        </div>
+      ) : jobs.length === 0 ? (
+        /* Empty state */
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-200 text-center px-6">
+          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 className="text-base font-bold text-slate-700">
+            {filterStatus ? 'Bu holatda ish yo\'q' : 'Hozircha e\'lonlar yo\'q'}
+          </h3>
+          <p className="text-sm text-slate-400 mt-1 max-w-xs">
+            {filterStatus
+              ? 'Boshqa filterni tanlang yoki yangi ish e\'lon qiling.'
+              : 'Birinchi loyihangizni e\'lon qiling va malakali freelancerlarni toping!'}
+          </p>
+          {!filterStatus && (
+            <button
+              onClick={() => router.push('/my-works/create')}
+              className="mt-5 inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+              Ish e'lon qilish
+            </button>
           )}
-        </Box>
+        </div>
       ) : (
-        <Stack spacing={2}>
+        /* Job list */
+        <div className="space-y-4">
           {jobs.map(job => {
             const cfg = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.OPEN;
             const isBoosted = !!job.boostExpiresAt && new Date(job.boostExpiresAt).getTime() > Date.now();
@@ -336,153 +434,160 @@ const MyWorksPage = () => {
             const canDelete = job.status !== JobStatus.ACTIVE;
             const canBoost  = job.status === JobStatus.OPEN;
 
+            const boostBorderClass = job.boostPlan === 'VIP'
+              ? 'border-amber-400'
+              : job.boostPlan === 'PRO'
+              ? 'border-violet-400'
+              : 'border-indigo-400';
+
             return (
-              <Box key={job._id} sx={{
-                bgcolor: 'white', borderRadius: 2.5,
-                border: isBoosted ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
-                p: 2.5, boxShadow: '0 1px 4px rgba(0,0,0,.04)',
-                transition: 'box-shadow 0.15s',
-                '&:hover': { boxShadow: '0 4px 16px rgba(79,70,229,.1)' },
-              }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={1}>
-                  <Box flex={1} minWidth={0}>
-                    <Stack direction="row" spacing={1} alignItems="center" mb={0.75} flexWrap="wrap">
-                      <Chip
-                        size="small"
-                        label={
-                          <Stack direction="row" alignItems="center" spacing={0.4}>
-                            {cfg.icon}<span>{cfg.label}</span>
-                          </Stack>
-                        }
-                        sx={{ bgcolor: cfg.bg, color: cfg.color, fontWeight: 700, fontSize: 11, height: 22 }}
-                      />
-                      {job.category && (
-                        <Chip
-                          size="small"
-                          icon={getCatIcon(job.category as JobCategory, 12) ?? undefined}
-                          label={JOB_CATEGORY_LABELS[job.category as JobCategory] ?? job.category}
-                          sx={{ fontSize: 11, height: 22, bgcolor: '#f8fafc', color: '#475569' }}
-                        />
-                      )}
-                      {isBoosted && (
-                        <Chip
-                          size="small"
-                          icon={<RocketLaunch size={11} color={job.boostPlan === 'VIP' ? '#b45309' : job.boostPlan === 'PRO' ? '#7c3aed' : '#4f46e5'} weight="fill" />}
-                          label={job.boostPlan === 'VIP' ? '⭐ VIP Top' : job.boostPlan === 'PRO' ? '⚡ Pro Top' : '🔵 Top'}
-                          sx={{ fontSize: 11, height: 22, bgcolor: job.boostPlan === 'VIP' ? '#fffbeb' : job.boostPlan === 'PRO' ? '#f5f3ff' : '#eef2ff', color: job.boostPlan === 'VIP' ? '#b45309' : job.boostPlan === 'PRO' ? '#7c3aed' : '#4f46e5', fontWeight: 700 }}
-                        />
-                      )}
-                      <Typography fontSize={11} color="#94a3b8">{timeAgo(job.createdAt)}</Typography>
-                    </Stack>
+              <div
+                key={job._id}
+                className={`bg-white rounded-2xl border p-5 md:p-6 hover:shadow-xl transition-all group flex flex-col md:flex-row md:items-center justify-between gap-5 ${
+                  isBoosted ? `border-2 ${boostBorderClass}` : 'border-slate-200 hover:border-indigo-300'
+                }`}
+              >
+                {/* Left: info */}
+                <div className="flex-1 min-w-0">
+                  {/* Badges row */}
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${cfg.badgeClass}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dotClass}`} />
+                      {cfg.label}
+                    </span>
 
-                    <Typography fontWeight={700} fontSize={15} color="#0f172a" mb={0.5} noWrap>
-                      {job.title}
-                    </Typography>
-                    <Typography fontSize={13} color="#64748b" sx={{
-                      overflow: 'hidden', display: '-webkit-box',
-                      WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                    }}>
-                      {job.description}
-                    </Typography>
-                  </Box>
+                    {job.category && (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+                        {JOB_CATEGORY_LABELS[job.category as JobCategory] ?? job.category}
+                      </span>
+                    )}
 
-                  <Stack alignItems="flex-end" spacing={1} flexShrink={0}>
-                    <Typography fontWeight={800} fontSize={16} color="#16a34a">${job.budget}</Typography>
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <Users size={13} color="#94a3b8" />
-                      <Typography fontSize={12} color="#94a3b8">{job.bidCount ?? 0} taklif</Typography>
-                    </Stack>
-                    {/* Quick action icons top-right */}
-                    <Stack direction="row" spacing={0.5}>
-                      {canEdit && (
-                        <Tooltip title="Tahrirlash">
-                          <IconButton
-                            size="small"
-                            onClick={() => openEdit(job)}
-                            sx={{ color: '#4f46e5', bgcolor: '#eef2ff', '&:hover': { bgcolor: '#e0e7ff' }, width: 28, height: 28 }}
-                          >
-                            <Pencil size={14} weight="bold" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      {canBoost && (
-                        <Tooltip title="Top ga chiqazish">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleBoost(job)}
-                            sx={{ color: '#7c3aed', bgcolor: '#f5f3ff', '&:hover': { bgcolor: '#ede9fe' }, width: 28, height: 28 }}
-                          >
-                            <RocketLaunch size={14} weight="bold" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      {canDelete && (
-                        <Tooltip title="O'chirish">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDelete(job)}
-                            sx={{ color: '#dc2626', bgcolor: '#fef2f2', '&:hover': { bgcolor: '#fee2e2' }, width: 28, height: 28 }}
-                          >
-                            <Trash size={14} weight="bold" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Stack>
-                  </Stack>
-                </Stack>
+                    {isBoosted && (
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded ${
+                        job.boostPlan === 'VIP'
+                          ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                          : job.boostPlan === 'PRO'
+                          ? 'bg-violet-50 text-violet-600 border border-violet-200'
+                          : 'bg-indigo-50 text-indigo-600 border border-indigo-200'
+                      }`}>
+                        🚀 {job.boostPlan === 'VIP' ? '⭐ VIP Top' : job.boostPlan === 'PRO' ? '⚡ Pro Top' : 'Top'}
+                      </span>
+                    )}
 
-                {/* Actions row */}
-                <Stack direction="row" spacing={1} mt={2} flexWrap="wrap">
-                  <Link href={`/jobs/${job._id}`} style={{ textDecoration: 'none' }}>
-                    <Button
-                      size="small" variant="outlined" endIcon={<ArrowRight size={14} />}
-                      sx={{ fontSize: 12, borderColor: '#e2e8f0', color: '#4f46e5', borderRadius: 1.5 }}
-                    >
-                      Batafsil
-                    </Button>
+                    <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {timeAgo(job.createdAt)}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h4 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate mb-1">
+                    {job.title}
+                  </h4>
+
+                  {/* Description */}
+                  <p className="text-sm text-slate-500 line-clamp-2 mb-3">
+                    {job.description}
+                  </p>
+
+                  {/* Meta: budget + bids */}
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full">
+                      <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-sm font-bold text-indigo-700">${job.budget}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-500">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="text-sm">{job.bidCount ?? 0} ta taklif</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: action buttons */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* View detail */}
+                  <Link href={`/jobs/${job._id}`}>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors cursor-pointer">
+                      Ko'rish
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
                   </Link>
-                  {canEdit && (
-                    <Button
-                      size="small" variant="outlined" startIcon={<Pencil size={13} />}
-                      onClick={() => openEdit(job)}
-                      sx={{ fontSize: 12, borderColor: '#e2e8f0', color: '#4f46e5', borderRadius: 1.5 }}
-                    >
-                      Tahrirlash
-                    </Button>
-                  )}
+
+                  {/* Boost */}
                   {canBoost && (
-                    <Button
-                      size="small" variant="outlined" startIcon={<RocketLaunch size={13} />}
+                    <button
                       onClick={() => handleBoost(job)}
-                      sx={{ fontSize: 12, borderColor: '#ddd6fe', color: '#7c3aed', borderRadius: 1.5 }}
+                      title="Top ga chiqazish"
+                      className="p-2.5 text-violet-600 bg-violet-50 hover:bg-violet-100 rounded-xl transition-all active:scale-90"
                     >
-                      Top ga chiqazish
-                    </Button>
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.5C6.5 9 5 13 5 16a7 7 0 0014 0c0-3-1.5-7-7-13.5zM12 21a5 5 0 01-5-5c0-2.5 1.5-6 5-11.5C15.5 10 17 13.5 17 16a5 5 0 01-5 5z"/>
+                      </svg>
+                    </button>
                   )}
+
+                  {/* Edit */}
+                  {canEdit && (
+                    <button
+                      onClick={() => openEdit(job)}
+                      title="Tahrirlash"
+                      className="p-2.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all active:scale-90"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                  )}
+
+                  {/* Mark complete */}
                   {job.status === JobStatus.ACTIVE && (
-                    <Button
-                      size="small" variant="contained" startIcon={<CheckCircle size={14} />}
+                    <button
                       onClick={() => handleComplete(job._id)}
-                      sx={{ fontSize: 12, bgcolor: '#6366f1', '&:hover': { bgcolor: '#4f46e5' }, borderRadius: 1.5 }}
+                      title="Bajarildi deb belgilash"
+                      className="p-2.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-all active:scale-90"
                     >
-                      Bajarildi
-                    </Button>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
                   )}
+
+                  {/* Delete */}
                   {canDelete && (
-                    <Button
-                      size="small" variant="outlined" startIcon={<Trash size={13} />}
+                    <button
                       onClick={() => handleDelete(job)}
-                      sx={{ fontSize: 12, borderColor: '#fecaca', color: '#dc2626', borderRadius: 1.5, ml: 'auto' }}
+                      title="O'chirish"
+                      className="p-2.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-all active:scale-90"
                     >
-                      O'chirish
-                    </Button>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   )}
-                </Stack>
-              </Box>
+                </div>
+              </div>
             );
           })}
-        </Stack>
+        </div>
       )}
+
+      {/* Mobile FAB */}
+      <button
+        onClick={() => router.push('/my-works/create')}
+        className="lg:hidden fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl shadow-indigo-500/40 flex items-center justify-center active:scale-90 transition-transform z-50"
+      >
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
     </>
   );
 };

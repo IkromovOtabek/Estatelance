@@ -5,64 +5,6 @@ import { useRouter } from 'next/router';
 import { useMutation, useQuery, useLazyQuery } from '@apollo/client';
 import { useReactiveVar } from '@apollo/client';
 import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tabs,
-  TextField,
-  Tooltip,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from '@mui/material';
-import {
-  Plus as AddIcon,
-  SignOut as LogoutIcon,
-  ShieldCheck,
-  ChartBar,
-  Users,
-  Briefcase,
-  Newspaper,
-  Megaphone,
-  Bell,
-  House,
-  ClipboardText,
-  LockOpen,
-  ProhibitInset,
-  CurrencyDollar,
-  Heart,
-  Eye,
-  PersonSimple,
-  Broadcast,
-  Trash,
-  ChartLineUp,
-  Circle,
-  UserPlus,
-  SignIn,
-  CaretDown,
-  CaretUp,
-  CalendarBlank,
-} from '@phosphor-icons/react';
-import {
   ADMIN_GET_ALL_USERS,
   ADMIN_GET_ALL_JOBS,
   ADMIN_GET_ALL_POSTS,
@@ -84,10 +26,17 @@ import {
   ADMIN_SEND_NOTIFICATION,
   ADMIN_SEND_BROADCAST,
 } from '../../apollo/admin/mutation';
-import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { logout } from '../../libs/auth';
-import { User, Job, Post, Announcement, DashboardStats, DailyVisitorStat, VisitorSessionItem } from '../../libs/types';
+import {
+  User,
+  Job,
+  Post,
+  Announcement,
+  DashboardStats,
+  DailyVisitorStat,
+  VisitorSessionItem,
+} from '../../libs/types';
 import { UserType, UserStatus, AnnouncementType } from '../../libs/enums';
 
 // ─── Color helpers ─────────────────────────────────────────────────────────────
@@ -104,79 +53,242 @@ const JOB_STATUS_COLOR: Record<string, string> = {
   CANCELLED: '#dc2626',
 };
 
+// ─── Sidebar nav items ─────────────────────────────────────────────────────────
+const NAV_ITEMS = [
+  { id: 'dashboard', label: 'Boshqaruv paneli', icon: 'dashboard' },
+  { id: 'users', label: 'Foydalanuvchilar', icon: 'group' },
+  { id: 'jobs', label: 'Ish e\'lonlari', icon: 'work' },
+  { id: 'payments', label: 'To\'lovlar', icon: 'payments' },
+  { id: 'posts', label: 'Maqolalar', icon: 'article' },
+  { id: 'announcements', label: 'E\'lonlar', icon: 'campaign' },
+  { id: 'settings', label: 'Sozlamalar', icon: 'settings' },
+];
+
+// ─── Sidebar Component ─────────────────────────────────────────────────────────
+const Sidebar = ({
+  activeSection,
+  onNav,
+  onLogout,
+  username,
+}: {
+  activeSection: string;
+  onNav: (id: string) => void;
+  onLogout: () => void;
+  username: string;
+}) => (
+  <aside className="h-screen w-64 fixed left-0 top-0 bg-white border-r border-slate-200 flex flex-col z-50 shadow-sm">
+    {/* Logo */}
+    <div className="px-6 py-6 border-b border-slate-100">
+      <span className="text-2xl font-black text-indigo-600 tracking-tight">BuFu</span>
+      <p className="text-xs text-slate-400 mt-0.5">Admin Panel</p>
+    </div>
+
+    {/* Nav */}
+    <nav className="flex-1 py-4 space-y-0.5 px-3 overflow-y-auto">
+      {NAV_ITEMS.map((item) => {
+        const isActive = activeSection === item.id;
+        return (
+          <button
+            key={item.id}
+            onClick={() => onNav(item.id)}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group
+              ${isActive
+                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800 hover:translate-x-0.5'
+              }`}
+          >
+            <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+            <span>{item.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+
+    {/* User info + logout */}
+    <div className="px-3 pb-4 border-t border-slate-100 pt-4">
+      <div className="flex items-center gap-3 px-3 py-2.5 bg-slate-50 rounded-xl mb-2">
+        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm flex-shrink-0">
+          {username?.[0]?.toUpperCase() ?? 'A'}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-slate-800 truncate">@{username}</p>
+          <p className="text-xs text-slate-400">Bosh administrator</p>
+        </div>
+      </div>
+      <button
+        onClick={onLogout}
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+      >
+        <span className="material-symbols-outlined text-[20px]">logout</span>
+        <span>Chiqish</span>
+      </button>
+    </div>
+  </aside>
+);
+
+// ─── Stats Card ────────────────────────────────────────────────────────────────
+const StatCard = ({
+  icon,
+  iconBg,
+  iconColor,
+  label,
+  value,
+  badge,
+  badgeColor,
+}: {
+  icon: string;
+  iconBg: string;
+  iconColor: string;
+  label: string;
+  value: string | number;
+  badge?: string;
+  badgeColor?: string;
+}) => (
+  <div className="bg-white/80 backdrop-blur-sm border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+    <div className="flex justify-between items-start mb-3">
+      <div className={`p-2.5 rounded-xl ${iconBg}`}>
+        <span className={`material-symbols-outlined text-[22px] ${iconColor}`}>{icon}</span>
+      </div>
+      {badge && (
+        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${badgeColor}`}>
+          {badge}
+        </span>
+      )}
+    </div>
+    <p className="text-xs font-semibold text-slate-500 mb-1">{label}</p>
+    <h3 className="text-2xl font-extrabold text-slate-800">{value}</h3>
+  </div>
+);
+
+// ─── Simple Bar Chart ──────────────────────────────────────────────────────────
+const BarChart = ({ data }: { data: { label: string; value: number }[] }) => {
+  const max = Math.max(...data.map((d) => d.value), 1);
+  return (
+    <div className="flex items-end gap-1.5 h-32 w-full">
+      {data.map((d, i) => (
+        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+          <div
+            className="w-full bg-indigo-500 rounded-t-sm transition-all duration-500 hover:bg-indigo-600"
+            style={{ height: `${(d.value / max) * 100}%`, minHeight: 4 }}
+            title={`${d.label}: ${d.value}`}
+          />
+          <span className="text-[9px] text-slate-400">{d.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ─── Progress Bar ──────────────────────────────────────────────────────────────
+const ProgressBar = ({ label, value, color }: { label: string; value: number; color: string }) => (
+  <div className="space-y-1">
+    <div className="flex justify-between text-xs font-medium text-slate-700">
+      <span>{label}</span>
+      <span>{value}%</span>
+    </div>
+    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+      <div
+        className={`${color} h-full rounded-full transition-all duration-700`}
+        style={{ width: `${value}%` }}
+      />
+    </div>
+  </div>
+);
+
 // ─── Main Component ────────────────────────────────────────────────────────────
 const AdminPage = () => {
   const router = useRouter();
   const user = useReactiveVar(userVar);
   const isAdmin = user.userType === UserType.ADMIN;
 
-  // Tabs: 0=Stats, 1=Users, 2=Jobs, 3=Posts, 4=Announcements, 5=Notifications
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeSection, setActiveSection] = useState('dashboard');
   const [userFilterTab, setUserFilterTab] = useState(0);
 
-  // Alert messages
+  // Messages
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   // Visitor detail modal
-  const [detailModal, setDetailModal] = useState<{ open: boolean; date: string; event: string; label: string }>({
-    open: false, date: '', event: '', label: '',
-  });
+  const [detailModal, setDetailModal] = useState<{
+    open: boolean;
+    date: string;
+    event: string;
+    label: string;
+  }>({ open: false, date: '', event: '', label: '' });
 
-  // Visitor stats panel toggle
   const [showVisitorStats, setShowVisitorStats] = useState(false);
-
-  // Session date filter (YYYY-MM-DD), null = today
   const [sessionDate, setSessionDate] = useState<string>('');
 
-  // ── Delete user dialog ─────────────────────────────────────────────────────
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId: string; username: string }>({
-    open: false, userId: '', username: '',
-  });
+  // Delete user dialog
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    userId: string;
+    username: string;
+  }>({ open: false, userId: '', username: '' });
 
-  // ── Spam dialog ────────────────────────────────────────────────────────────
-  const [spamDialog, setSpamDialog] = useState<{ open: boolean; userId: string; username: string }>({
-    open: false, userId: '', username: '',
-  });
+  // Spam dialog
+  const [spamDialog, setSpamDialog] = useState<{
+    open: boolean;
+    userId: string;
+    username: string;
+  }>({ open: false, userId: '', username: '' });
   const [spamReason, setSpamReason] = useState('');
 
-  // ── Announcement dialog ────────────────────────────────────────────────────
+  // Announcement dialog
   const [announcementDialog, setAnnouncementDialog] = useState(false);
   const [annTitle, setAnnTitle] = useState('');
   const [annBody, setAnnBody] = useState('');
   const [annImageUrl, setAnnImageUrl] = useState('');
   const [annType, setAnnType] = useState<AnnouncementType>(AnnouncementType.ANNOUNCEMENT);
 
-  // ── Notification dialog ────────────────────────────────────────────────────
-  const [notifDialog, setNotifDialog] = useState<{ open: boolean; userId: string; username: string; broadcast: boolean }>({
-    open: false, userId: '', username: '', broadcast: false,
-  });
+  // Notification dialog
+  const [notifDialog, setNotifDialog] = useState<{
+    open: boolean;
+    userId: string;
+    username: string;
+    broadcast: boolean;
+  }>({ open: false, userId: '', username: '', broadcast: false });
   const [notifTitle, setNotifTitle] = useState('');
   const [notifBody, setNotifBody] = useState('');
 
+  // Session detail
+  const [selectedSession, setSelectedSession] = useState<VisitorSessionItem | null>(null);
+
+  // Search states
+  const [userSearch, setUserSearch] = useState('');
+  const [jobSearch, setJobSearch] = useState('');
+
   // ── Queries ────────────────────────────────────────────────────────────────
-  const { data: usersData, loading: usersLoading, refetch: refetchUsers } = useQuery(ADMIN_GET_ALL_USERS, {
-    variables: { page: 1, limit: 100 },
-    skip: !isAdmin,
-    fetchPolicy: 'cache-and-network',
-  });
+  const { data: usersData, loading: usersLoading, refetch: refetchUsers } = useQuery(
+    ADMIN_GET_ALL_USERS,
+    { variables: { page: 1, limit: 100 }, skip: !isAdmin, fetchPolicy: 'cache-and-network' },
+  );
 
-  const { data: jobsData, loading: jobsLoading, refetch: refetchJobs } = useQuery(ADMIN_GET_ALL_JOBS, {
-    variables: { page: 1, limit: 100 },
-    skip: !isAdmin || activeTab !== 2,
-    fetchPolicy: 'cache-and-network',
-  });
+  const { data: jobsData, loading: jobsLoading, refetch: refetchJobs } = useQuery(
+    ADMIN_GET_ALL_JOBS,
+    {
+      variables: { page: 1, limit: 100 },
+      skip: !isAdmin || activeSection !== 'jobs',
+      fetchPolicy: 'cache-and-network',
+    },
+  );
 
-  const { data: postsData, loading: postsLoading, refetch: refetchPosts } = useQuery(ADMIN_GET_ALL_POSTS, {
-    variables: { page: 1, limit: 100 },
-    skip: !isAdmin || activeTab !== 3,
-    fetchPolicy: 'cache-and-network',
-  });
+  const { data: postsData, loading: postsLoading, refetch: refetchPosts } = useQuery(
+    ADMIN_GET_ALL_POSTS,
+    {
+      variables: { page: 1, limit: 100 },
+      skip: !isAdmin || activeSection !== 'posts',
+      fetchPolicy: 'cache-and-network',
+    },
+  );
 
-  const { data: annData, loading: annLoading, refetch: refetchAnn } = useQuery(ADMIN_GET_ALL_ANNOUNCEMENTS, {
-    skip: !isAdmin || activeTab !== 4,
-    fetchPolicy: 'cache-and-network',
-  });
+  const { data: annData, loading: annLoading, refetch: refetchAnn } = useQuery(
+    ADMIN_GET_ALL_ANNOUNCEMENTS,
+    {
+      skip: !isAdmin || activeSection !== 'announcements',
+      fetchPolicy: 'cache-and-network',
+    },
+  );
 
   const { data: statsData, loading: statsLoading } = useQuery(ADMIN_GET_DASHBOARD_STATS, {
     skip: !isAdmin,
@@ -185,15 +297,15 @@ const AdminPage = () => {
 
   const { data: visitorData } = useQuery(ADMIN_GET_VISITOR_STATS, {
     variables: { days: 14 },
-    skip: !isAdmin || activeTab !== 0,
+    skip: !isAdmin || activeSection !== 'dashboard',
     fetchPolicy: 'cache-and-network',
   });
 
   const { data: sessionsData, refetch: refetchSessions } = useQuery(ADMIN_GET_TODAY_SESSIONS, {
     variables: { date: sessionDate || null },
-    skip: !isAdmin || activeTab !== 0,
+    skip: !isAdmin || activeSection !== 'dashboard',
     fetchPolicy: 'network-only',
-    pollInterval: showVisitorStats && !sessionDate ? 30_000 : 0, // auto-refresh only for today
+    pollInterval: showVisitorStats && !sessionDate ? 30_000 : 0,
   });
 
   const [fetchUserDetails, { data: detailData, loading: detailLoading }] = useLazyQuery(
@@ -221,13 +333,11 @@ const AdminPage = () => {
   const detailUsers = detailData?.adminGetDailyUserDetails ?? [];
   const todaySessions: VisitorSessionItem[] = sessionsData?.adminGetTodaySessions ?? [];
   const onlineSessions = todaySessions.filter((s) => s.isOnline);
-  const [selectedSession, setSelectedSession] = useState<VisitorSessionItem | null>(null);
-
-  // Today in Tashkent (UTC+5)
-  const todayStr = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const todayStat = visitorStats.find((s) => s.date === todayStr);
   const allAnn: Announcement[] = annData?.adminGetAllAnnouncements ?? [];
   const stats: DashboardStats | null = statsData?.adminGetDashboardStats ?? null;
+
+  const todayStr = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const todayStat = visitorStats.find((s) => s.date === todayStr);
 
   const userTabs = [
     allUsers,
@@ -235,6 +345,17 @@ const AdminPage = () => {
     allUsers.filter((u) => u.userType === UserType.FREELANCER),
     allUsers.filter((u) => u.userStatus === UserStatus.SPAM),
   ];
+
+  const filteredUsers = userTabs[userFilterTab].filter(
+    (u) =>
+      !userSearch ||
+      u.username?.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.fullName?.toLowerCase().includes(userSearch.toLowerCase()),
+  );
+
+  const filteredJobs = allJobs.filter(
+    (j) => !jobSearch || j.title?.toLowerCase().includes(jobSearch.toLowerCase()),
+  );
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const notify = (msg: string, isError = false) => {
@@ -244,8 +365,6 @@ const AdminPage = () => {
   };
 
   // ── Handlers ───────────────────────────────────────────────────────────────
-
-  // When admin picks SPAM from dropdown → open reason dialog first
   const handleStatusChange = (userId: string, username: string, newStatus: UserStatus) => {
     if (newStatus === UserStatus.SPAM) {
       setSpamReason('');
@@ -260,10 +379,10 @@ const AdminPage = () => {
       await changeStatus({
         variables: { input: { userId, newStatus, spamReason: reason || undefined } },
       });
-      notify(`User status updated to ${newStatus}.`);
+      notify(`Foydalanuvchi holati ${newStatus} ga o'zgartirildi.`);
       refetchUsers();
     } catch (err: any) {
-      notify(err?.graphQLErrors?.[0]?.message ?? 'Failed to update status', true);
+      notify(err?.graphQLErrors?.[0]?.message ?? 'Holat o\'zgartirish muvaffaqiyatsiz', true);
     }
     setSpamDialog({ open: false, userId: '', username: '' });
   };
@@ -271,10 +390,10 @@ const AdminPage = () => {
   const handleChangeRole = async (userId: string, role: UserType) => {
     try {
       await changeRole({ variables: { input: { userId, newRole: role } } });
-      notify('Role updated.');
+      notify('Rol yangilandi.');
       refetchUsers();
     } catch (err: any) {
-      notify(err?.graphQLErrors?.[0]?.message ?? 'Failed to update role', true);
+      notify(err?.graphQLErrors?.[0]?.message ?? 'Rol o\'zgartirish muvaffaqiyatsiz', true);
     }
   };
 
@@ -286,39 +405,39 @@ const AdminPage = () => {
     const { userId, username } = deleteDialog;
     try {
       await deleteUser({ variables: { userId } });
-      notify(`User "@${username}" deleted.`);
+      notify(`"@${username}" o'chirildi.`);
       refetchUsers();
     } catch (err: any) {
-      notify(err?.graphQLErrors?.[0]?.message ?? 'Failed to delete', true);
+      notify(err?.graphQLErrors?.[0]?.message ?? 'O\'chirib bo\'lmadi', true);
     }
     setDeleteDialog({ open: false, userId: '', username: '' });
   };
 
   const handleDeleteJob = async (jobId: string, title: string) => {
-    if (!window.confirm(`Delete job "${title}"?`)) return;
+    if (!window.confirm(`"${title}" e'lonini o'chirasizmi?`)) return;
     try {
       await deleteJob({ variables: { jobId } });
-      notify('Job deleted.');
+      notify('E\'lon o\'chirildi.');
       refetchJobs();
     } catch (err: any) {
-      notify(err?.graphQLErrors?.[0]?.message ?? 'Failed to delete job', true);
+      notify(err?.graphQLErrors?.[0]?.message ?? 'O\'chirib bo\'lmadi', true);
     }
   };
 
   const handleDeletePost = async (postId: string, title: string) => {
-    if (!window.confirm(`Delete post "${title}"?`)) return;
+    if (!window.confirm(`"${title}" maqolasini o'chirasizmi?`)) return;
     try {
       await deletePost({ variables: { postId } });
-      notify('Post deleted.');
+      notify('Maqola o\'chirildi.');
       refetchPosts();
     } catch (err: any) {
-      notify(err?.graphQLErrors?.[0]?.message ?? 'Failed to delete post', true);
+      notify(err?.graphQLErrors?.[0]?.message ?? 'O\'chirib bo\'lmadi', true);
     }
   };
 
   const handleCreateAnnouncement = async () => {
     if (!annTitle.trim() || !annBody.trim()) {
-      notify('Title and body are required.', true);
+      notify('Sarlavha va matn talab qilinadi.', true);
       return;
     }
     try {
@@ -332,12 +451,14 @@ const AdminPage = () => {
           },
         },
       });
-      notify('Announcement created and sent to all users!');
+      notify("E'lon yaratildi va foydalanuvchilarga yuborildi!");
       setAnnouncementDialog(false);
-      setAnnTitle(''); setAnnBody(''); setAnnImageUrl('');
+      setAnnTitle('');
+      setAnnBody('');
+      setAnnImageUrl('');
       refetchAnn();
     } catch (err: any) {
-      notify(err?.graphQLErrors?.[0]?.message ?? 'Failed to create', true);
+      notify(err?.graphQLErrors?.[0]?.message ?? 'Yaratib bo\'lmadi', true);
     }
   };
 
@@ -346,40 +467,41 @@ const AdminPage = () => {
       await toggleAnnouncement({ variables: { announcementId: id } });
       refetchAnn();
     } catch (err: any) {
-      notify(err?.graphQLErrors?.[0]?.message ?? 'Failed', true);
+      notify(err?.graphQLErrors?.[0]?.message ?? 'Muvaffaqiyatsiz', true);
     }
   };
 
   const handleDeleteAnn = async (id: string, title: string) => {
-    if (!window.confirm(`Delete announcement "${title}"?`)) return;
+    if (!window.confirm(`"${title}" e'lonini o'chirasizmi?`)) return;
     try {
       await deleteAnnouncement({ variables: { announcementId: id } });
-      notify('Announcement deleted.');
+      notify("E'lon o'chirildi.");
       refetchAnn();
     } catch (err: any) {
-      notify(err?.graphQLErrors?.[0]?.message ?? 'Failed', true);
+      notify(err?.graphQLErrors?.[0]?.message ?? 'Muvaffaqiyatsiz', true);
     }
   };
 
   const handleSendNotification = async () => {
     if (!notifTitle.trim() || !notifBody.trim()) {
-      notify('Title and message are required.', true);
+      notify('Sarlavha va xabar talab qilinadi.', true);
       return;
     }
     try {
       if (notifDialog.broadcast) {
         await sendBroadcast({ variables: { title: notifTitle, description: notifBody } });
-        notify('Broadcast sent to all users!');
+        notify('Xabar barcha foydalanuvchilarga yuborildi!');
       } else {
         await sendNotification({
           variables: { userId: notifDialog.userId, title: notifTitle, description: notifBody },
         });
-        notify(`Notification sent to @${notifDialog.username}`);
+        notify(`Xabar @${notifDialog.username} ga yuborildi`);
       }
       setNotifDialog({ open: false, userId: '', username: '', broadcast: false });
-      setNotifTitle(''); setNotifBody('');
+      setNotifTitle('');
+      setNotifBody('');
     } catch (err: any) {
-      notify(err?.graphQLErrors?.[0]?.message ?? 'Failed to send', true);
+      notify(err?.graphQLErrors?.[0]?.message ?? 'Yuborib bo\'lmadi', true);
     }
   };
 
@@ -391,1066 +513,1481 @@ const AdminPage = () => {
   // ── Access guard ───────────────────────────────────────────────────────────
   if (!isAdmin) {
     return (
-      <Box sx={{ textAlign: 'center', py: 12 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-          <ShieldCheck size={48} color="#dc2626" weight="fill" />
-        </Box>
-        <Typography variant="h6" fontWeight={700} mb={1}>Access Denied</Typography>
-        <Typography color="text.secondary" fontSize={14} mb={3}>
-          This page is only accessible to administrators.
-        </Typography>
-        <Link href="/_admin/login" style={{ textDecoration: 'none' }}>
-          <Button variant="contained" sx={{ bgcolor: '#dc2626', '&:hover': { bgcolor: '#b91c1c' } }}>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="material-symbols-outlined text-3xl text-red-600">shield</span>
+          </div>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Kirish taqiqlangan</h2>
+          <p className="text-slate-500 text-sm mb-6">
+            Bu sahifa faqat administratorlar uchun.
+          </p>
+          <Link
+            href="/_admin/login"
+            className="px-6 py-3 bg-red-600 text-white rounded-xl font-semibold text-sm hover:bg-red-700 transition-colors"
+          >
             Admin Login
-          </Button>
-        </Link>
-      </Box>
+          </Link>
+        </div>
+      </div>
     );
   }
+
+  // ── Dashboard section ──────────────────────────────────────────────────────
+  const chartData = visitorStats
+    .slice(-7)
+    .map((s) => ({ label: s.date.slice(5), value: s.visits }));
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
-      <Head><title>Admin Panel — BuFu</title></Head>
+      <Head>
+        <title>Admin Panel — BuFu</title>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        />
+      </Head>
 
-      {/* Header row */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Stack direction="row" alignItems="center" spacing={1.5}>
-            <ShieldCheck size={24} color="#4f46e5" weight="fill" />
-            <Box>
-              <Typography variant="h5" fontWeight={800} lineHeight={1}>Admin Panel</Typography>
-              <Typography color="text.secondary" fontSize={12}>Welcome, @{user.username}</Typography>
-            </Box>
-          </Stack>
-        </Box>
-        <Stack direction="row" spacing={1}>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<AddIcon size={20} />}
-            onClick={() => { setActiveTab(5); setNotifDialog({ open: false, userId: '', username: '', broadcast: true }); }}
-            sx={{ fontSize: 12, borderColor: '#e2e8f0', color: '#64748b' }}
-          >
-            Broadcast
-          </Button>
-          <Button
-            size="small"
-            color="error"
-            variant="outlined"
-            startIcon={<LogoutIcon size={20} />}
-            onClick={handleLogout}
-            sx={{ fontSize: 12 }}
-          >
-            Log Out
-          </Button>
-        </Stack>
-      </Stack>
+      <style>{`
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+          font-family: 'Material Symbols Outlined';
+          font-style: normal;
+          display: inline-block;
+          white-space: nowrap;
+          word-wrap: normal;
+          direction: ltr;
+          vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card {
+          background: rgba(255,255,255,0.8);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(226,232,240,0.8);
+        }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c7c4d8; border-radius: 10px; }
+      `}</style>
 
-      {errorMsg && <Alert severity="error" sx={{ mb: 2 }}>{errorMsg}</Alert>}
-      {successMsg && <Alert severity="success" sx={{ mb: 2 }}>{successMsg}</Alert>}
+      <div className="flex min-h-screen bg-slate-50 font-sans">
+        {/* Sidebar */}
+        <Sidebar
+          activeSection={activeSection}
+          onNav={(id) => setActiveSection(id)}
+          onLogout={handleLogout}
+          username={user.username ?? 'admin'}
+        />
 
-      {/* Main Tabs */}
-      <Box sx={{ borderBottom: '1px solid #e2e8f0', mb: 3 }}>
-        <Tabs
-          value={activeTab}
-          onChange={(_, v) => setActiveTab(v)}
-          sx={{
-            '& .MuiTab-root': { fontSize: 13, textTransform: 'none', minWidth: 100 },
-            '& .Mui-selected': { color: '#4f46e5', fontWeight: 700 },
-            '& .MuiTabs-indicator': { bgcolor: '#4f46e5' },
-          }}
-        >
-          <Tab icon={<ChartBar size={15} />} iconPosition="start" label="Stats" />
-          <Tab icon={<Users size={15} />} iconPosition="start" label={`Users (${allUsers.length})`} />
-          <Tab icon={<Briefcase size={15} />} iconPosition="start" label={`Jobs (${stats?.totalJobs ?? allJobs.length})`} />
-          <Tab icon={<Newspaper size={15} />} iconPosition="start" label={`Posts (${stats?.totalPosts ?? allPosts.length})`} />
-          <Tab icon={<Megaphone size={15} />} iconPosition="start" label="Announcements" />
-          <Tab icon={<Bell size={15} />} iconPosition="start" label="Notifications" />
-        </Tabs>
-      </Box>
-
-      {/* ── TAB 0: Stats ────────────────────────────────────────────────── */}
-      {activeTab === 0 && (
-        <Box>
-          {statsLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-              <CircularProgress sx={{ color: '#4f46e5' }} />
-            </Box>
-          ) : stats ? (
-            <>
-              <Typography fontWeight={700} mb={2} color="#64748b" fontSize={13} textTransform="uppercase" letterSpacing={1}>
-                Platform Overview
-              </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 2, mb: 4 }}>
-                {[
-                  { label: 'Total Users', value: stats.totalUsers, color: '#4f46e5', icon: <Users size={20} color="#4f46e5" weight="fill" /> },
-                  { label: 'Agents', value: stats.totalAgents, color: '#0891b2', icon: <House size={20} color="#0891b2" weight="fill" /> },
-                  { label: 'Freelancers', value: stats.totalFreelancers, color: '#16a34a', icon: <Briefcase size={20} color="#16a34a" weight="fill" /> },
-                  { label: 'Total Jobs', value: stats.totalJobs, color: '#7c3aed', icon: <ClipboardText size={20} color="#7c3aed" weight="fill" /> },
-                  { label: 'Open Jobs', value: stats.activeJobs, color: '#d97706', icon: <LockOpen size={20} color="#d97706" weight="fill" /> },
-                  { label: 'Total Posts', value: stats.totalPosts, color: '#0891b2', icon: <Newspaper size={20} color="#0891b2" weight="fill" /> },
-                  { label: 'Announcements', value: stats.totalAnnouncements, color: '#16a34a', icon: <Megaphone size={20} color="#16a34a" weight="fill" /> },
-                  { label: 'Spammed Users', value: stats.spammedUsers, color: '#dc2626', icon: <ProhibitInset size={20} color="#dc2626" weight="fill" /> },
-                  {
-                    label: 'Budget Posted',
-                    value: `$${Number(stats.totalBudgetPosted ?? 0).toLocaleString()}`,
-                    color: '#059669',
-                    icon: <CurrencyDollar size={20} color="#059669" weight="fill" />,
-                  },
-                ].map((s) => (
-                  <Box
-                    key={s.label}
-                    sx={{
-                      p: 2.5,
-                      bgcolor: 'white',
-                      borderRadius: 2,
-                      border: '1px solid #e2e8f0',
-                      boxShadow: '0 1px 3px rgba(0,0,0,.04)',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', mb: 0.75 }}>{s.icon}</Box>
-                    <Typography fontSize={26} fontWeight={900} color={s.color} lineHeight={1}>
-                      {s.value}
-                    </Typography>
-                    <Typography fontSize={12} color="text.secondary" mt={0.5}>{s.label}</Typography>
-                  </Box>
-                ))}
-              </Box>
-
-              <Divider sx={{ mb: 3 }} />
-              <Typography fontWeight={700} mb={2} color="#64748b" fontSize={13} textTransform="uppercase" letterSpacing={1}>
-                Quick Actions
-              </Typography>
-              <Stack direction="row" spacing={2} flexWrap="wrap">
-                <Button
-                  variant="contained"
-                  startIcon={<Megaphone size={16} />}
-                  onClick={() => { setActiveTab(4); setAnnouncementDialog(true); }}
-                  sx={{ bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' }, fontSize: 13 }}
-                >
-                  New Announcement
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<Bell size={16} />}
-                  onClick={() => setNotifDialog({ open: true, userId: '', username: '', broadcast: true })}
-                  sx={{ fontSize: 13, borderColor: '#e2e8f0', color: '#64748b' }}
-                >
-                  Broadcast Notification
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<Users size={16} />}
-                  onClick={() => setActiveTab(1)}
-                  sx={{ fontSize: 13, borderColor: '#e2e8f0', color: '#64748b' }}
-                >
-                  Manage Users
-                </Button>
-              </Stack>
-            </>
-          ) : (
-            <Typography color="text.secondary">No stats available.</Typography>
-          )}
-
-          {/* ── Visitor Stats toggle button ── */}
-          <Box mt={3}>
-            <Button
-              variant="outlined"
-              startIcon={<ChartLineUp size={16} weight="bold" />}
-              endIcon={showVisitorStats ? <CaretUp size={14} /> : <CaretDown size={14} />}
-              onClick={() => setShowVisitorStats((v) => !v)}
-              sx={{
-                fontSize: 13, fontWeight: 600,
-                borderColor: '#4f46e5', color: '#4f46e5',
-                '&:hover': { bgcolor: '#ede9fe', borderColor: '#4338ca' },
-              }}
-            >
-              Tashrif buyuruvchilar statistikasi
-            </Button>
-          </Box>
-
-          {/* ── Visitor Stats panel ── */}
-          {showVisitorStats && (
-            <Box mt={2} sx={{ border: '1px solid #e2e8f0', borderRadius: 2, p: 2.5 }}>
-
-              {/* Today highlight */}
-              {todayStat && (
-                <Box sx={{ bgcolor: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 2, p: 2, mb: 3 }}>
-                  <Stack direction="row" alignItems="center" spacing={1} mb={1.5}>
-                    <Circle size={10} color="#16a34a" weight="fill" />
-                    <Typography fontWeight={700} fontSize={13} color="#16a34a">Bugun — {todayStr}</Typography>
-                    <CalendarBlank size={14} color="#16a34a" />
-                    {onlineSessions.length > 0 && (
-                      <Chip label={`${onlineSessions.length} online`} size="small" sx={{ bgcolor: '#16a34a', color: '#fff', fontSize: 10, height: 20, ml: 1 }} />
-                    )}
-                  </Stack>
-                  <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-                    <Box sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2.5, py: 1.5, border: '1px solid #e2e8f0' }}>
-                      <Stack direction="row" justifyContent="center" mb={0.5}><Eye size={16} color="#4f46e5" /></Stack>
-                      <Typography fontSize={24} fontWeight={800} color="#4f46e5" lineHeight={1}>{todayStat.visits}</Typography>
-                      <Typography fontSize={11} color="#64748b" mt={0.5}>Tashriflar</Typography>
-                    </Box>
-                    <Box
-                      onClick={() => { setDetailModal({ open: true, date: todayStr, event: 'register', label: "Ro'yxatdan o'tganlar" }); fetchUserDetails({ variables: { date: todayStr, event: 'register' } }); }}
-                      sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2.5, py: 1.5, border: '1px solid #e2e8f0', cursor: 'pointer', '&:hover': { bgcolor: '#dcfce7', borderColor: '#86efac' } }}
-                    >
-                      <Stack direction="row" justifyContent="center" mb={0.5}><UserPlus size={16} color="#16a34a" /></Stack>
-                      <Typography fontSize={24} fontWeight={800} color="#16a34a" lineHeight={1}>{todayStat.registrations}</Typography>
-                      <Typography fontSize={11} color="#64748b" mt={0.5}>Ro'yxatdan o'tdi</Typography>
-                    </Box>
-                    <Box
-                      onClick={() => { setDetailModal({ open: true, date: todayStr, event: 'login', label: "Login bo'lganlar" }); fetchUserDetails({ variables: { date: todayStr, event: 'login' } }); }}
-                      sx={{ textAlign: 'center', bgcolor: '#fff', borderRadius: 1.5, px: 2.5, py: 1.5, border: '1px solid #e2e8f0', cursor: 'pointer', '&:hover': { bgcolor: '#fef3c7', borderColor: '#fcd34d' } }}
-                    >
-                      <Stack direction="row" justifyContent="center" mb={0.5}><SignIn size={16} color="#d97706" /></Stack>
-                      <Typography fontSize={24} fontWeight={800} color="#d97706" lineHeight={1}>{todayStat.logins}</Typography>
-                      <Typography fontSize={11} color="#64748b" mt={0.5}>Login bo'ldi</Typography>
-                    </Box>
-                  </Stack>
-                </Box>
-              )}
-
-            {/* Sessions filter + table */}
-            <Box sx={{ overflowX: 'auto', mb: 3 }}>
-              <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5} flexWrap="wrap" gap={1}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Eye size={15} color="#4f46e5" />
-                  <Typography fontSize={13} fontWeight={600} color="#374151">
-                    {sessionDate ? `${sessionDate} tashriflari` : 'Bugungi tashriflar'} ({todaySessions.length})
-                  </Typography>
-                  {!sessionDate && onlineSessions.length > 0 && (
-                    <Chip label={`${onlineSessions.length} online`} size="small" sx={{ bgcolor: '#16a34a', color: '#fff', fontSize: 10, height: 20 }} />
-                  )}
-                </Stack>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <CalendarBlank size={15} color="#64748b" />
-                  <TextField
-                    type="date"
-                    size="small"
-                    value={sessionDate}
-                    onChange={(e) => { setSessionDate(e.target.value); setTimeout(() => refetchSessions(), 0); }}
-                    inputProps={{ max: todayStr }}
-                    sx={{ '& .MuiInputBase-input': { fontSize: 12, py: 0.5, px: 1 }, width: 145 }}
-                  />
-                  {sessionDate && (
-                    <Button size="small" variant="text" sx={{ fontSize: 11, color: '#64748b' }}
-                      onClick={() => { setSessionDate(''); setTimeout(() => refetchSessions(), 0); }}>
-                      Bugun
-                    </Button>
-                  )}
-                  <Button size="small" variant="text" sx={{ fontSize: 11 }} onClick={() => refetchSessions()}>Yangilash</Button>
-                </Stack>
-              </Stack>
-
-              {todaySessions.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 4, color: '#94a3b8' }}>
-                  <PersonSimple size={32} color="#cbd5e1" />
-                  <Typography fontSize={13} mt={1}>Bu kunda tashrif yo'q</Typography>
-                </Box>
-              ) : (
-                <Table size="small">
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Holat</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Foydalanuvchi</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Qurilma</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>OS / Brauzer</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Sahifalar</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Kirdi</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Chiqdi</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {[...todaySessions].sort((a, b) => (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0)).map((s) => (
-                      <TableRow key={s.sessionId} hover onClick={() => setSelectedSession(s)} sx={{ cursor: 'pointer', bgcolor: s.isOnline ? '#f0fdf4' : undefined }}>
-                        <TableCell>
-                          <Stack direction="row" alignItems="center" spacing={0.5}>
-                            <Circle size={8}
-                              color={s.isOnline ? '#16a34a' : s.endedAt ? '#94a3b8' : '#f59e0b'}
-                              weight="fill" />
-                            <Typography fontSize={11} fontWeight={600}
-                              color={s.isOnline ? '#16a34a' : s.endedAt ? '#94a3b8' : '#f59e0b'}>
-                              {s.isOnline ? 'Online' : s.endedAt ? 'Chiqdi' : 'Faolsiz'}
-                            </Typography>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          {s.userName ? (
-                            <Typography fontSize={11} fontWeight={600} color="#374151">{s.userName}</Typography>
-                          ) : (
-                            <Typography fontSize={11} color="#94a3b8" fontStyle="italic">Guest</Typography>
-                          )}
-                        </TableCell>
-                        <TableCell><Typography fontSize={11}>{s.device}</Typography></TableCell>
-                        <TableCell><Typography fontSize={11}>{s.os} / {s.browser}</Typography></TableCell>
-                        <TableCell><Chip label={s.pages.length} size="small" sx={{ bgcolor: '#ede9fe', color: '#4f46e5', fontSize: 10 }} /></TableCell>
-                        <TableCell sx={{ fontSize: 11, fontFamily: 'monospace' }}>{new Date(s.startedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}</TableCell>
-                        <TableCell sx={{ fontSize: 11, fontFamily: 'monospace', color: '#94a3b8' }}>
-                          {s.endedAt
-                            ? new Date(s.endedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })
-                            : s.isOnline ? '—' : (
-                              <Tooltip title="Tab yopilmagan, oxirgi faollik vaqti">
-                                <span style={{ color: '#f59e0b' }}>
-                                  ~{new Date(s.lastSeenAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              </Tooltip>
-                            )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </Box>
-
-              {/* 14-day table */}
-              {visitorStats.length > 0 && (
-                <Box sx={{ overflowX: 'auto' }}>
-                  <Stack direction="row" alignItems="center" spacing={1} mb={1.5}>
-                    <CalendarBlank size={15} color="#64748b" />
-                    <Typography fontSize={13} fontWeight={600} color="#374151">So'nggi 14 kun</Typography>
-                  </Stack>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                        <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Sana</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12 }}>
-                          <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5}>
-                            <Eye size={12} color="#4f46e5" /><span style={{ color: '#4f46e5' }}>Tashriflar</span>
-                          </Stack>
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12 }}>
-                          <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5}>
-                            <UserPlus size={12} color="#16a34a" /><span style={{ color: '#16a34a' }}>Ro'yxatdan</span>
-                          </Stack>
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 700, fontSize: 12 }}>
-                          <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.5}>
-                            <SignIn size={12} color="#d97706" /><span style={{ color: '#d97706' }}>Login</span>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {[...visitorStats].reverse().map((s) => (
-                        <TableRow key={s.date} hover sx={s.date === todayStr ? { bgcolor: '#f0fdf4' } : {}}>
-                          <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', fontWeight: s.date === todayStr ? 700 : 400 }}>
-                            <Stack direction="row" alignItems="center" spacing={0.5}>
-                              {s.date === todayStr && <Circle size={8} color="#16a34a" weight="fill" />}
-                              <span>{s.date}</span>
-                              {s.date === todayStr && <Chip label="bugun" size="small" sx={{ bgcolor: '#16a34a', color: '#fff', fontSize: 10, height: 18 }} />}
-                            </Stack>
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip label={s.visits} size="small" sx={{ bgcolor: '#ede9fe', color: '#4f46e5', fontWeight: 700, fontSize: 11 }} />
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip
-                              label={s.registrations}
-                              size="small"
-                              onClick={() => { setDetailModal({ open: true, date: s.date, event: 'register', label: "Ro'yxatdan o'tganlar" }); fetchUserDetails({ variables: { date: s.date, event: 'register' } }); }}
-                              sx={{ bgcolor: '#dcfce7', color: '#16a34a', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip
-                              label={s.logins}
-                              size="small"
-                              onClick={() => { setDetailModal({ open: true, date: s.date, event: 'login', label: "Login bo'lganlar" }); fetchUserDetails({ variables: { date: s.date, event: 'login' } }); }}
-                              sx={{ bgcolor: '#fef3c7', color: '#d97706', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Box>
-              )}
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {/* ── TAB 1: Users ────────────────────────────────────────────────── */}
-      {activeTab === 1 && (
-        <Box>
-          {/* Sub-tabs for user filter */}
-          <Stack direction="row" spacing={1} mb={2} flexWrap="wrap">
-            {['All', 'Agents', 'Freelancers', 'Spam'].map((label, i) => (
-              <Button
-                key={label}
-                size="small"
-                variant={userFilterTab === i ? 'contained' : 'outlined'}
-                onClick={() => setUserFilterTab(i)}
-                sx={{
-                  fontSize: 12,
-                  bgcolor: userFilterTab === i ? '#4f46e5' : 'transparent',
-                  borderColor: '#e2e8f0',
-                  color: userFilterTab === i ? 'white' : '#64748b',
-                  '&:hover': { bgcolor: userFilterTab === i ? '#4338ca' : '#f1f5f9' },
+        {/* Main */}
+        <main className="ml-64 flex-1 flex flex-col min-h-screen">
+          {/* Top header */}
+          <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-slate-800">
+                {NAV_ITEMS.find((n) => n.id === activeSection)?.label ?? 'Boshqaruv paneli'}
+              </h1>
+              <p className="text-xs text-slate-400 mt-0.5">Platformaning bugungi holatini kuzating</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {/* Search */}
+              <div className="relative hidden lg:block">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">
+                  search
+                </span>
+                <input
+                  className="pl-9 pr-4 py-2 text-sm bg-slate-100 border border-slate-200 rounded-xl w-56 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"
+                  placeholder="Qidirish..."
+                  type="text"
+                />
+              </div>
+              {/* Notifications */}
+              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+                <span className="material-symbols-outlined text-[20px]">notifications</span>
+              </button>
+              {/* Broadcast shortcut */}
+              <button
+                onClick={() => {
+                  setActiveSection('announcements');
+                  setNotifDialog({ open: true, userId: '', username: '', broadcast: true });
                 }}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors"
               >
-                {label} ({userTabs[i].length})
-              </Button>
-            ))}
-          </Stack>
+                <span className="material-symbols-outlined text-[16px]">campaign</span>
+                Broadcast
+              </button>
+            </div>
+          </header>
 
-          {usersLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-              <CircularProgress sx={{ color: '#4f46e5' }} />
-            </Box>
-          ) : (
-            <Box sx={{ overflowX: 'auto' }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ '& th': { fontWeight: 700, fontSize: 12, color: '#64748b', borderBottom: '2px solid #e2e8f0' } }}>
-                    <TableCell>#</TableCell>
-                    <TableCell>Username</TableCell>
-                    <TableCell>Full Name</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Spam Reason</TableCell>
-                    <TableCell>Joined</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {userTabs[userFilterTab].map((u, idx) => (
-                    <TableRow key={u._id} hover sx={{ '& td': { fontSize: 13, py: 1.5 } }}>
-                      <TableCell sx={{ color: '#94a3b8' }}>{idx + 1}</TableCell>
-                      <TableCell>
-                        <Link href={`/profile/${u._id}`} style={{ textDecoration: 'none' }}>
-                          <Typography fontSize={13} fontWeight={600} color="#4f46e5">
-                            @{u.username}
-                          </Typography>
-                        </Link>
-                      </TableCell>
-                      <TableCell sx={{ color: '#475569' }}>{u.fullName ?? '—'}</TableCell>
+          {/* Alert banners */}
+          {errorMsg && (
+            <div className="mx-8 mt-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">error</span>
+              {errorMsg}
+            </div>
+          )}
+          {successMsg && (
+            <div className="mx-8 mt-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+              {successMsg}
+            </div>
+          )}
 
-                      {/* Role */}
-                      <TableCell>
-                        {u.userType === UserType.ADMIN ? (
-                          <Chip label="ADMIN" size="small" sx={{ bgcolor: '#1e1b4b', color: 'white', fontSize: 10 }} />
-                        ) : (
-                          <Select
-                            value={u.userType}
-                            size="small"
-                            onChange={(e) => handleChangeRole(u._id, e.target.value as UserType)}
-                            sx={{ fontSize: 12, height: 28 }}
+          {/* Content area */}
+          <div className="flex-1 p-8">
+
+            {/* ── DASHBOARD ──────────────────────────────────────────────── */}
+            {activeSection === 'dashboard' && (
+              <div className="space-y-6">
+                {/* Stats grid */}
+                {statsLoading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : stats ? (
+                  <>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      <StatCard
+                        icon="group"
+                        iconBg="bg-indigo-50"
+                        iconColor="text-indigo-600"
+                        label="Jami foydalanuvchilar"
+                        value={stats.totalUsers?.toLocaleString() ?? '—'}
+                        badge="+12%"
+                        badgeColor="bg-green-50 text-green-600"
+                      />
+                      <StatCard
+                        icon="work"
+                        iconBg="bg-purple-50"
+                        iconColor="text-purple-600"
+                        label="Faol ishlar"
+                        value={stats.activeJobs?.toLocaleString() ?? '—'}
+                        badge="+5%"
+                        badgeColor="bg-green-50 text-green-600"
+                      />
+                      <StatCard
+                        icon="payments"
+                        iconBg="bg-emerald-50"
+                        iconColor="text-emerald-600"
+                        label="Jami byudjet"
+                        value={`$${Number(stats.totalBudgetPosted ?? 0).toLocaleString()}`}
+                        badge="Barcha vaqt"
+                        badgeColor="bg-slate-100 text-slate-500"
+                      />
+                      <StatCard
+                        icon="pending_actions"
+                        iconBg="bg-red-50"
+                        iconColor="text-red-500"
+                        label="Spam foydalanuvchilar"
+                        value={stats.spammedUsers ?? 0}
+                        badge="Shoshilinch"
+                        badgeColor="bg-red-50 text-red-500"
+                      />
+                    </div>
+
+                    {/* Secondary stats */}
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                      {[
+                        { label: 'Agentlar', value: stats.totalAgents, color: 'text-cyan-600' },
+                        { label: 'Frilanserlar', value: stats.totalFreelancers, color: 'text-violet-600' },
+                        { label: 'Jami ishlar', value: stats.totalJobs, color: 'text-indigo-600' },
+                        { label: 'Maqolalar', value: stats.totalPosts, color: 'text-sky-600' },
+                        { label: 'E\'lonlar', value: stats.totalAnnouncements, color: 'text-emerald-600' },
+                      ].map((s) => (
+                        <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4">
+                          <p className="text-xs text-slate-400 mb-1">{s.label}</p>
+                          <p className={`text-2xl font-extrabold ${s.color}`}>{s.value ?? 0}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-slate-400 text-sm">Ma'lumot yo'q.</p>
+                )}
+
+                {/* Bento grid: charts + moderation */}
+                <div className="grid grid-cols-12 gap-4">
+                  {/* Growth chart */}
+                  <div className="col-span-12 lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-base font-bold text-slate-800">Platforma o'sishi (tashriflar)</h2>
+                      <select className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 outline-none">
+                        <option>Oxirgi 7 kun</option>
+                        <option>Oxirgi 14 kun</option>
+                      </select>
+                    </div>
+                    {chartData.length > 0 ? (
+                      <BarChart data={chartData} />
+                    ) : (
+                      <div className="h-32 flex items-center justify-center bg-slate-50 rounded-xl">
+                        <p className="text-xs text-slate-400">Ma'lumot yuklanmoqda...</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Visitor stats mini card */}
+                  <div className="col-span-12 lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <h2 className="text-base font-bold text-slate-800 mb-4">Bugungi statistika</h2>
+                    {todayStat ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-xl">
+                          <div>
+                            <p className="text-xs text-indigo-400 font-medium">Tashriflar</p>
+                            <p className="text-2xl font-extrabold text-indigo-600">{todayStat.visits}</p>
+                          </div>
+                          <span className="material-symbols-outlined text-indigo-300 text-3xl">visibility</span>
+                        </div>
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => {
+                              setDetailModal({ open: true, date: todayStr, event: 'register', label: "Ro'yxatdan o'tganlar" });
+                              fetchUserDetails({ variables: { date: todayStr, event: 'register' } });
+                            }}
+                            className="flex-1 p-3 bg-green-50 rounded-xl text-center hover:bg-green-100 transition-colors cursor-pointer"
                           >
-                            <MenuItem value={UserType.AGENT} sx={{ fontSize: 12 }}>Agent</MenuItem>
-                            <MenuItem value={UserType.FREELANCER} sx={{ fontSize: 12 }}>Freelancer</MenuItem>
-                          </Select>
-                        )}
-                      </TableCell>
-
-                      {/* Status */}
-                      <TableCell>
-                        {u.userType === UserType.ADMIN ? (
-                          <Chip label="ACTIVE" size="small" sx={{ bgcolor: '#dcfce7', color: '#16a34a', fontSize: 10 }} />
-                        ) : (
-                          <Select
-                            value={u.userStatus}
-                            size="small"
-                            onChange={(e) => handleStatusChange(u._id, u.username, e.target.value as UserStatus)}
-                            sx={{ fontSize: 12, height: 28, color: STATUS_COLOR[u.userStatus] }}
+                            <p className="text-xs text-green-500 font-medium">Ro'yxatdan</p>
+                            <p className="text-xl font-extrabold text-green-600">{todayStat.registrations}</p>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDetailModal({ open: true, date: todayStr, event: 'login', label: "Login bo'lganlar" });
+                              fetchUserDetails({ variables: { date: todayStr, event: 'login' } });
+                            }}
+                            className="flex-1 p-3 bg-amber-50 rounded-xl text-center hover:bg-amber-100 transition-colors cursor-pointer"
                           >
-                            <MenuItem value={UserStatus.ACTIVE} sx={{ fontSize: 12, color: '#16a34a' }}>Active</MenuItem>
-                            <MenuItem value={UserStatus.SPAM} sx={{ fontSize: 12, color: '#f59e0b' }}>Spam</MenuItem>
-                          </Select>
+                            <p className="text-xs text-amber-500 font-medium">Login</p>
+                            <p className="text-xl font-extrabold text-amber-600">{todayStat.logins}</p>
+                          </button>
+                        </div>
+                        {onlineSessions.length > 0 && (
+                          <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl">
+                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0" />
+                            <span className="text-xs font-semibold text-green-700">
+                              {onlineSessions.length} foydalanuvchi onlayn
+                            </span>
+                          </div>
                         )}
-                      </TableCell>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400">Bugun ma'lumot yo'q</p>
+                    )}
+                  </div>
 
-                      {/* Spam reason */}
-                      <TableCell sx={{ maxWidth: 180 }}>
-                        <Typography fontSize={11} color="#94a3b8" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {u.spamReason || '—'}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell sx={{ color: '#94a3b8', whiteSpace: 'nowrap' }}>
-                        {u.createdAt ? new Date(Number(u.createdAt)).toISOString().slice(0, 10) : '—'}
-                      </TableCell>
-
-                      {/* Action buttons */}
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5}>
-                          {u.userType !== UserType.ADMIN && (
-                            <>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                onClick={() => setNotifDialog({ open: true, userId: u._id, username: u.username, broadcast: false })}
-                                sx={{ fontSize: 10, py: 0.25, px: 0.75, borderColor: '#e2e8f0', color: '#4f46e5' }}
-                              >
-                                Notify
-                              </Button>
-                              <Tooltip title="Delete user">
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => handleDeleteUser(u._id, u.username)}
-                              >
-                                <Trash size={16} weight="bold" />
-                              </IconButton>
-                            </Tooltip>
-                            </>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {userTabs[userFilterTab].length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={8} sx={{ textAlign: 'center', py: 6, color: '#94a3b8' }}>
-                        No users in this category.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {/* ── TAB 2: Jobs ─────────────────────────────────────────────────── */}
-      {activeTab === 2 && (
-        <Box>
-          {jobsLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress sx={{ color: '#4f46e5' }} /></Box>
-          ) : (
-            <Box sx={{ overflowX: 'auto' }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ '& th': { fontWeight: 700, fontSize: 12, color: '#64748b', borderBottom: '2px solid #e2e8f0' } }}>
-                    <TableCell>#</TableCell>
-                    <TableCell>Title</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Budget</TableCell>
-                    <TableCell>Agent</TableCell>
-                    <TableCell>Bids</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {allJobs.map((j, idx) => (
-                    <TableRow key={j._id} hover sx={{ '& td': { fontSize: 13, py: 1.5 } }}>
-                      <TableCell sx={{ color: '#94a3b8' }}>{idx + 1}</TableCell>
-                      <TableCell>
-                        <Link href={`/jobs/${j._id}`} style={{ textDecoration: 'none' }}>
-                          <Typography fontSize={13} fontWeight={600} color="#4f46e5" sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {j.title}
-                          </Typography>
-                        </Link>
-                      </TableCell>
-                      <TableCell><Chip label={j.category} size="small" sx={{ fontSize: 10 }} /></TableCell>
-                      <TableCell>
-                        <Chip label={j.status} size="small"
-                          sx={{ bgcolor: `${JOB_STATUS_COLOR[j.status]}22`, color: JOB_STATUS_COLOR[j.status], fontSize: 10, fontWeight: 700 }}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>${j.budget}</TableCell>
-                      <TableCell sx={{ color: '#64748b' }}>{j.agentName ?? '—'}</TableCell>
-                      <TableCell sx={{ color: '#94a3b8' }}>{j.bidCount}</TableCell>
-                      <TableCell sx={{ color: '#94a3b8', whiteSpace: 'nowrap' }}>{j.createdAt?.slice(0, 10) ?? '—'}</TableCell>
-                      <TableCell>
-                        <Tooltip title="Delete job">
-                          <IconButton size="small" color="error" onClick={() => handleDeleteJob(j._id, j.title)}>
-                            <Trash size={16} weight="bold" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {allJobs.length === 0 && (
-                    <TableRow><TableCell colSpan={9} sx={{ textAlign: 'center', py: 6, color: '#94a3b8' }}>No jobs found.</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {/* ── TAB 3: Posts ────────────────────────────────────────────────── */}
-      {activeTab === 3 && (
-        <Box>
-          {postsLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress sx={{ color: '#4f46e5' }} /></Box>
-          ) : (
-            <Box sx={{ overflowX: 'auto' }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ '& th': { fontWeight: 700, fontSize: 12, color: '#64748b', borderBottom: '2px solid #e2e8f0' } }}>
-                    <TableCell>#</TableCell>
-                    <TableCell>Title</TableCell>
-                    <TableCell>Author</TableCell>
-                    <TableCell>Likes</TableCell>
-                    <TableCell>Views</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {allPosts.map((p, idx) => (
-                    <TableRow key={p._id} hover sx={{ '& td': { fontSize: 13, py: 1.5 } }}>
-                      <TableCell sx={{ color: '#94a3b8' }}>{idx + 1}</TableCell>
-                      <TableCell>
-                        <Typography fontSize={13} fontWeight={600} sx={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {p.title}
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={{ color: '#64748b' }}>{p.authorName}</TableCell>
-                      <TableCell sx={{ color: '#94a3b8' }}>
-                        <Stack direction="row" alignItems="center" spacing={0.5}>
-                          <Heart size={13} color="#ef4444" weight="fill" />
-                          <span>{p.likeCount}</span>
-                        </Stack>
-                      </TableCell>
-                      <TableCell sx={{ color: '#94a3b8' }}>
-                        <Stack direction="row" alignItems="center" spacing={0.5}>
-                          <Eye size={13} color="#94a3b8" />
-                          <span>{p.viewCount}</span>
-                        </Stack>
-                      </TableCell>
-                      <TableCell sx={{ color: '#94a3b8', whiteSpace: 'nowrap' }}>{p.createdAt?.slice(0, 10) ?? '—'}</TableCell>
-                      <TableCell>
-                        <Tooltip title="Delete post">
-                          <IconButton size="small" color="error" onClick={() => handleDeletePost(p._id, p.title)}>
-                            <Trash size={16} weight="bold" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {allPosts.length === 0 && (
-                    <TableRow><TableCell colSpan={7} sx={{ textAlign: 'center', py: 6, color: '#94a3b8' }}>No posts found.</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {/* ── TAB 4: Announcements ─────────────────────────────────────────── */}
-      {activeTab === 4 && (
-        <Box>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography fontWeight={700} fontSize={15}>Site-wide Announcements</Typography>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={() => setAnnouncementDialog(true)}
-              sx={{ bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' }, fontSize: 12 }}
-            >
-              New Announcement
-            </Button>
-          </Stack>
-
-          {annLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress sx={{ color: '#4f46e5' }} /></Box>
-          ) : (
-            <Stack spacing={2}>
-              {allAnn.map((a) => (
-                <Box
-                  key={a._id}
-                  sx={{
-                    p: 2.5,
-                    bgcolor: 'white',
-                    borderRadius: 2,
-                    border: `1px solid ${a.isActive ? '#e2e8f0' : '#fef3c7'}`,
-                    opacity: a.isActive ? 1 : 0.6,
-                  }}
-                >
-                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                    <Box flex={1}>
-                      <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
-                        <Chip
-                          label={a.announcementType}
-                          size="small"
-                          sx={{
-                            fontSize: 10, fontWeight: 700,
-                            bgcolor: a.announcementType === AnnouncementType.ADVERTISEMENT ? '#fef3c7' : '#eef2ff',
-                            color: a.announcementType === AnnouncementType.ADVERTISEMENT ? '#d97706' : '#4f46e5',
-                          }}
-                        />
-                        <Chip
-                          label={a.isActive ? 'Active' : 'Hidden'}
-                          size="small"
-                          sx={{
-                            fontSize: 10,
-                            bgcolor: a.isActive ? '#dcfce7' : '#f1f5f9',
-                            color: a.isActive ? '#16a34a' : '#94a3b8',
-                          }}
-                        />
-                        <Typography fontSize={11} color="#94a3b8">
-                          {a.createdAt?.slice(0, 10)}
-                        </Typography>
-                      </Stack>
-                      <Typography fontWeight={700} fontSize={14} mb={0.5}>{a.title}</Typography>
-                      <Typography fontSize={13} color="#64748b" sx={{ whiteSpace: 'pre-line' }}>
-                        {a.body.slice(0, 200)}{a.body.length > 200 ? '...' : ''}
-                      </Typography>
-                    </Box>
-
-                    <Stack direction="row" spacing={1} ml={2} flexShrink={0}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => handleToggleAnn(a._id)}
-                        sx={{ fontSize: 11, py: 0.25, px: 1, borderColor: '#e2e8f0', color: '#64748b' }}
+                  {/* Recent transactions / activity */}
+                  <div className="col-span-12 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                      <h2 className="text-base font-bold text-slate-800">So'nggi faollik</h2>
+                      <button
+                        onClick={() => setActiveSection('users')}
+                        className="text-xs font-semibold text-indigo-600 hover:underline"
                       >
-                        {a.isActive ? 'Hide' : 'Show'}
-                      </Button>
-                      <Button
-                        size="small"
-                        color="error"
-                        variant="outlined"
-                        onClick={() => handleDeleteAnn(a._id, a.title)}
-                        sx={{ fontSize: 11, py: 0.25, px: 1 }}
+                        Hammasi
+                      </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="border-b border-slate-100 bg-slate-50/60">
+                            <th className="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Foydalanuvchi</th>
+                            <th className="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Tur</th>
+                            <th className="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Holat</th>
+                            <th className="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Sana</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {allUsers.slice(0, 5).map((u) => (
+                            <tr key={u._id} className="hover:bg-slate-50/60 transition-colors">
+                              <td className="px-6 py-3">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0 overflow-hidden">
+                                    {u.profileImage ? (
+                                      <img src={u.profileImage} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                      (u.fullName || u.username)?.[0]?.toUpperCase()
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-slate-700">{u.fullName ?? u.username}</p>
+                                    <p className="text-xs text-slate-400">@{u.username}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-3">
+                                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                                  u.userType === UserType.FREELANCER
+                                    ? 'bg-indigo-50 text-indigo-600'
+                                    : u.userType === UserType.AGENT
+                                    ? 'bg-sky-50 text-sky-600'
+                                    : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {u.userType}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3">
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className="w-1.5 h-1.5 rounded-full"
+                                    style={{ backgroundColor: STATUS_COLOR[u.userStatus] ?? '#94a3b8' }}
+                                  />
+                                  <span className="text-xs font-semibold" style={{ color: STATUS_COLOR[u.userStatus] ?? '#94a3b8' }}>
+                                    {u.userStatus === 'ACTIVE' ? 'Faol' : u.userStatus === 'SPAM' ? 'Spam' : u.userStatus}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-3 text-xs text-slate-400">
+                                {u.createdAt
+                                  ? new Date(Number(u.createdAt)).toISOString().slice(0, 10)
+                                  : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Audience analysis */}
+                  <div className="col-span-12 lg:col-span-6 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <h2 className="text-base font-bold text-slate-800 mb-4">Foydalanuvchilar taqsimoti</h2>
+                    <div className="space-y-4">
+                      <ProgressBar
+                        label="Frilanserlar"
+                        value={
+                          stats && stats.totalUsers > 0
+                            ? Math.round((stats.totalFreelancers / stats.totalUsers) * 100)
+                            : 64
+                        }
+                        color="bg-indigo-500"
+                      />
+                      <ProgressBar
+                        label="Agentlar / Mijozlar"
+                        value={
+                          stats && stats.totalUsers > 0
+                            ? Math.round((stats.totalAgents / stats.totalUsers) * 100)
+                            : 36
+                        }
+                        color="bg-violet-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quick actions */}
+                  <div className="col-span-12 lg:col-span-6 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <h2 className="text-base font-bold text-slate-800 mb-4">Tezkor amallar</h2>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => { setActiveSection('announcements'); setAnnouncementDialog(true); }}
+                        className="flex items-center gap-2 px-3 py-3 bg-indigo-50 text-indigo-700 font-semibold text-sm rounded-xl hover:bg-indigo-100 transition-colors"
                       >
-                        Delete
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </Box>
-              ))}
+                        <span className="material-symbols-outlined text-[20px]">campaign</span>
+                        Yangi e'lon
+                      </button>
+                      <button
+                        onClick={() => setNotifDialog({ open: true, userId: '', username: '', broadcast: true })}
+                        className="flex items-center gap-2 px-3 py-3 bg-slate-50 text-slate-700 font-semibold text-sm rounded-xl hover:bg-slate-100 transition-colors border border-slate-200"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">notifications</span>
+                        Broadcast
+                      </button>
+                      <button
+                        onClick={() => setActiveSection('users')}
+                        className="flex items-center gap-2 px-3 py-3 bg-slate-50 text-slate-700 font-semibold text-sm rounded-xl hover:bg-slate-100 transition-colors border border-slate-200"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">group</span>
+                        Foydalanuvchilar
+                      </button>
+                      <button
+                        onClick={() => setActiveSection('jobs')}
+                        className="flex items-center gap-2 px-3 py-3 bg-slate-50 text-slate-700 font-semibold text-sm rounded-xl hover:bg-slate-100 transition-colors border border-slate-200"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">work</span>
+                        Ish e'lonlari
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-              {allAnn.length === 0 && (
-                <Box sx={{ textAlign: 'center', py: 8, color: '#94a3b8' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-                    <Megaphone size={40} color="#94a3b8" />
-                  </Box>
-                  <Typography>No announcements yet. Create the first one!</Typography>
-                </Box>
-              )}
-            </Stack>
-          )}
-        </Box>
-      )}
+                {/* Visitor stats toggle */}
+                <div>
+                  <button
+                    onClick={() => setShowVisitorStats((v) => !v)}
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-indigo-600 border border-indigo-200 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">bar_chart</span>
+                    Tashrif buyuruvchilar statistikasi
+                    <span className="material-symbols-outlined text-[16px]">
+                      {showVisitorStats ? 'expand_less' : 'expand_more'}
+                    </span>
+                  </button>
+                </div>
 
-      {/* ── TAB 5: Notifications ─────────────────────────────────────────── */}
-      {activeTab === 5 && (
-        <Box>
-          <Typography fontWeight={700} fontSize={15} mb={1}>Send Notifications</Typography>
-          <Typography fontSize={13} color="text.secondary" mb={3}>
-            Send a custom notification to a specific user or broadcast to all active users.
-          </Typography>
-          <Stack direction="row" spacing={2} flexWrap="wrap">
-            <Button
-              variant="contained"
-              startIcon={<Broadcast size={16} />}
-              onClick={() => setNotifDialog({ open: true, userId: '', username: '', broadcast: true })}
-              sx={{ bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' }, fontSize: 13 }}
-            >
-              Broadcast to All Users
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<Users size={16} />}
-              onClick={() => setActiveTab(1)}
-              sx={{ fontSize: 13, borderColor: '#e2e8f0', color: '#64748b' }}
-            >
-              Go to Users → click "Notify"
-            </Button>
-          </Stack>
-        </Box>
-      )}
+                {/* Visitor stats panel */}
+                {showVisitorStats && (
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    {/* Session filter */}
+                    <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[18px] text-slate-400">visibility</span>
+                        <span className="text-sm font-semibold text-slate-700">
+                          {sessionDate ? `${sessionDate} tashriflari` : 'Bugungi tashriflar'}{' '}
+                          ({todaySessions.length})
+                        </span>
+                        {!sessionDate && onlineSessions.length > 0 && (
+                          <span className="text-xs font-semibold px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
+                            {onlineSessions.length} online
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          value={sessionDate}
+                          max={todayStr}
+                          onChange={(e) => {
+                            setSessionDate(e.target.value);
+                            setTimeout(() => refetchSessions(), 0);
+                          }}
+                          className="text-xs border border-slate-200 rounded-lg px-3 py-1.5 outline-none focus:border-indigo-400"
+                        />
+                        {sessionDate && (
+                          <button
+                            onClick={() => { setSessionDate(''); setTimeout(() => refetchSessions(), 0); }}
+                            className="text-xs text-slate-500 hover:text-slate-800"
+                          >
+                            Bugun
+                          </button>
+                        )}
+                        <button
+                          onClick={() => refetchSessions()}
+                          className="text-xs text-indigo-600 hover:underline font-semibold"
+                        >
+                          Yangilash
+                        </button>
+                      </div>
+                    </div>
 
-      {/* ── Dialog: Delete User ─────────────────────────────────────────── */}
-      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, userId: '', username: '' })} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Trash size={20} color="#dc2626" weight="fill" />
-            <span>Delete User</span>
-          </Stack>
-        </DialogTitle>
-        <DialogContent>
-          <Typography fontSize={14}>
-            <strong>@{deleteDialog.username}</strong> foydalanuvchisini o'chirishni tasdiqlaysizmi?
-          </Typography>
-          <Typography fontSize={13} color="text.secondary" mt={1}>
-            Bu amalni ortga qaytarib bo'lmaydi. Foydalanuvchi va uning barcha ma'lumotlari databasedan o'chiriladi.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDeleteDialog({ open: false, userId: '', username: '' })} sx={{ color: '#64748b' }}>
-            Bekor qilish
-          </Button>
-          <Button variant="contained" color="error" onClick={confirmDeleteUser} startIcon={<Trash size={16} weight="bold" />}>
-            O'chirish
-          </Button>
-        </DialogActions>
-      </Dialog>
+                    {/* Sessions table */}
+                    {todaySessions.length === 0 ? (
+                      <p className="text-sm text-slate-400 text-center py-6">Bu kunda tashrif yo'q</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead>
+                            <tr className="border-b border-slate-100 bg-slate-50">
+                              <th className="px-4 py-3 font-bold text-slate-500">Holat</th>
+                              <th className="px-4 py-3 font-bold text-slate-500">Foydalanuvchi</th>
+                              <th className="px-4 py-3 font-bold text-slate-500">Qurilma</th>
+                              <th className="px-4 py-3 font-bold text-slate-500">OS / Brauzer</th>
+                              <th className="px-4 py-3 font-bold text-slate-500">Sahifalar</th>
+                              <th className="px-4 py-3 font-bold text-slate-500">Kirdi</th>
+                              <th className="px-4 py-3 font-bold text-slate-500">Chiqdi</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {[...todaySessions]
+                              .sort((a, b) => (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0))
+                              .map((s) => (
+                                <tr
+                                  key={s.sessionId}
+                                  onClick={() => setSelectedSession(s)}
+                                  className={`cursor-pointer hover:bg-slate-50 transition-colors ${s.isOnline ? 'bg-green-50/50' : ''}`}
+                                >
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center gap-1.5">
+                                      <span
+                                        className={`w-2 h-2 rounded-full ${s.isOnline ? 'bg-green-500 animate-pulse' : s.endedAt ? 'bg-slate-300' : 'bg-amber-400'}`}
+                                      />
+                                      <span className={`font-semibold ${s.isOnline ? 'text-green-600' : s.endedAt ? 'text-slate-400' : 'text-amber-600'}`}>
+                                        {s.isOnline ? 'Online' : s.endedAt ? 'Chiqdi' : 'Faolsiz'}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 font-medium text-slate-700">
+                                    {s.userName ?? <span className="text-slate-400 italic">Guest</span>}
+                                  </td>
+                                  <td className="px-4 py-3 text-slate-500">{s.device}</td>
+                                  <td className="px-4 py-3 text-slate-500">{s.os} / {s.browser}</td>
+                                  <td className="px-4 py-3">
+                                    <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 font-bold rounded">
+                                      {s.pages.length}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 font-mono text-slate-500">
+                                    {new Date(s.startedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}
+                                  </td>
+                                  <td className="px-4 py-3 font-mono text-slate-400">
+                                    {s.endedAt
+                                      ? new Date(s.endedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })
+                                      : s.isOnline
+                                      ? '—'
+                                      : `~${new Date(s.lastSeenAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}`}
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
 
-      {/* ── Dialog: Spam Reason ──────────────────────────────────────────── */}
-      <Dialog open={spamDialog.open} onClose={() => setSpamDialog({ open: false, userId: '', username: '' })} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <ProhibitInset size={20} color="#f59e0b" weight="fill" />
-            <span>Spam User: @{spamDialog.username}</span>
-          </Stack>
-        </DialogTitle>
-        <DialogContent>
-          <Typography fontSize={13} color="text.secondary" mb={2}>
-            This user will be notified with the reason below. Their account will be restricted.
-          </Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="Spam Reason"
-            placeholder="e.g. Posting fake job listings. Repeated violations of platform rules."
-            value={spamReason}
-            onChange={(e) => setSpamReason(e.target.value)}
-            sx={{ mt: 1 }}
-          />
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setSpamDialog({ open: false, userId: '', username: '' })} sx={{ color: '#64748b' }}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="warning"
-            onClick={() => confirmStatusChange(spamDialog.userId, UserStatus.SPAM, spamReason)}
-          >
-            Confirm Spam
-          </Button>
-        </DialogActions>
-      </Dialog>
+                    {/* 14-day table */}
+                    {visitorStats.length > 0 && (
+                      <div className="mt-6">
+                        <p className="text-sm font-semibold text-slate-700 mb-3">So'nggi 14 kun</p>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs text-left">
+                            <thead>
+                              <tr className="border-b border-slate-200 bg-slate-50">
+                                <th className="px-4 py-3 font-bold text-slate-500">Sana</th>
+                                <th className="px-4 py-3 font-bold text-indigo-500 text-center">Tashriflar</th>
+                                <th className="px-4 py-3 font-bold text-green-500 text-center">Ro'yxatdan</th>
+                                <th className="px-4 py-3 font-bold text-amber-500 text-center">Login</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {[...visitorStats].reverse().map((s) => (
+                                <tr key={s.date} className={`hover:bg-slate-50 ${s.date === todayStr ? 'bg-green-50/50' : ''}`}>
+                                  <td className="px-4 py-2.5 font-mono font-semibold text-slate-600">
+                                    {s.date}
+                                    {s.date === todayStr && (
+                                      <span className="ml-2 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded">bugun</span>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-2.5 text-center">
+                                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 font-bold rounded">{s.visits}</span>
+                                  </td>
+                                  <td className="px-4 py-2.5 text-center">
+                                    <button
+                                      onClick={() => {
+                                        setDetailModal({ open: true, date: s.date, event: 'register', label: "Ro'yxatdan o'tganlar" });
+                                        fetchUserDetails({ variables: { date: s.date, event: 'register' } });
+                                      }}
+                                      className="px-2 py-0.5 bg-green-50 text-green-600 font-bold rounded hover:bg-green-100 transition-colors cursor-pointer"
+                                    >
+                                      {s.registrations}
+                                    </button>
+                                  </td>
+                                  <td className="px-4 py-2.5 text-center">
+                                    <button
+                                      onClick={() => {
+                                        setDetailModal({ open: true, date: s.date, event: 'login', label: "Login bo'lganlar" });
+                                        fetchUserDetails({ variables: { date: s.date, event: 'login' } });
+                                      }}
+                                      className="px-2 py-0.5 bg-amber-50 text-amber-600 font-bold rounded hover:bg-amber-100 transition-colors cursor-pointer"
+                                    >
+                                      {s.logins}
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
-      {/* ── Dialog: Create Announcement ──────────────────────────────────── */}
-      <Dialog open={announcementDialog} onClose={() => setAnnouncementDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Megaphone size={20} color="#4f46e5" weight="fill" />
-            <span>New Announcement</span>
-          </Stack>
-        </DialogTitle>
-        <DialogContent>
-          <Typography fontSize={13} color="text.secondary" mb={2}>
-            This will be sent as a notification to all active users on the platform.
-          </Typography>
-          <Stack spacing={2} mt={1}>
-            <ToggleButtonGroup
-              value={annType}
-              exclusive
-              onChange={(_, v) => v && setAnnType(v)}
-              size="small"
-            >
-              <ToggleButton value={AnnouncementType.ANNOUNCEMENT} sx={{ fontSize: 12, gap: 0.75 }}>
-                <Newspaper size={15} /> Announcement
-              </ToggleButton>
-              <ToggleButton value={AnnouncementType.ADVERTISEMENT} sx={{ fontSize: 12, gap: 0.75 }}>
-                <Megaphone size={15} /> Advertisement
-              </ToggleButton>
-            </ToggleButtonGroup>
+            {/* ── USERS ──────────────────────────────────────────────────── */}
+            {activeSection === 'users' && (
+              <div>
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">Foydalanuvchilar boshqaruvi</h2>
+                    <p className="text-sm text-slate-400 mt-0.5">Platformadagi barcha frilanserlar va mijozlarni nazorat qilish.</p>
+                  </div>
+                  <Link
+                    href="/users.tsx"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white font-semibold text-sm rounded-xl hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">person_add</span>
+                    Yangi foydalanuvchi
+                  </Link>
+                </div>
 
-            <TextField
-              fullWidth size="small" label="Title"
-              placeholder="e.g. Platform Maintenance Notice"
-              value={annTitle}
-              onChange={(e) => setAnnTitle(e.target.value)}
-            />
-            <TextField
-              fullWidth multiline rows={4} label="Body"
-              placeholder="Full announcement text..."
-              value={annBody}
-              onChange={(e) => setAnnBody(e.target.value)}
-            />
-            <TextField
-              fullWidth size="small" label="Image URL (optional)"
-              placeholder="https://..."
-              value={annImageUrl}
-              onChange={(e) => setAnnImageUrl(e.target.value)}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setAnnouncementDialog(false)} sx={{ color: '#64748b' }}>Cancel</Button>
-          <Button variant="contained" onClick={handleCreateAnnouncement} sx={{ bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' } }}>
-            Publish & Notify Users
-          </Button>
-        </DialogActions>
-      </Dialog>
+                {/* Stats mini */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  {[
+                    { label: 'Umumiy', value: allUsers.length, icon: 'group', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                    { label: 'Frilanserlar', value: allUsers.filter((u) => u.userType === UserType.FREELANCER).length, icon: 'engineering', color: 'text-violet-600', bg: 'bg-violet-50' },
+                    { label: 'Mijozlar (Agentlar)', value: allUsers.filter((u) => u.userType === UserType.AGENT).length, icon: 'shopping_bag', color: 'text-amber-600', bg: 'bg-amber-50' },
+                    { label: 'Spam', value: allUsers.filter((u) => u.userStatus === UserStatus.SPAM).length, icon: 'block', color: 'text-red-500', bg: 'bg-red-50' },
+                  ].map((s) => (
+                    <div key={s.label} className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-3">
+                      <div className={`w-11 h-11 rounded-xl ${s.bg} flex items-center justify-center flex-shrink-0`}>
+                        <span className={`material-symbols-outlined text-[22px] ${s.color}`}>{s.icon}</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">{s.label}</p>
+                        <p className="text-2xl font-extrabold text-slate-800">{s.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-      {/* ── Dialog: Send Notification ────────────────────────────────────── */}
-      <Dialog open={notifDialog.open} onClose={() => setNotifDialog({ open: false, userId: '', username: '', broadcast: false })} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            {notifDialog.broadcast ? <Broadcast size={20} color="#4f46e5" weight="fill" /> : <Bell size={20} color="#4f46e5" weight="fill" />}
-            <span>{notifDialog.broadcast ? 'Broadcast Notification' : `Notify @${notifDialog.username}`}</span>
-          </Stack>
-        </DialogTitle>
-        <DialogContent>
-          <Typography fontSize={13} color="text.secondary" mb={2}>
-            {notifDialog.broadcast
-              ? 'This message will be sent to all active users.'
-              : `A notification will appear in @${notifDialog.username}'s notification bell.`}
-          </Typography>
-          <Stack spacing={2} mt={1}>
-            <TextField
-              fullWidth size="small" label="Title"
-              placeholder="e.g. Important update"
-              value={notifTitle}
-              onChange={(e) => setNotifTitle(e.target.value)}
-            />
-            <TextField
-              fullWidth multiline rows={3} label="Message"
-              placeholder="Full notification text..."
-              value={notifBody}
-              onChange={(e) => setNotifBody(e.target.value)}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setNotifDialog({ open: false, userId: '', username: '', broadcast: false })} sx={{ color: '#64748b' }}>Cancel</Button>
-          <Button variant="contained" onClick={handleSendNotification} sx={{ bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' } }}>
-            Send Notification
-          </Button>
-        </DialogActions>
-      </Dialog>
-      {/* ── Dialog: Session Detail ───────────────────────────────────────── */}
-      <Dialog open={!!selectedSession} onClose={() => setSelectedSession(null)} maxWidth="sm" fullWidth>
-        {selectedSession && (
-          <>
-            <DialogTitle sx={{ fontWeight: 700, fontSize: 15, pb: 1 }}>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Circle size={10} color={selectedSession.isOnline ? '#16a34a' : '#94a3b8'} weight="fill" />
-                <span>Tashrif tafsiloti</span>
-                <Chip label={selectedSession.isOnline ? 'Online' : 'Offline'} size="small"
-                  sx={{ bgcolor: selectedSession.isOnline ? '#dcfce7' : '#f1f5f9', color: selectedSession.isOnline ? '#16a34a' : '#64748b', fontSize: 10 }} />
-              </Stack>
-            </DialogTitle>
-            <DialogContent dividers>
-              <Stack spacing={1.5}>
-                <Box>
-                  <Typography fontSize={11} color="#94a3b8">Foydalanuvchi</Typography>
-                  <Typography fontSize={13} fontWeight={600} color={selectedSession.userName ? '#374151' : '#94a3b8'} fontStyle={selectedSession.userName ? 'normal' : 'italic'}>
-                    {selectedSession.userName ?? 'Guest'}
-                  </Typography>
-                </Box>
-                <Stack direction="row" spacing={3}>
-                  <Box>
-                    <Typography fontSize={11} color="#94a3b8">Qurilma</Typography>
-                    <Typography fontSize={13} fontWeight={600}>{selectedSession.device}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography fontSize={11} color="#94a3b8">OS</Typography>
-                    <Typography fontSize={13} fontWeight={600}>{selectedSession.os}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography fontSize={11} color="#94a3b8">Brauzer</Typography>
-                    <Typography fontSize={13} fontWeight={600}>{selectedSession.browser}</Typography>
-                  </Box>
-                </Stack>
-                <Stack direction="row" spacing={3}>
-                  <Box>
-                    <Typography fontSize={11} color="#94a3b8">Kirdi</Typography>
-                    <Typography fontSize={13} fontWeight={600}>{new Date(selectedSession.startedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography fontSize={11} color="#94a3b8">Chiqdi</Typography>
-                    <Typography fontSize={13} fontWeight={600}>
-                      {selectedSession.endedAt
-                        ? new Date(selectedSession.endedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                        : selectedSession.isOnline
-                          ? '— (hali online)'
-                          : `~${new Date(selectedSession.lastSeenAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} (oxirgi faollik)`}
-                    </Typography>
-                  </Box>
-                  {selectedSession.endedAt && (
-                    <Box>
-                      <Typography fontSize={11} color="#94a3b8">Davomiyligi</Typography>
-                      <Typography fontSize={13} fontWeight={600}>
-                        {Math.round((new Date(selectedSession.endedAt).getTime() - new Date(selectedSession.startedAt).getTime()) / 60000)} daq
-                      </Typography>
-                    </Box>
-                  )}
-                </Stack>
-                <Box>
-                  <Typography fontSize={11} color="#94a3b8" mb={0.5}>Ko'rilgan sahifalar ({selectedSession.pages.length})</Typography>
-                  <Box sx={{ bgcolor: '#f8fafc', borderRadius: 1, p: 1.5, maxHeight: 200, overflowY: 'auto' }}>
-                    {selectedSession.pages.map((p, i) => (
-                      <Stack key={i} direction="row" justifyContent="space-between" py={0.5} sx={{ borderBottom: i < selectedSession.pages.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
-                        <Typography fontSize={12} sx={{ fontFamily: 'monospace', color: '#4f46e5' }}>{p.path}</Typography>
-                        <Typography fontSize={11} color="#94a3b8">{new Date(p.visitedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}</Typography>
-                      </Stack>
+                {/* Filter bar */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 flex flex-col lg:flex-row gap-3 items-center">
+                  <div className="relative w-full lg:w-80">
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                    <input
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"
+                      placeholder="Ism yoki username bo'yicha qidirish..."
+                      type="text"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 w-full lg:w-auto">
+                    {['Barchasi', 'Agentlar', 'Frilanserlar', 'Spam'].map((label, i) => (
+                      <button
+                        key={label}
+                        onClick={() => setUserFilterTab(i)}
+                        className={`px-3 py-2 text-xs font-semibold rounded-xl transition-colors ${
+                          userFilterTab === i
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {label} ({userTabs[i].length})
+                      </button>
                     ))}
-                  </Box>
-                </Box>
-              </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button size="small" onClick={() => setSelectedSession(null)}>Yopish</Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
+                  </div>
+                </div>
 
-      {/* ── Dialog: Visitor User Details ─────────────────────────────────── */}
-      <Dialog open={detailModal.open} onClose={() => setDetailModal({ open: false, date: '', event: '', label: '' })} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700, fontSize: 15, pb: 1 }}>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            {detailModal.event === 'register' ? <UserPlus size={18} color="#16a34a" weight="bold" /> : <SignIn size={18} color="#d97706" weight="bold" />}
-            <span>{detailModal.label} — {detailModal.date}</span>
-          </Stack>
-        </DialogTitle>
-        <DialogContent dividers sx={{ p: 0 }}>
-          {detailLoading ? (
-            <Box sx={{ p: 3, textAlign: 'center' }}><CircularProgress size={28} /></Box>
-          ) : detailUsers.length === 0 ? (
-            <Box sx={{ p: 3, textAlign: 'center' }}>
-              <Typography color="text.secondary" fontSize={13}>Ma'lumot yo'q</Typography>
-            </Box>
-          ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Foydalanuvchi</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Tur</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Vaqt</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {detailUsers.map((u: any, i: number) => (
-                  <TableRow key={i} hover>
-                    <TableCell>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Box sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 700, overflow: 'hidden', flexShrink: 0 }}>
-                          {u.profileImage ? <img src={u.profileImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (u.fullName || u.username)?.[0]?.toUpperCase()}
-                        </Box>
-                        <Box>
-                          <Typography fontSize={12} fontWeight={600}>{u.fullName || u.username}</Typography>
-                          <Typography fontSize={11} color="#94a3b8">@{u.username}</Typography>
-                        </Box>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={u.userType} size="small" sx={{ fontSize: 10, bgcolor: u.userType === 'FREELANCER' ? '#ede9fe' : '#e0f2fe', color: u.userType === 'FREELANCER' ? '#4f46e5' : '#0891b2' }} />
-                    </TableCell>
-                    <TableCell sx={{ fontSize: 11, color: '#64748b' }}>
-                      {u.createdAt ? new Date(u.createdAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : '—'}
-                    </TableCell>
-                  </TableRow>
+                {/* Table */}
+                <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                  {usersLoading ? (
+                    <div className="flex justify-center py-12">
+                      <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200">
+                              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Foydalanuvchi</th>
+                              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email</th>
+                              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Rol</th>
+                              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Holat</th>
+                              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Spam sababi</th>
+                              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Qo'shilgan</th>
+                              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Amallar</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {filteredUsers.map((u, idx) => (
+                              <tr
+                                key={u._id}
+                                className={`hover:bg-slate-50/60 transition-colors ${u.userStatus === UserStatus.SPAM ? 'bg-red-50/30' : ''}`}
+                              >
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="relative flex-shrink-0">
+                                      <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm overflow-hidden">
+                                        {u.profileImage ? (
+                                          <img src={u.profileImage} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                          (u.fullName || u.username)?.[0]?.toUpperCase()
+                                        )}
+                                      </div>
+                                      {u.userStatus === UserStatus.ACTIVE && (
+                                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full" />
+                                      )}
+                                    </div>
+                                    <div>
+                                      <Link href={`/profile/${u._id}`}>
+                                        <p className="text-sm font-bold text-slate-800 hover:text-indigo-600 transition-colors">
+                                          {u.fullName ?? u.username}
+                                        </p>
+                                      </Link>
+                                      <p className="text-xs text-slate-400">@{u.username}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-slate-500">{u.email ?? '—'}</td>
+                                <td className="px-6 py-4">
+                                  {u.userType === UserType.ADMIN ? (
+                                    <span className="px-2.5 py-1 bg-slate-800 text-white text-xs font-bold rounded-full">ADMIN</span>
+                                  ) : (
+                                    <select
+                                      value={u.userType}
+                                      onChange={(e) => handleChangeRole(u._id, e.target.value as UserType)}
+                                      className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white outline-none focus:border-indigo-400"
+                                    >
+                                      <option value={UserType.AGENT}>Agent</option>
+                                      <option value={UserType.FREELANCER}>Frilanser</option>
+                                    </select>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4">
+                                  {u.userType === UserType.ADMIN ? (
+                                    <span className="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">FAOL</span>
+                                  ) : (
+                                    <select
+                                      value={u.userStatus}
+                                      onChange={(e) => handleStatusChange(u._id, u.username, e.target.value as UserStatus)}
+                                      className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white outline-none focus:border-indigo-400"
+                                      style={{ color: STATUS_COLOR[u.userStatus] }}
+                                    >
+                                      <option value={UserStatus.ACTIVE} style={{ color: '#16a34a' }}>Faol</option>
+                                      <option value={UserStatus.SPAM} style={{ color: '#f59e0b' }}>Spam</option>
+                                    </select>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 max-w-[160px]">
+                                  <p className="text-xs text-slate-400 truncate">{u.spamReason || '—'}</p>
+                                </td>
+                                <td className="px-6 py-4 text-xs text-slate-400 whitespace-nowrap">
+                                  {u.createdAt ? new Date(Number(u.createdAt)).toISOString().slice(0, 10) : '—'}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    {u.userType !== UserType.ADMIN && (
+                                      <>
+                                        <button
+                                          onClick={() =>
+                                            setNotifDialog({ open: true, userId: u._id, username: u.username, broadcast: false })
+                                          }
+                                          title="Xabar yuborish"
+                                          className="p-1.5 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors"
+                                        >
+                                          <span className="material-symbols-outlined text-[18px]">notifications</span>
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteUser(u._id, u.username)}
+                                          title="O'chirish"
+                                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                            {filteredUsers.length === 0 && (
+                              <tr>
+                                <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
+                                  Bu kategoriyada foydalanuvchi yo'q.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                      {/* Pagination indicator */}
+                      <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between">
+                        <span className="text-sm text-slate-400">
+                          {filteredUsers.length} ta foydalanuvchi ko'rsatilmoqda
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── JOBS ──────────────────────────────────────────────────── */}
+            {activeSection === 'jobs' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">Ish e'lonlari</h2>
+                    <p className="text-sm text-slate-400 mt-0.5">Platformadagi barcha ish e'lonlarini boshqaring.</p>
+                  </div>
+                </div>
+                {/* Search */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
+                  <div className="relative w-full lg:w-80">
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                    <input
+                      value={jobSearch}
+                      onChange={(e) => setJobSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-400"
+                      placeholder="E'lon nomini qidirish..."
+                    />
+                  </div>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                  {jobsLoading ? (
+                    <div className="flex justify-center py-12">
+                      <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-200">
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">#</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Sarlavha</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Kategoriya</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Holat</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Byudjet</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Agent</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Takliflar</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Sana</th>
+                            <th className="px-6 py-4"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {filteredJobs.map((j, idx) => (
+                            <tr key={j._id} className="hover:bg-slate-50/60 transition-colors">
+                              <td className="px-6 py-3 text-xs text-slate-400">{idx + 1}</td>
+                              <td className="px-6 py-3">
+                                <Link href={`/jobs/${j._id}`}>
+                                  <p className="text-sm font-semibold text-indigo-600 hover:underline max-w-[200px] truncate">
+                                    {j.title}
+                                  </p>
+                                </Link>
+                              </td>
+                              <td className="px-6 py-3">
+                                <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full">
+                                  {j.category}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3">
+                                <span
+                                  className="px-2.5 py-1 text-xs font-bold rounded-full"
+                                  style={{
+                                    backgroundColor: `${JOB_STATUS_COLOR[j.status]}22`,
+                                    color: JOB_STATUS_COLOR[j.status],
+                                  }}
+                                >
+                                  {j.status}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3 text-sm font-semibold text-slate-700">${j.budget}</td>
+                              <td className="px-6 py-3 text-sm text-slate-500">{j.agentName ?? '—'}</td>
+                              <td className="px-6 py-3 text-sm text-slate-400">{j.bidCount}</td>
+                              <td className="px-6 py-3 text-xs text-slate-400 whitespace-nowrap">
+                                {j.createdAt?.slice(0, 10) ?? '—'}
+                              </td>
+                              <td className="px-6 py-3 text-right">
+                                <button
+                                  onClick={() => handleDeleteJob(j._id, j.title)}
+                                  className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="O'chirish"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                          {filteredJobs.length === 0 && (
+                            <tr>
+                              <td colSpan={9} className="px-6 py-12 text-center text-sm text-slate-400">
+                                Ish e'lonlar topilmadi.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── POSTS ──────────────────────────────────────────────────── */}
+            {activeSection === 'posts' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-slate-800">Maqolalar</h2>
+                  <p className="text-sm text-slate-400 mt-0.5">Platformadagi barcha maqolalar.</p>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                  {postsLoading ? (
+                    <div className="flex justify-center py-12">
+                      <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-200">
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">#</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Sarlavha</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Muallif</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Yoqtirishlar</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Ko'rishlar</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Sana</th>
+                            <th className="px-6 py-4"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {allPosts.map((p, idx) => (
+                            <tr key={p._id} className="hover:bg-slate-50/60 transition-colors">
+                              <td className="px-6 py-3 text-xs text-slate-400">{idx + 1}</td>
+                              <td className="px-6 py-3">
+                                <p className="text-sm font-semibold text-slate-700 max-w-[240px] truncate">{p.title}</p>
+                              </td>
+                              <td className="px-6 py-3 text-sm text-slate-500">{p.authorName}</td>
+                              <td className="px-6 py-3">
+                                <div className="flex items-center gap-1 text-sm text-slate-400">
+                                  <span className="material-symbols-outlined text-[16px] text-red-400">favorite</span>
+                                  {p.likeCount}
+                                </div>
+                              </td>
+                              <td className="px-6 py-3">
+                                <div className="flex items-center gap-1 text-sm text-slate-400">
+                                  <span className="material-symbols-outlined text-[16px]">visibility</span>
+                                  {p.viewCount}
+                                </div>
+                              </td>
+                              <td className="px-6 py-3 text-xs text-slate-400 whitespace-nowrap">
+                                {p.createdAt?.slice(0, 10) ?? '—'}
+                              </td>
+                              <td className="px-6 py-3 text-right">
+                                <button
+                                  onClick={() => handleDeletePost(p._id, p.title)}
+                                  className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="O'chirish"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                          {allPosts.length === 0 && (
+                            <tr>
+                              <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
+                                Maqolalar topilmadi.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── ANNOUNCEMENTS ──────────────────────────────────────────── */}
+            {activeSection === 'announcements' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">E'lonlar</h2>
+                    <p className="text-sm text-slate-400 mt-0.5">Platforma bo'ylab e'lonlarni boshqaring.</p>
+                  </div>
+                  <button
+                    onClick={() => setAnnouncementDialog(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white font-semibold text-sm rounded-xl hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">add</span>
+                    Yangi e'lon
+                  </button>
+                </div>
+                {annLoading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {allAnn.map((a) => (
+                      <div
+                        key={a._id}
+                        className={`bg-white border rounded-2xl p-5 shadow-sm transition-opacity ${
+                          a.isActive ? 'border-slate-200' : 'border-amber-100 opacity-60'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full ${
+                                a.announcementType === AnnouncementType.ADVERTISEMENT
+                                  ? 'bg-amber-50 text-amber-600'
+                                  : 'bg-indigo-50 text-indigo-600'
+                              }`}>
+                                {a.announcementType}
+                              </span>
+                              <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full ${
+                                a.isActive ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-400'
+                              }`}>
+                                {a.isActive ? 'Faol' : 'Yashirin'}
+                              </span>
+                              <span className="text-xs text-slate-400">{a.createdAt?.slice(0, 10)}</span>
+                            </div>
+                            <h3 className="text-base font-bold text-slate-800 mb-1">{a.title}</h3>
+                            <p className="text-sm text-slate-500 line-clamp-2">
+                              {a.body.slice(0, 200)}{a.body.length > 200 ? '...' : ''}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+                            <button
+                              onClick={() => handleToggleAnn(a._id)}
+                              className="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+                            >
+                              {a.isActive ? 'Yashirish' : "Ko'rsatish"}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAnn(a._id, a.title)}
+                              className="px-3 py-1.5 text-xs font-semibold text-red-500 border border-red-100 rounded-xl hover:bg-red-50 transition-colors"
+                            >
+                              O'chirish
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {allAnn.length === 0 && (
+                      <div className="text-center py-12 bg-white border border-slate-200 rounded-2xl">
+                        <span className="material-symbols-outlined text-4xl text-slate-300">campaign</span>
+                        <p className="text-slate-400 mt-2">Hali e'lon yo'q. Birinchi e'lonni yarating!</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── PAYMENTS placeholder ──────────────────────────────────── */}
+            {activeSection === 'payments' && (
+              <div className="text-center py-20 bg-white border border-slate-200 rounded-2xl">
+                <span className="material-symbols-outlined text-5xl text-slate-300">payments</span>
+                <h3 className="text-lg font-bold text-slate-600 mt-4">To'lovlar bo'limi</h3>
+                <p className="text-slate-400 text-sm mt-1">Tez orada ishga tushadi</p>
+              </div>
+            )}
+
+            {/* ── SETTINGS placeholder ──────────────────────────────────── */}
+            {activeSection === 'settings' && (
+              <div className="text-center py-20 bg-white border border-slate-200 rounded-2xl">
+                <span className="material-symbols-outlined text-5xl text-slate-300">settings</span>
+                <h3 className="text-lg font-bold text-slate-600 mt-4">Sozlamalar</h3>
+                <p className="text-slate-400 text-sm mt-1">Tez orada ishga tushadi</p>
+              </div>
+            )}
+
+            {/* ── NOTIFICATIONS section ──────────────────────────────────── */}
+            {activeSection === 'notifications' && (
+              <div>
+                <h2 className="text-xl font-bold text-slate-800 mb-2">Bildirishnomalar yuborish</h2>
+                <p className="text-sm text-slate-400 mb-6">
+                  Aniq foydalanuvchiga yoki barcha faol foydalanuvchilarga bildirishnoma yuboring.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => setNotifDialog({ open: true, userId: '', username: '', broadcast: true })}
+                    className="flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white font-semibold text-sm rounded-xl hover:bg-indigo-700 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">campaign</span>
+                    Barcha foydalanuvchilarga yuborish
+                  </button>
+                  <button
+                    onClick={() => setActiveSection('users')}
+                    className="flex items-center gap-2 px-5 py-3 bg-slate-100 text-slate-700 font-semibold text-sm rounded-xl hover:bg-slate-200 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">group</span>
+                    Foydalanuvchilar sahifasiga o'tish
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <footer className="border-t border-slate-200 px-8 py-6 mt-auto bg-white/60">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <span className="text-lg font-black text-indigo-600">BuFu</span>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Markaziy Osiyodagi eng yirik frilans ekotizimi. Build Future (BuFu) admin tizimi.
+                </p>
+              </div>
+              <p className="text-xs text-slate-400">© 2024 BuFu (Build Future). Barcha huquqlar himoyalangan.</p>
+            </div>
+          </footer>
+        </main>
+      </div>
+
+      {/* ── Modal: Delete User ────────────────────────────────────────── */}
+      {deleteDialog.open && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-red-600">delete</span>
+              </div>
+              <h3 className="text-base font-bold text-slate-800">Foydalanuvchini o'chirish</h3>
+            </div>
+            <p className="text-sm text-slate-600 mb-2">
+              <strong>@{deleteDialog.username}</strong> foydalanuvchisini o'chirishni tasdiqlaysizmi?
+            </p>
+            <p className="text-xs text-slate-400 mb-6">
+              Bu amalni ortga qaytarib bo'lmaydi. Foydalanuvchi va barcha ma'lumotlari o'chiriladi.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteDialog({ open: false, userId: '', username: '' })}
+                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={confirmDeleteUser}
+                className="flex-1 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors"
+              >
+                O'chirish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Spam Reason ────────────────────────────────────────── */}
+      {spamDialog.open && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-amber-600">block</span>
+              </div>
+              <h3 className="text-base font-bold text-slate-800">Spam: @{spamDialog.username}</h3>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              Foydalanuvchi spam sababi bilan xabardor qilinadi va hisobi cheklanadi.
+            </p>
+            <textarea
+              value={spamReason}
+              onChange={(e) => setSpamReason(e.target.value)}
+              placeholder="Masalan: Soxta ish e'lonlari joylash. Platforma qoidalarini ko'p marta buzish."
+              rows={3}
+              className="w-full text-sm border border-slate-200 rounded-xl p-3 outline-none focus:border-amber-400 resize-none mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSpamDialog({ open: false, userId: '', username: '' })}
+                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={() => confirmStatusChange(spamDialog.userId, UserStatus.SPAM, spamReason)}
+                className="flex-1 py-2.5 text-sm font-semibold text-white bg-amber-500 rounded-xl hover:bg-amber-600 transition-colors"
+              >
+                Tasdiqlash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Create Announcement ───────────────────────────────── */}
+      {announcementDialog && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-indigo-600">campaign</span>
+                </div>
+                <h3 className="text-base font-bold text-slate-800">Yangi e'lon</h3>
+              </div>
+              <button onClick={() => setAnnouncementDialog(false)} className="text-slate-400 hover:text-slate-600">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              Barcha faol foydalanuvchilarga bildirishnoma sifatida yuboriladi.
+            </p>
+            <div className="space-y-3 mb-4">
+              {/* Type toggle */}
+              <div className="flex gap-2">
+                {[
+                  { value: AnnouncementType.ANNOUNCEMENT, label: 'E\'lon' },
+                  { value: AnnouncementType.ADVERTISEMENT, label: 'Reklama' },
+                ].map((t) => (
+                  <button
+                    key={t.value}
+                    onClick={() => setAnnType(t.value)}
+                    className={`px-4 py-2 text-xs font-semibold rounded-xl transition-colors ${
+                      annType === t.value
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {t.label}
+                  </button>
                 ))}
-              </TableBody>
-            </Table>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button size="small" onClick={() => setDetailModal({ open: false, date: '', event: '', label: '' })}>Yopish</Button>
-        </DialogActions>
-      </Dialog>
+              </div>
+              <input
+                value={annTitle}
+                onChange={(e) => setAnnTitle(e.target.value)}
+                placeholder="Sarlavha"
+                className="w-full text-sm border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400"
+              />
+              <textarea
+                value={annBody}
+                onChange={(e) => setAnnBody(e.target.value)}
+                placeholder="E'lon matni..."
+                rows={4}
+                className="w-full text-sm border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-400 resize-none"
+              />
+              <input
+                value={annImageUrl}
+                onChange={(e) => setAnnImageUrl(e.target.value)}
+                placeholder="Rasm URL (ixtiyoriy)"
+                className="w-full text-sm border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setAnnouncementDialog(false)}
+                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleCreateAnnouncement}
+                className="flex-1 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors"
+              >
+                Nashr etish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Send Notification ─────────────────────────────────── */}
+      {notifDialog.open && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-indigo-600">
+                    {notifDialog.broadcast ? 'campaign' : 'notifications'}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-slate-800">
+                  {notifDialog.broadcast
+                    ? 'Broadcast bildirishnomasi'
+                    : `@${notifDialog.username} ga xabar`}
+                </h3>
+              </div>
+              <button
+                onClick={() => setNotifDialog({ open: false, userId: '', username: '', broadcast: false })}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              {notifDialog.broadcast
+                ? 'Bu xabar barcha faol foydalanuvchilarga yuboriladi.'
+                : `Bildirishnoma @${notifDialog.username} ning notification belliga tushadi.`}
+            </p>
+            <div className="space-y-3 mb-4">
+              <input
+                value={notifTitle}
+                onChange={(e) => setNotifTitle(e.target.value)}
+                placeholder="Sarlavha"
+                className="w-full text-sm border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400"
+              />
+              <textarea
+                value={notifBody}
+                onChange={(e) => setNotifBody(e.target.value)}
+                placeholder="Xabar matni..."
+                rows={3}
+                className="w-full text-sm border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-400 resize-none"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setNotifDialog({ open: false, userId: '', username: '', broadcast: false })}
+                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleSendNotification}
+                className="flex-1 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors"
+              >
+                Yuborish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Session Detail ─────────────────────────────────────── */}
+      {selectedSession && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <span className={`w-2.5 h-2.5 rounded-full ${selectedSession.isOnline ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`} />
+                <h3 className="text-base font-bold text-slate-800">Tashrif tafsiloti</h3>
+                <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${selectedSession.isOnline ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                  {selectedSession.isOnline ? 'Online' : 'Offline'}
+                </span>
+              </div>
+              <button onClick={() => setSelectedSession(null)} className="text-slate-400 hover:text-slate-600">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 space-y-4">
+              <div>
+                <p className="text-xs text-slate-400">Foydalanuvchi</p>
+                <p className={`text-sm font-semibold ${selectedSession.userName ? 'text-slate-800' : 'text-slate-400 italic'}`}>
+                  {selectedSession.userName ?? 'Guest'}
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Qurilma', value: selectedSession.device },
+                  { label: 'OS', value: selectedSession.os },
+                  { label: 'Brauzer', value: selectedSession.browser },
+                ].map((item) => (
+                  <div key={item.label}>
+                    <p className="text-xs text-slate-400">{item.label}</p>
+                    <p className="text-sm font-semibold text-slate-700">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <p className="text-xs text-slate-400">Kirdi</p>
+                  <p className="text-sm font-semibold text-slate-700 font-mono">
+                    {new Date(selectedSession.startedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Chiqdi</p>
+                  <p className="text-sm font-semibold text-slate-700 font-mono">
+                    {selectedSession.endedAt
+                      ? new Date(selectedSession.endedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                      : selectedSession.isOnline
+                      ? '— (online)'
+                      : `~${new Date(selectedSession.lastSeenAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`}
+                  </p>
+                </div>
+                {selectedSession.endedAt && (
+                  <div>
+                    <p className="text-xs text-slate-400">Davomiyligi</p>
+                    <p className="text-sm font-semibold text-slate-700">
+                      {Math.round((new Date(selectedSession.endedAt).getTime() - new Date(selectedSession.startedAt).getTime()) / 60000)} daq
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 mb-2">Ko'rilgan sahifalar ({selectedSession.pages.length})</p>
+                <div className="bg-slate-50 rounded-xl p-3 max-h-40 overflow-y-auto space-y-1.5">
+                  {selectedSession.pages.map((p, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <span className="text-xs font-mono text-indigo-600">{p.path}</span>
+                      <span className="text-xs text-slate-400">
+                        {new Date(p.visitedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="pt-4 flex-shrink-0 border-t border-slate-100">
+              <button
+                onClick={() => setSelectedSession(null)}
+                className="w-full py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                Yopish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Visitor User Details ──────────────────────────────── */}
+      {detailModal.open && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <span className={`material-symbols-outlined text-[20px] ${detailModal.event === 'register' ? 'text-green-600' : 'text-amber-600'}`}>
+                  {detailModal.event === 'register' ? 'person_add' : 'login'}
+                </span>
+                <h3 className="text-sm font-bold text-slate-800">
+                  {detailModal.label} — {detailModal.date}
+                </h3>
+              </div>
+              <button onClick={() => setDetailModal({ open: false, date: '', event: '', label: '' })} className="text-slate-400 hover:text-slate-600">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1">
+              {detailLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : detailUsers.length === 0 ? (
+                <p className="text-center text-sm text-slate-400 py-8">Ma'lumot yo'q</p>
+              ) : (
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200">
+                      <th className="px-4 py-3 font-bold text-slate-500">Foydalanuvchi</th>
+                      <th className="px-4 py-3 font-bold text-slate-500">Tur</th>
+                      <th className="px-4 py-3 font-bold text-slate-500">Vaqt</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {detailUsers.map((u: any, i: number) => (
+                      <tr key={i} className="hover:bg-slate-50">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0 overflow-hidden">
+                              {u.profileImage ? (
+                                <img src={u.profileImage} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                (u.fullName || u.username)?.[0]?.toUpperCase()
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-700">{u.fullName || u.username}</p>
+                              <p className="text-slate-400">@{u.username}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-0.5 rounded-full font-bold ${
+                            u.userType === 'FREELANCER'
+                              ? 'bg-indigo-50 text-indigo-600'
+                              : 'bg-sky-50 text-sky-600'
+                          }`}>
+                            {u.userType}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-400">
+                          {u.createdAt
+                            ? new Date(u.createdAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <div className="pt-4 flex-shrink-0 border-t border-slate-100">
+              <button
+                onClick={() => setDetailModal({ open: false, date: '', event: '', label: '' })}
+                className="w-full py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                Yopish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
 
-export default withLayoutBasic(AdminPage);
+export default AdminPage;
