@@ -33,7 +33,19 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // Global button outline reset
+    function({ addBase }) {
+      addBase({
+        'button': { outline: 'none', '&:focus': { outline: 'none' } },
+        '[type="button"]': { outline: 'none', '&:focus': { outline: 'none' } },
+        '[type="submit"]': { outline: 'none', '&:focus': { outline: 'none' } },
+        'input': { outline: 'none' },
+        'select': { outline: 'none' },
+        'textarea': { outline: 'none' },
+      });
+    },
+  ],
   corePlugins: {
     preflight: false,
   },

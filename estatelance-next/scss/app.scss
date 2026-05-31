@@ -68,6 +68,24 @@ a { text-decoration: none; color: inherit; }
 
 img { max-width: 100%; height: auto; }
 
+// ─── Button reset — barcha tugmalardan qora chiziq olib tashlash ─────────────
+button, [type='button'], [type='reset'], [type='submit'] {
+  outline: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  &:focus { outline: none !important; }
+  &:focus-visible { outline: none !important; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25); }
+}
+
+// ─── Input / Select / Textarea ────────────────────────────────────────────────
+input, select, textarea {
+  outline: none;
+  &:focus { outline: none; }
+}
+
 // ─── Scrollbar ────────────────────────────────────────────────────────────────
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -382,10 +400,11 @@ img { max-width: 100%; height: auto; }
   > * { scroll-snap-align: start; flex-shrink: 0; }
 }
 
-// ─── Focus ring ───────────────────────────────────────────────────────────────
+// ─── Focus ring — faqat klaviatura navigatsiyasida ko'rinadi ─────────────────
+:focus { outline: none; }
 :focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
 }
 
 // ─── Input base ───────────────────────────────────────────────────────────────

@@ -87,6 +87,60 @@ const theme = createTheme({
     button: { textTransform: 'none' },
   },
   shape: { borderRadius: 8 },
+  components: {
+    // Barcha MUI tugmalardan qora outline olib tashlash
+    MuiButtonBase: {
+      styleOverrides: {
+        root: {
+          outline: 'none !important',
+          '&:focus': { outline: 'none !important' },
+          '&:focus-visible': {
+            outline: 'none !important',
+            boxShadow: '0 0 0 3px rgba(79,70,229,0.25)',
+          },
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          outline: 'none',
+          boxShadow: 'none',
+          '&:focus': { outline: 'none' },
+          '&:active': { boxShadow: 'none' },
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          outline: 'none',
+          '&:focus': { outline: 'none' },
+          '&:focus-visible': { boxShadow: '0 0 0 3px rgba(79,70,229,0.25)' },
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: '#4f46e5',
+            borderWidth: '1.5px',
+          },
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: { outline: 'none', '&:focus': { outline: 'none' } },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: { outline: 'none', '&:focus': { outline: 'none' } },
+      },
+    },
+  },
 });
 
 function OnboardingGuard({ children }: { children: React.ReactNode }) {
