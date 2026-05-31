@@ -267,7 +267,10 @@ const HomePage = () => {
   return (
     <>
       <Head>
-        <title>BuFu — Build Future</title>
+        <title>BuFu — O'zbekiston frilanserlar platformasi | Ish toping yoki frilanser yollang</title>
+        <meta name="description" content="BuFu — O'zbekistondagi eng yaxshi frilanserlar platformasi. IT, dizayn, foto, 3D render, yuridik va boshqa sohalarda mutaxassis toping yoki ish e'lon qiling." />
+        <meta name="keywords" content="frilanser, ish, bufu, freelance, O'zbekiston, IT freelancer, dizayn, foto, 3D render, yuridik, ish topish, mutaxassis, Toshkent" />
+        <link rel="canonical" href="https://bufu.uz" />
       </Head>
 
       {/* ═══════════════════ HERO ═══════════════════ */}

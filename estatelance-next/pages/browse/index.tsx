@@ -188,7 +188,12 @@ const BrowsePage = () => {
 
   return (
     <>
-      <Head><title>Frilanserlar — BuFu</title></Head>
+      <Head>
+        <title>Frilanserlar — BuFu | O'zbekiston mutaxassislari</title>
+        <meta name="description" content="O'zbekistondagi eng yaxshi frilanserlar. IT dasturchilar, dizaynerlar, fotosuratchilar, 3D renderchilar va boshqa mutaxassislarni toping." />
+        <meta name="keywords" content="frilanser, mutaxassis, IT dasturchi, dizayner, fotograf, O'zbekiston freelancer, Toshkent mutaxassis" />
+        <link rel="canonical" href="https://bufu.uz/browse" />
+      </Head>
 
       <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
 

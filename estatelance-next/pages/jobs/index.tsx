@@ -182,7 +182,12 @@ const JobsPage = () => {
 
   return (
     <>
-      <Head><title>Ish e'lonlari — BuFu</title></Head>
+      <Head>
+        <title>Ish e'lonlari — BuFu | O'zbekiston frilanserlar uchun ishlar</title>
+        <meta name="description" content="O'zbekistondagi frilanser ishlar. IT, dizayn, foto, 3D render, marketing va boshqa sohalarda ish toping. BuFu — frilanserlar platformasi." />
+        <meta name="keywords" content="ish elonlari, frilanser ish, IT ish, dizayn ish, Toshkent ish, O'zbekiston freelance, remote ish" />
+        <link rel="canonical" href="https://bufu.uz/jobs" />
+      </Head>
 
       <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
 

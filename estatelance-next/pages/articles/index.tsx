@@ -65,7 +65,12 @@ const ArticlesPage = () => {
 
   return (
     <>
-      <Head><title>Maqolalar — BuFu</title></Head>
+      <Head>
+        <title>Maqolalar — BuFu | Frilanserlik haqida maslahatlar</title>
+        <meta name="description" content="Frilanserlik, IT, dizayn va boshqa sohalar bo'yicha mutaxassislardan foydali maqolalar va maslahatlar. BuFu blog." />
+        <meta name="keywords" content="frilanser maqolalar, IT maslahat, frilanserlik qanday, O'zbekiston freelance blog" />
+        <link rel="canonical" href="https://bufu.uz/articles" />
+      </Head>
 
       {/* Comment error snackbar */}
       <Snackbar
