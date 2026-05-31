@@ -215,6 +215,33 @@ export const GET_POSTS = gql`
       viewCount
       comments {
         _id
+        authorId
+        authorName
+        authorAvatar
+        text
+        createdAt
+      }
+      createdAt
+    }
+  }
+`;
+
+export const GET_POST_BY_ID = gql`
+  query GetPostById($postId: String!) {
+    getPostById(postId: $postId) {
+      _id
+      title
+      body
+      imageUrl
+      authorId
+      authorName
+      authorAvatar
+      likeCount
+      likedByUserIds
+      viewCount
+      comments {
+        _id
+        authorId
         authorName
         authorAvatar
         text

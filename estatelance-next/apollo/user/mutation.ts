@@ -213,7 +213,9 @@ export const ADD_COMMENT = gql`
       _id
       comments {
         _id
+        authorId
         authorName
+        authorAvatar
         text
         createdAt
       }

@@ -5,8 +5,9 @@ import { useMutation, useQuery } from '@apollo/client';
 import { useReactiveVar } from '@apollo/client';
 import { Alert, Avatar, Box, Button, CircularProgress, Divider, Snackbar, Stack, TextField, Typography } from '@mui/material';
 import { Heart as FavoriteIcon, Heart as FavoriteBorderIcon, Eye as VisibilityIcon } from '@phosphor-icons/react';
-import { GET_POSTS } from '../../apollo/user/query';
+import { GET_POSTS, GET_POST_BY_ID } from '../../apollo/user/query';
 import { CREATE_POST, TOGGLE_LIKE_POST, ADD_COMMENT } from '../../apollo/user/mutation';
+import { apolloClient } from '../../apollo/client';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { Post } from '../../libs/types';
@@ -42,6 +43,42 @@ const ArticlesPage = () => {
     setPostTitle(''); setPostBody(''); setPostImageUrl('');
     setShowWriteForm(false);
     refetch();
+  };
+
+  // Ko'rishlar sonini oshirish — faqat birinchi ochilganda
+  const viewedPosts = React.useRef<Set<string>>(new Set());
+
+  const handleExpand = (postId: string) => {
+    const isCurrentlyExpanded = expandedPost === postId;
+    setExpandedPost(isCurrentlyExpanded ? null : postId);
+
+    // Birinchi marta ochilganda backend ga viewCount increment yuborish
+    if (!isCurrentlyExpanded && !viewedPosts.current.has(postId)) {
+      viewedPosts.current.add(postId);
+      apolloClient.query({
+        query: GET_POST_BY_ID,
+        variables: { postId },
+        fetchPolicy: 'network-only',
+      }).then(({ data }) => {
+        // GET_POSTS cache dagi post ni yangilash
+        const updatedPost = data?.getPostById;
+        if (!updatedPost) return;
+        try {
+          const cached = apolloClient.readQuery({ query: GET_POSTS, variables: { page: 1, limit: 20 } }) as any;
+          if (cached?.getPosts) {
+            apolloClient.writeQuery({
+              query: GET_POSTS,
+              variables: { page: 1, limit: 20 },
+              data: {
+                getPosts: cached.getPosts.map((p: any) =>
+                  p._id === postId ? { ...p, viewCount: updatedPost.viewCount } : p
+                ),
+              },
+            });
+          }
+        } catch {/* cache miss */}
+      }).catch(() => {/* silent */});
+    }
   };
 
   const handleLike = async (postId: string) => {
@@ -182,7 +219,7 @@ const ArticlesPage = () => {
                     {post.body}
                   </Typography>
 
-                  <Button size="small" onClick={() => setExpandedPost(isExpanded ? null : post._id)} sx={{ color: '#4f46e5', fontSize: 12, p: 0, mb: 2 }}>
+                  <Button size="small" onClick={() => handleExpand(post._id)} sx={{ color: '#4f46e5', fontSize: 12, p: 0, mb: 2 }}>
                     {isExpanded ? 'Kamroq ko\'rish' : 'Ko\'proq o\'qish'}
                   </Button>
 
@@ -195,7 +232,7 @@ const ArticlesPage = () => {
                       <VisibilityIcon size={14} color="#94a3b8" />
                       <Typography fontSize={12} color="text.secondary">{post.viewCount}</Typography>
                     </Stack>
-                    <Button size="small" onClick={() => setExpandedPost(isExpanded ? null : post._id)} sx={{ color: '#64748b', fontSize: 12, ml: 'auto' }}>
+                    <Button size="small" onClick={() => handleExpand(post._id)} sx={{ color: '#64748b', fontSize: 12, ml: 'auto' }}>
                       {post.comments.length} ta izoh
                     </Button>
                   </Stack>
