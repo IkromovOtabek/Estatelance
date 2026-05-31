@@ -36,6 +36,8 @@ import {
   ArrowRight,
   ArrowLeft,
   CheckCircle,
+  Eye,
+  EyeSlash,
 } from '@phosphor-icons/react';
 import { loginWithPassword, signupWithPassword, loginWithTelegram } from '../../libs/auth';
 import { saveToken } from '../../apollo/client';
@@ -615,7 +617,7 @@ const AccountPage = () => {
                         endAdornment: (
                           <InputAdornment position="end">
                             <IconButton size="small" onClick={() => setShowPassword((v) => !v)} edge="end" sx={{ color: '#777587' }}>
-                              <Typography fontSize={11}>{showPassword ? 'yashir' : 'ko\'r'}</Typography>
+                              {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
                             </IconButton>
                           </InputAdornment>
                         ),
@@ -776,9 +778,18 @@ const AccountPage = () => {
 
                       {/* Parol */}
                       <TextField
-                        label="Parol" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                        label="Parol" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
                         size="small" fullWidth required
-                        InputProps={{ startAdornment: <InputAdornment position="start"><LockOutlinedIcon size={18} color="#777587" /></InputAdornment> }}
+                        InputProps={{
+                          startAdornment: <InputAdornment position="start"><LockOutlinedIcon size={18} color="#777587" /></InputAdornment>,
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton size="small" onClick={() => setShowPassword(v => !v)} edge="end" sx={{ color: '#777587' }}>
+                                {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
                         sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2, '&:hover fieldset': { borderColor: '#3525cd' }, '&.Mui-focused fieldset': { borderColor: '#3525cd', boxShadow: '0 0 0 4px rgba(53,37,205,0.1)' } } }}
                       />
 

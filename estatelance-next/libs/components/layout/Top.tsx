@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useMutation, useQuery } from '@apollo/client';
@@ -40,6 +41,8 @@ import {
   Heart as LikeIcon,
   Chat as ChatIcon,
   UserSquare as FollowIcon,
+  Sun,
+  Moon,
 } from '@phosphor-icons/react';
 import { userVar } from '../../../apollo/store';
 import { logout } from '../../../libs/auth';
@@ -99,10 +102,12 @@ function getInitials(name?: string, fallback?: string): string {
 const Top = () => {
   const router = useRouter();
   const user = useReactiveVar(userVar);
+  const { theme: currentTheme, setTheme } = useTheme();
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
   const isLoggedIn = mounted && !!user._id;
+  const isDark = mounted && currentTheme === 'dark';
   const isAdmin = mounted && user.userType === UserType.ADMIN;
 
   const [profileMenuAnchor, setProfileMenuAnchor] = useState<null | HTMLElement>(null);
@@ -428,6 +433,22 @@ const Top = () => {
           {isLoggedIn ? (
             <Stack direction="row" spacing={1} alignItems="center">
 
+              {/* ── Dark/Light toggle ── */}
+              <Tooltip title={isDark ? "Yorug' rejim" : "Qorong'i rejim"}>
+                <IconButton
+                  size="small"
+                  onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                  sx={{
+                    color: isDark ? '#facc15' : '#64748b',
+                    bgcolor: isDark ? 'rgba(250,204,21,0.1)' : 'rgba(100,116,139,0.08)',
+                    '&:hover': { bgcolor: isDark ? 'rgba(250,204,21,0.2)' : 'rgba(100,116,139,0.15)' },
+                    width: 34, height: 34,
+                  }}
+                >
+                  {isDark ? <Sun size={18} weight="fill" /> : <Moon size={18} />}
+                </IconButton>
+              </Tooltip>
+
               {/* ── Bell Icon ── */}
               <Tooltip title="Bildirishnomalar">
                 <IconButton
@@ -719,22 +740,39 @@ const Top = () => {
               </Menu>
             </Stack>
           ) : (
-            <Link href="/account" style={{ textDecoration: 'none' }}>
-              <Button
-                variant="contained"
-                size="small"
-                sx={{
-                  bgcolor: '#4f46e5',
-                  '&:hover': { bgcolor: '#4338ca', transform: 'translateY(-1px)' },
-                  fontSize: 13, fontWeight: 700, borderRadius: 2,
-                  px: 2.5, py: 0.75,
-                  boxShadow: '0 2px 8px rgba(79,70,229,0.3)',
-                  transition: 'all 0.2s',
-                }}
-              >
-                Kirish
-              </Button>
-            </Link>
+            <Stack direction="row" spacing={1} alignItems="center">
+              {/* Dark/Light toggle (guest) */}
+              <Tooltip title={isDark ? "Yorug' rejim" : "Qorong'i rejim"}>
+                <IconButton
+                  size="small"
+                  onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                  sx={{
+                    color: isDark ? '#facc15' : '#64748b',
+                    bgcolor: isDark ? 'rgba(250,204,21,0.1)' : 'rgba(100,116,139,0.08)',
+                    '&:hover': { bgcolor: isDark ? 'rgba(250,204,21,0.2)' : 'rgba(100,116,139,0.15)' },
+                    width: 34, height: 34,
+                  }}
+                >
+                  {isDark ? <Sun size={18} weight="fill" /> : <Moon size={18} />}
+                </IconButton>
+              </Tooltip>
+              <Link href="/account" style={{ textDecoration: 'none' }}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  sx={{
+                    bgcolor: '#4f46e5',
+                    '&:hover': { bgcolor: '#4338ca', transform: 'translateY(-1px)' },
+                    fontSize: 13, fontWeight: 700, borderRadius: 2,
+                    px: 2.5, py: 0.75,
+                    boxShadow: '0 2px 8px rgba(79,70,229,0.3)',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Kirish
+                </Button>
+              </Link>
+            </Stack>
           )}
         </Toolbar>
       </AppBar>

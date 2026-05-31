@@ -2,8 +2,9 @@ import React, { useEffect } from 'react';
 import type { AppProps } from 'next/app';
 import { useRouter } from 'next/router';
 import { ApolloProvider } from '@apollo/client';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider } from 'next-themes';
 import { useReactiveVar } from '@apollo/client';
 import { apolloClient } from '../apollo/client';
 import { restoreUserSession } from '../libs/auth';
@@ -212,16 +213,18 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [router.events]);
 
   return (
-    <ApolloProvider client={apolloClient}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <OnboardingGuard>
-          <Component {...pageProps} />
-        </OnboardingGuard>
-        <AnnouncementBanner />
-        <SpamModal />
-        <ChatWidget />
-      </ThemeProvider>
-    </ApolloProvider>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+      <ApolloProvider client={apolloClient}>
+        <MuiThemeProvider theme={theme}>
+          <CssBaseline />
+          <OnboardingGuard>
+            <Component {...pageProps} />
+          </OnboardingGuard>
+          <AnnouncementBanner />
+          <SpamModal />
+          <ChatWidget />
+        </MuiThemeProvider>
+      </ApolloProvider>
+    </ThemeProvider>
   );
 }

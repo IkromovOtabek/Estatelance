@@ -300,8 +300,8 @@ const HomePage = () => {
 
       {/* ─── HERO ─────────────────────────────────────────────────────────── */}
       <section
-        className="relative min-h-[820px] flex flex-col items-center justify-center text-center px-4 overflow-hidden"
-        style={{ backgroundColor: '#0f172a' }}
+        className="relative w-screen min-h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden"
+        style={{ backgroundColor: '#0f172a', marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' }}
       >
         {/* Glow orb */}
         <div
