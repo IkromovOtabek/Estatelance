@@ -5,6 +5,7 @@ export default function Document() {
     <Html lang="en">
       <Head>
         <meta charSet="utf-8" />
+        <meta name="google-site-verification" content="VRFENrwRjM4ww5GdWgSECw6guWew_Xbt5mDZW00IZfE" />
         <meta name="description" content="BuFu — Build Future. O'zbekistondagi frilanserlar platformasi. Mutaxassis toping yoki o'z xizmatlaringizni taklif qiling." />
         <meta name="theme-color" content="#6366f1" />
 
