@@ -7,8 +7,8 @@ import {
   Rocket, Pencil, Trash, ArrowRight, ChartBar, Wallet, XCircle
 } from '@phosphor-icons/react';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
-import { GET_MY_JOBS } from '../../apollo/job/query';
-import { DELETE_JOB } from '../../apollo/job/mutation';
+import { GET_MY_JOBS } from '../../apollo/user/query';
+import { DELETE_JOB } from '../../apollo/user/mutation';
 
 type FilterTab = 'all' | 'active' | 'pending' | 'completed' | 'cancelled';
 

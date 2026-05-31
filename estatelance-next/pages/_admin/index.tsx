@@ -1208,7 +1208,7 @@ const AdminPage = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-slate-500">{u.email ?? '—'}</td>
+                                <td className="px-6 py-4 text-sm text-slate-500">@{u.username ?? '—'}</td>
                                 <td className="px-6 py-4">
                                   {u.userType === UserType.ADMIN ? (
                                     <span className="px-2.5 py-1 bg-slate-800 text-white text-xs font-bold rounded-full">ADMIN</span>

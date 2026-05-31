@@ -5,9 +5,9 @@ import { useRouter } from 'next/router';
 import { useMutation } from '@apollo/client';
 import {
   Briefcase, User, ArrowRight, ArrowLeft, CheckCircle,
-  Phone, Buildings, TrendUp, Sparkle, X
+  Phone, Buildings, TrendUp, Sparkle, X, MagnifyingGlass
 } from '@phosphor-icons/react';
-import { SIGN_UP } from '../../apollo/user/mutation';
+import { SIGNUP } from '../../apollo/user/mutation';
 
 type Role = 'CLIENT' | 'FREELANCER' | '';
 type Experience = 'JUNIOR' | 'MIDDLE' | 'SENIOR' | '';
@@ -43,7 +43,7 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const [signUp] = useMutation(SIGN_UP);
+  const [signUp] = useMutation(SIGNUP);
 
   const toggleSkill = (s: string) => {
     setSkills(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);

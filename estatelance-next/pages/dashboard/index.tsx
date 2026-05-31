@@ -8,7 +8,7 @@ import {
   CheckCircle, Clock, XCircle, Rocket
 } from '@phosphor-icons/react';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
-import { GET_MY_JOBS } from '../../apollo/job/query';
+import { GET_MY_JOBS } from '../../apollo/user/query';
 import { useReactiveVar } from '@apollo/client';
 import { userVar } from '../../apollo/store';
 
@@ -48,7 +48,7 @@ const DashboardPage = () => {
     { label: 'Faol ishlar',   value: activeJobs.length,  icon: <Briefcase size={22} color="#4f46e5" />, bg: 'bg-indigo-50',  delta: '+2' },
     { label: "Daromad (so'm)", value: earnings.toLocaleString() || '0', icon: <CurrencyDollar size={22} color="#10b981" />, bg: 'bg-emerald-50', delta: '+12%' },
     { label: 'Yuborilgan takliflar', value: jobs.length,  icon: <PaperPlaneTilt size={22} color="#f59e0b" />, bg: 'bg-amber-50',   delta: '+5' },
-    { label: "Reyting",        value: user?.averageRating?.toFixed(1) ?? '—', icon: <Star size={22} color="#a855f7" weight="fill" />, bg: 'bg-purple-50', delta: '' },
+    { label: "Tugagan ishlar",  value: completedJobs.length, icon: <Star size={22} color="#a855f7" weight="fill" />, bg: 'bg-purple-50', delta: '' },
   ];
 
   return (

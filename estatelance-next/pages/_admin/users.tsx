@@ -108,8 +108,7 @@ const UsersPage = () => {
       list = list.filter(
         (u) =>
           u.username?.toLowerCase().includes(search.toLowerCase()) ||
-          u.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-          u.email?.toLowerCase().includes(search.toLowerCase()),
+          u.fullName?.toLowerCase().includes(search.toLowerCase()),
       );
     return list;
   })();
@@ -448,7 +447,7 @@ const UsersPage = () => {
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 text-sm text-slate-500">{u.email ?? '—'}</td>
+                              <td className="px-6 py-4 text-sm text-slate-500">@{u.username ?? '—'}</td>
                               <td className="px-6 py-4">
                                 {u.userType === UserType.ADMIN ? (
                                   <span className="px-2.5 py-1 bg-slate-800 text-white text-xs font-bold rounded-full">ADMIN</span>
@@ -664,8 +663,8 @@ const UsersPage = () => {
                     {/* Details */}
                     <div className="space-y-3 mb-4">
                       {[
-                        { label: 'Email', value: selectedUser.email ?? '—' },
-                        { label: 'Telefon', value: selectedUser.phone ?? '—' },
+                        { label: 'Username', value: selectedUser.username ? `@${selectedUser.username}` : '—' },
+                        { label: 'Joylashuv', value: selectedUser.location ?? '—' },
                         {
                           label: "Qo'shilgan",
                           value: selectedUser.createdAt
