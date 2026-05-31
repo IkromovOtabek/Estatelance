@@ -5,10 +5,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useMutation } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
+import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { UPDATE_PROFILE } from '../../apollo/mutations';
+import { GET_ME } from '../../apollo/queries';
 
 const AVAIL_OPTIONS = [
   { value: 'AVAILABLE',    label: '✅ Band emas' },
@@ -20,12 +22,16 @@ export default function ProfileScreen() {
   const { user, login, logout } = useAuth();
   const [editModal, setEditModal] = useState(false);
 
-  const [eName, setEName]       = useState(user?.fullName ?? '');
-  const [eBio, setEBio]         = useState(user?.bio ?? '');
-  const [eTitle, setETitle]     = useState(user?.title ?? '');
-  const [eRate, setERate]       = useState(String(user?.hourlyRate ?? ''));
-  const [eAvail, setEAvail]     = useState(user?.availability ?? 'AVAILABLE');
-  const [eSkills, setESkills]   = useState((user?.skills ?? []).join(', '));
+  // Serverdan yangi ma'lumot olish
+  const { data: meData, loading: meLoading } = useQuery(GET_ME, { fetchPolicy: 'cache-and-network' });
+  const profile = meData?.getMe ?? user;
+
+  const [eName, setEName]       = useState('');
+  const [eBio, setEBio]         = useState('');
+  const [eTitle, setETitle]     = useState('');
+  const [eRate, setERate]       = useState('');
+  const [eAvail, setEAvail]     = useState('AVAILABLE');
+  const [eSkills, setESkills]   = useState('');
 
   const [updateProfile, { loading: saving }] = useMutation(UPDATE_PROFILE);
 
@@ -55,28 +61,28 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const initials = (user?.fullName ?? user?.username ?? '?')[0].toUpperCase();
+  const initials = (profile?.fullName ?? profile?.username ?? '?')[0].toUpperCase();
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Avatar + name */}
         <View style={styles.profileTop}>
-          {user?.profileImage ? (
-            <Image source={{ uri: user.profileImage }} style={styles.avatar} />
+          {profile?.profileImage ? (
+            <Image source={{ uri: profile.profileImage }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarFallback}>
               <Text style={styles.avatarText}>{initials}</Text>
             </View>
           )}
-          <Text style={styles.name}>{user?.fullName ?? user?.username}</Text>
-          <Text style={styles.username}>@{user?.username}</Text>
-          {user?.title && <Text style={styles.userTitle}>{user.title}</Text>}
+          <Text style={styles.name}>{profile?.fullName ?? profile?.username}</Text>
+          <Text style={styles.username}>@{profile?.username}</Text>
+          {profile?.title && <Text style={styles.userTitle}>{profile.title}</Text>}
 
           {/* Type badge */}
           <View style={[styles.typeBadge, user?.userType === 'AGENT' ? styles.agentBadge : styles.freelancerBadge]}>
             <Text style={[styles.typeText, user?.userType === 'AGENT' ? { color: '#0891b2' } : { color: '#7c3aed' }]}>
-              {user?.userType === 'AGENT' ? '🏠 Mijoz' : '💼 Frilanser'}
+              {user?.userType === 'AGENT' ? '🏢 Mijoz' : '💼 Frilanser'}
             </Text>
           </View>
         </View>
@@ -84,8 +90,8 @@ export default function ProfileScreen() {
         {/* Stats */}
         <View style={styles.statsRow}>
           {[
-            { label: 'Bajarilgan ish', value: user?.completedJobCount ?? 0 },
-            { label: 'Soatlik narx',   value: user?.hourlyRate ? `$${user.hourlyRate}` : '—' },
+            { label: 'Bajarilgan ish', value: profile?.completedJobCount ?? 0 },
+            { label: 'Soatlik narx',   value: profile?.hourlyRate ? `$${profile.hourlyRate}` : '—' },
           ].map(s => (
             <View key={s.label} style={styles.statCard}>
               <Text style={styles.statValue}>{s.value}</Text>
@@ -95,19 +101,19 @@ export default function ProfileScreen() {
         </View>
 
         {/* Bio */}
-        {user?.bio && (
+        {profile?.bio && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Bio</Text>
-            <Text style={styles.bioText}>{user.bio}</Text>
+            <Text style={styles.bioText}>{profile.bio}</Text>
           </View>
         )}
 
         {/* Skills */}
-        {user?.skills && user.skills.length > 0 && (
+        {profile?.skills && profile.skills.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Ko'nikmalar</Text>
             <View style={styles.skillsWrap}>
-              {user.skills.map(s => (
+              {profile.skills.map((s: string) => (
                 <View key={s} style={styles.skillChip}>
                   <Text style={styles.skillText}>{s}</Text>
                 </View>
@@ -121,20 +127,25 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Holat</Text>
           <View style={styles.availChip}>
             <Text style={styles.availText}>
-              {AVAIL_OPTIONS.find(o => o.value === user?.availability)?.label ?? '—'}
+              {AVAIL_OPTIONS.find(o => o.value === profile?.availability)?.label ?? '—'}
             </Text>
           </View>
         </View>
 
         {/* Buttons */}
         <View style={styles.btnsSection}>
+          <TouchableOpacity style={styles.myWorksBtn} onPress={() => router.push('/(tabs)/my-works')}>
+            <Ionicons name="folder-open" size={18} color="white" />
+            <Text style={styles.myWorksBtnText}>Mening Ishlarim</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.editBtn} onPress={() => {
-            setEName(user?.fullName ?? '');
-            setEBio(user?.bio ?? '');
-            setETitle(user?.title ?? '');
-            setERate(String(user?.hourlyRate ?? ''));
-            setEAvail(user?.availability ?? 'AVAILABLE');
-            setESkills((user?.skills ?? []).join(', '));
+            setEName(profile?.fullName ?? '');
+            setEBio(profile?.bio ?? '');
+            setETitle(profile?.title ?? '');
+            setERate(String(profile?.hourlyRate ?? ''));
+            setEAvail(profile?.availability ?? 'AVAILABLE');
+            setESkills((profile?.skills ?? []).join(', '));
             setEditModal(true);
           }}>
             <Ionicons name="pencil" size={16} color="white" />
@@ -223,6 +234,8 @@ const styles = StyleSheet.create({
   availChip:       { backgroundColor: Colors.bg, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, alignSelf: 'flex-start' },
   availText:       { fontSize: 14, fontWeight: '600', color: Colors.text },
   btnsSection:     { padding: 16, gap: 10 },
+  myWorksBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#0891b2', borderRadius: 14, paddingVertical: 14 },
+  myWorksBtnText:  { color: 'white', fontWeight: '800', fontSize: 16 },
   editBtn:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 14 },
   editBtnText:     { color: 'white', fontWeight: '800', fontSize: 16 },
   logoutBtn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: Colors.white, borderRadius: 14, paddingVertical: 14, borderWidth: 1, borderColor: '#fecaca' },

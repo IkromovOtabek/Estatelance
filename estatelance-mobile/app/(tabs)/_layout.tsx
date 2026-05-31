@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { useQuery } from '@apollo/client';
@@ -31,6 +31,24 @@ function TabIcon({ name, focused, badge }: { name: any; focused: boolean; badge?
   );
 }
 
+function AddButton() {
+  return (
+    <View style={{
+      width: 50, height: 50, borderRadius: 25,
+      backgroundColor: Colors.primary,
+      alignItems: 'center', justifyContent: 'center',
+      marginBottom: 20,
+      shadowColor: Colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.4,
+      shadowRadius: 8,
+      elevation: 6,
+    }}>
+      <Ionicons name="add" size={28} color="white" />
+    </View>
+  );
+}
+
 export default function TabsLayout() {
   const { user, loading } = useAuth();
   const { data: notifData } = useQuery(GET_UNREAD_COUNT, {
@@ -55,10 +73,11 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: Colors.tabBar,
           borderTopColor: Colors.border,
-          height: 60,
+          height: 64,
           paddingBottom: 8,
+          paddingTop: 4,
         },
-        tabBarActiveTintColor:   Colors.tabActive,
+        tabBarActiveTintColor: Colors.tabActive,
         tabBarInactiveTintColor: Colors.tabInactive,
         tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
       }}
@@ -77,11 +96,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => <TabIcon name="people" focused={focused} />,
         }}
       />
+      {/* Center + button */}
       <Tabs.Screen
         name="my-works"
         options={{
-          title: 'Mening',
-          tabBarIcon: ({ focused }) => <TabIcon name="folder" focused={focused} />,
+          title: '',
+          tabBarIcon: () => <AddButton />,
+          tabBarLabel: () => null,
         }}
       />
       <Tabs.Screen
@@ -94,8 +115,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="notifications"
         options={{
-          title: 'Bildirishnoma',
-          tabBarIcon: ({ focused }) => <TabIcon name="notifications" focused={focused} badge={unread} />,
+          href: null,
         }}
       />
       <Tabs.Screen

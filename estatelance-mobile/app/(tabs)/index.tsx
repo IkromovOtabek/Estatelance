@@ -47,9 +47,14 @@ export default function JobsScreen() {
           <Text style={styles.headerTitle}>Ish e'lonlari</Text>
           <Text style={styles.headerSub}>{jobs.length} ta ish topildi</Text>
         </View>
-        <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/my-works')}>
-          <Ionicons name="add" size={20} color="white" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/(tabs)/notifications')}>
+            <Ionicons name="notifications-outline" size={22} color={Colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/messages')}>
+            <Ionicons name="chatbubble-ellipses-outline" size={22} color={Colors.text} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Search */}
@@ -124,7 +129,7 @@ const styles = StyleSheet.create({
   header:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
   headerTitle:   { fontSize: 22, fontWeight: '900', color: Colors.text },
   headerSub:     { fontSize: 12, color: Colors.textSub, marginTop: 2 },
-  addBtn:        { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+  iconBtn:       { width: 38, height: 38, borderRadius: 12, backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.border, alignItems: 'center', justifyContent: 'center' },
   searchBox:     { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.border, borderRadius: 12, marginHorizontal: 16, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 10 },
   searchInput:   { flex: 1, fontSize: 15, color: Colors.text },
   catList:       { paddingHorizontal: 16, paddingBottom: 10, gap: 8 },
