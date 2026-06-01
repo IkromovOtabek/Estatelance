@@ -13,6 +13,13 @@ import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { Post } from '../../libs/types';
 
+// Eski DB da rasmlar "/uploads/" prefikssiz saqlangan — normalize qilamiz
+function fixImgUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('http') || url.startsWith('/')) return url;
+  return `/uploads/${url}`;
+}
+
 const ArticlesPage = () => {
   const user = useReactiveVar(userVar);
   const [mounted, setMounted] = useState(false);
@@ -188,7 +195,7 @@ const ArticlesPage = () => {
               <Box key={post._id} className="card-base" sx={{ overflow: 'hidden' }}>
                 {post.imageUrl && (
                   <Box sx={{ height: 220, overflow: 'hidden' }}>
-                    <img src={post.imageUrl} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={fixImgUrl(post.imageUrl)} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </Box>
                 )}
 
@@ -205,7 +212,7 @@ const ArticlesPage = () => {
                     >
                       <Avatar
                         className="author-avatar"
-                        src={post.authorAvatar}
+                        src={fixImgUrl(post.authorAvatar)}
                         sx={{ width: 36, height: 36, border: '2px solid transparent', transition: 'border-color 0.15s' }}
                       >
                         {post.authorName?.[0]}
@@ -254,7 +261,7 @@ const ArticlesPage = () => {
                       <Divider sx={{ my: 2 }} />
                       {post.comments.map(c => (
                         <Stack key={c._id} direction="row" spacing={1.5} mb={2}>
-                          <Avatar src={c.authorAvatar} sx={{ width: 28, height: 28, fontSize: 12 }}>{c.authorName?.[0]}</Avatar>
+                          <Avatar src={fixImgUrl(c.authorAvatar)} sx={{ width: 28, height: 28, fontSize: 12 }}>{c.authorName?.[0]}</Avatar>
                           <Box sx={{ bgcolor: '#f8fafc', p: 1.5, borderRadius: 2, flex: 1 }}>
                             <Typography fontWeight={600} fontSize={12}>{c.authorName}</Typography>
                             <Typography fontSize={13} color="text.secondary">{c.text}</Typography>

@@ -177,12 +177,15 @@ const AccountPage = () => {
       pendingOnboarding.current = true;
       setOnboardingOpen(true);
     } else if (user._id && !pendingOnboarding.current) {
-      router.replace('/');
+      // Google callback dan kelsa onboarding=google param bo'ladi — redirect qilmaymiz
+      const fromGoogle = router.query.onboarding === 'google';
+      if (!fromGoogle) router.replace('/');
     }
-  }, [sessionChecked, user._id, user.needsOnboarding]);
+  }, [sessionChecked, user._id, user.needsOnboarding, router.query.onboarding]);
 
   if (!sessionChecked) return null;
-  if (user._id && !user.needsOnboarding) return null;
+  // needsOnboarding=true bo'lsa sahifani ko'rsatamiz (onboarding dialog ochiladi)
+  if (user._id && !user.needsOnboarding && router.query.onboarding !== 'google') return null;
 
   const isDark = resolvedTheme === 'dark';
 
@@ -396,15 +399,32 @@ const AccountPage = () => {
     if (!file || !file.type.startsWith('image/')) return;
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
-    img.onload = () => {
+    img.onload = async () => {
       const SIZE = 200;
       const canvas = document.createElement('canvas');
       canvas.width = SIZE; canvas.height = SIZE;
       const ctx = canvas.getContext('2d')!;
       const min = Math.min(img.width, img.height);
       ctx.drawImage(img, (img.width - min) / 2, (img.height - min) / 2, min, min, 0, 0, SIZE, SIZE);
-      setOnboardingImage(canvas.toDataURL('image/jpeg', 0.7));
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
       URL.revokeObjectURL(objectUrl);
+
+      // Upload to server → get URL instead of storing base64
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base64: dataUrl, fileName: file.name }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          setOnboardingImage(data.url);
+        } else {
+          setOnboardingImage(dataUrl); // fallback
+        }
+      } catch {
+        setOnboardingImage(dataUrl); // fallback
+      }
     };
     img.src = objectUrl;
   };
