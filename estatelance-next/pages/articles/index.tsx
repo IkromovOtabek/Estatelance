@@ -105,10 +105,10 @@ const ArticlesPage = () => {
     try {
       const result = await addComment({
         variables: { input: { postId, text } },
-        refetchQueries: [{ query: GET_POSTS, variables: { page: 1, limit: 20 } }],
       });
       if (result?.data) {
         setCommentText(prev => ({ ...prev, [postId]: '' }));
+        refetch();
       }
     } catch (err: any) {
       const msg = err?.graphQLErrors?.[0]?.message ?? err?.networkError?.message ?? err?.message ?? "Izoh yuborishda xatolik. Qayta urinib ko'ring.";
