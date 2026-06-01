@@ -70,6 +70,7 @@ export const GET_USER_BY_ID = gql`
         createdAt
       }
       availability
+      phoneNumber
     }
   }
 `;
@@ -112,10 +113,18 @@ export const GET_JOBS = gql`
       propertyType
       propertyAddress
       budget
+      salaryFrom
+      salaryTo
+      location
+      experienceLevel
+      jobType
+      workFormat
       status
       agentId
       agentName
       bidCount
+      viewCount
+      requiredSkills
       createdAt
     }
   }
@@ -131,10 +140,18 @@ export const GET_JOB_BY_ID = gql`
       propertyType
       propertyAddress
       budget
+      salaryFrom
+      salaryTo
+      location
+      experienceLevel
+      jobType
+      workFormat
       status
       agentId
       agentName
+      contactPhone
       bidCount
+      viewCount
       hiredFreelancerId
       createdAt
     }
@@ -317,5 +334,11 @@ export const GET_MY_NOTIFICATIONS = gql`
 export const GET_UNREAD_NOTIFICATION_COUNT = gql`
   query GetUnreadNotificationCount {
     getUnreadNotificationCount
+  }
+`;
+
+export const CHECK_USERNAME = gql`
+  query CheckUsername($username: String!) {
+    checkUsername(username: $username)
   }
 `;

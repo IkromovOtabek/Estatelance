@@ -72,9 +72,10 @@ const AnnouncementsPage = () => {
               key={a._id}
               sx={{
                 p: { xs: 2.5, md: 3.5 },
-                bgcolor: 'white',
+                bgcolor: 'background.paper',
                 borderRadius: 3,
-                border: '1px solid #e2e8f0',
+                border: '1px solid',
+                borderColor: 'divider',
                 boxShadow: '0 1px 4px rgba(0,0,0,.04)',
               }}
             >
@@ -112,7 +113,7 @@ const AnnouncementsPage = () => {
                   }}
                 />
                 {a.createdAt && (
-                  <Typography fontSize={12} color="#94a3b8">
+                  <Typography fontSize={12} color="text.secondary">
                     {new Date(a.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -123,14 +124,14 @@ const AnnouncementsPage = () => {
               </Stack>
 
               {/* Title */}
-              <Typography fontWeight={800} fontSize={20} mb={1.5} color="#0f172a">
+              <Typography fontWeight={800} fontSize={20} mb={1.5} color="text.primary">
                 {a.title}
               </Typography>
 
               {/* Body */}
               <Typography
                 fontSize={15}
-                color="#475569"
+                color="text.secondary"
                 lineHeight={1.7}
                 sx={{ whiteSpace: 'pre-line' }}
               >

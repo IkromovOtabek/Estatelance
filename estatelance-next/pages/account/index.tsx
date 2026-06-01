@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import {
@@ -31,6 +31,7 @@ import {
   Palette,
   Camera,
   UploadSimple,
+  Phone,
   HouseLine,
   Briefcase,
   ArrowRight,
@@ -38,7 +39,10 @@ import {
   CheckCircle,
   Eye,
   EyeSlash,
+  MapPin,
+  X,
 } from '@phosphor-icons/react';
+import { useTheme } from 'next-themes';
 import { loginWithPassword, signupWithPassword, loginWithTelegram } from '../../libs/auth';
 import { saveToken } from '../../apollo/client';
 import TelegramLoginButton from '../../libs/components/common/TelegramLoginButton';
@@ -46,6 +50,9 @@ import { UPDATE_PROFILE } from '../../apollo/user/mutation';
 import { JobCategory, JOB_CATEGORY_LABELS, UserType } from '../../libs/enums';
 import { userVar } from '../../apollo/store';
 import { useMutation, useReactiveVar } from '@apollo/client';
+import { apolloClient } from '../../apollo/client';
+import { CHECK_USERNAME } from '../../apollo/user/query';
+import YandexMapModal, { getYandexSuggests } from '../../libs/components/common/YandexMapModal';
 
 // ─── Kirish va Ro'yxatdan o'tish sahifasi ────────────────────────────────────
 
@@ -80,6 +87,7 @@ const BuFuLogoSvg = ({ size = 28 }: { size?: number }) => (
 const AccountPage = () => {
   const router = useRouter();
   const user = useReactiveVar(userVar);
+  const { resolvedTheme } = useTheme();
 
   // ── Tab holatlar: 'login' | 'signup' ──────────────────────────────────────
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
@@ -92,15 +100,42 @@ const AccountPage = () => {
   const [signupStep, setSignupStep] = useState<1 | 2>(1);
   const [selectedRole, setSelectedRole] = useState<UserType | ''>('');
   const [username, setUsername] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const usernameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [signupPhone, setSignupPhone] = useState('');
   const [location, setLocation] = useState('');
+  const [locationSuggests, setLocationSuggests] = useState<string[]>([]);
+  const locationTimerRef = useRef<any>(null);
   const [profileImage, setProfileImage] = useState('');
   const [bio, setBio] = useState('');
+  const [mapOpen, setMapOpen] = useState(false);
   const [freelancerCategory, setFreelancerCategory] = useState('');
   const [hourlyRate, setHourlyRate] = useState('');
   const [skillInput, setSkillInput] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
+
+  // ── Username mavjudligini tekshirish (debounced) ───────────────────────────
+  const handleUsernameChange = useCallback((value: string) => {
+    setUsername(value);
+    setUsernameAvailable(null);
+    if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
+    if (value.trim().length < 3) return;
+    setUsernameChecking(true);
+    usernameTimerRef.current = setTimeout(async () => {
+      try {
+        const { data } = await apolloClient.query({
+          query: CHECK_USERNAME,
+          variables: { username: value.trim() },
+          fetchPolicy: 'network-only',
+        });
+        setUsernameAvailable(data?.checkUsername ?? null);
+      } catch { setUsernameAvailable(null); }
+      finally { setUsernameChecking(false); }
+    }, 600);
+  }, []);
 
   // ── Umumiy holatlar ────────────────────────────────────────────────────────
   const [isLoading, setIsLoading] = useState(false);
@@ -146,6 +181,61 @@ const AccountPage = () => {
   if (!sessionChecked) return null;
   if (user._id && !user.needsOnboarding) return null;
 
+  const isDark = resolvedTheme === 'dark';
+
+  // ── Dark mode color tokens ─────────────────────────────────────────────────
+  const pageBg    = isDark ? '#0f172a' : '#faf8ff';
+  const panelBg   = isDark ? '#1e293b' : '#ffffff';
+  const textPrim  = isDark ? '#f1f5f9' : '#131b2e';
+  const textSec   = isDark ? '#94a3b8' : '#464555';
+  const textMuted = isDark ? '#64748b' : '#777587';
+  const borderClr = isDark ? '#334155' : '#e2e8f0';
+  const tabBarBg  = isDark ? '#1e293b' : '#eaedff';
+  const inputBg   = pageBg;   // inputlar sahifa foni bilan bir xil
+  const divider   = isDark ? '#334155' : '#e2e8f0';
+
+  // Input sx shortcut — barcha TextField uchun
+  const inputSx = {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: isDark ? 'transparent' : '#ffffff',
+      borderRadius: 2,
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? '#334155' : borderClr,
+        transition: 'border-color 0.2s',
+      },
+      '&:hover .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? '#6366f1' : '#3525cd',
+      },
+      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? '#6366f1' : '#3525cd',
+        borderWidth: '1px',
+        boxShadow: 'none',
+      },
+      '&.Mui-focused': {
+        outline: 'none',
+        boxShadow: 'none',
+      },
+    },
+    '& .MuiInputBase-input': {
+      color: textPrim,
+      backgroundColor: 'transparent',
+    },
+    '& .MuiInputLabel-root': { color: textMuted },
+    '& .MuiInputLabel-root.Mui-focused': { color: isDark ? textMuted : '#3525cd' },
+  };
+
+  // Outlined back button sx
+  const backBtnSx = {
+    borderColor: isDark ? 'transparent' : borderClr,
+    color: textSec,
+    bgcolor: inputBg,
+    borderRadius: 2,
+    py: 1.3,
+    fontWeight: 600,
+    minWidth: 100,
+    '&:hover': { borderColor: '#3525cd', color: '#3525cd', bgcolor: isDark ? '#1e293b' : '#f2f3ff' },
+  };
+
   const botName = process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME ?? '';
 
   // ── Skills ──────────────────────────────────────────────────────────────────
@@ -162,16 +252,35 @@ const AccountPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) { setErrorMessage("Faqat rasm faylini yuklash mumkin."); return; }
-    if (file.size > 2 * 1024 * 1024) { setErrorMessage('Rasm hajmi 2MB dan oshmasin.'); return; }
-    const reader = new FileReader();
-    reader.onload = () => { setProfileImage(String(reader.result)); setErrorMessage(''); };
-    reader.readAsDataURL(file);
+
+    // Canvas orqali 200x200 ga resize qilib, siqilgan JPEG ga o'girish
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      const SIZE = 200;
+      const canvas = document.createElement('canvas');
+      canvas.width = SIZE;
+      canvas.height = SIZE;
+      const ctx = canvas.getContext('2d')!;
+      // Markazdan crop
+      const min = Math.min(img.width, img.height);
+      const sx = (img.width - min) / 2;
+      const sy = (img.height - min) / 2;
+      ctx.drawImage(img, sx, sy, min, min, 0, 0, SIZE, SIZE);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% sifat
+      URL.revokeObjectURL(objectUrl);
+      setProfileImage(dataUrl);
+      setErrorMessage('');
+    };
+    img.src = objectUrl;
   };
 
   // ── Login submit ───────────────────────────────────────────────────────────
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+    if (!loginUsername.trim()) { setErrorMessage("Foydalanuvchi nomini kiriting."); return; }
+    if (!loginPassword) { setErrorMessage("Parolni kiriting."); return; }
     setIsLoading(true);
     try {
       await loginWithPassword(loginUsername, loginPassword);
@@ -194,6 +303,14 @@ const AccountPage = () => {
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+
+    // Frontend validatsiya
+    if (!fullName.trim()) { setErrorMessage("To'liq ism-sharifingizni kiriting."); return; }
+    if (!username.trim() || username.trim().length < 3) { setErrorMessage("Foydalanuvchi nomi kamida 3 belgi bo'lishi kerak."); return; }
+    if (usernameAvailable === false) { setErrorMessage("Bu foydalanuvchi nomi band. Boshqa nom tanlang."); return; }
+    if (!password || password.length < 6) { setErrorMessage("Parol kamida 6 ta belgi bo'lishi kerak."); return; }
+    if (!selectedRole) { setErrorMessage("Rolni tanlang."); return; }
+
     setIsLoading(true);
     try {
       await signupWithPassword(username, password, selectedRole as UserType, fullName, location, profileImage);
@@ -203,6 +320,7 @@ const AccountPage = () => {
       if (location.trim()) profileInput.location = location.trim();
       if (profileImage) profileInput.profileImage = profileImage;
       if (bio.trim()) profileInput.bio = bio.trim();
+      if (signupPhone.trim()) profileInput.phoneNumber = signupPhone.trim();
 
       if (selectedRole === UserType.FREELANCER) {
         if (freelancerCategory) profileInput.freelancerCategory = freelancerCategory;
@@ -226,7 +344,20 @@ const AccountPage = () => {
         router.push('/');
       }
     } catch (err: any) {
-      setErrorMessage(err?.graphQLErrors?.[0]?.message ?? err?.message ?? "Xatolik yuz berdi. Qayta urinib ko'ring.");
+      const raw: string = err?.graphQLErrors?.[0]?.message ?? err?.message ?? '';
+      if (raw.toLowerCase().includes('already taken') || raw.toLowerCase().includes('already exists') || raw.toLowerCase().includes('duplicate') || raw.toLowerCase().includes('exist')) {
+        setErrorMessage("Bu foydalanuvchi nomi band. Boshqa nom tanlang.");
+      } else if (raw.toLowerCase().includes('password') || raw.toLowerCase().includes('weak')) {
+        setErrorMessage("Parol juda oddiy. Kamida 6 ta belgi kiriting.");
+      } else if (raw.toLowerCase().includes('forbidden') || raw.toLowerCase().includes('unauthorized')) {
+        setErrorMessage("Ruxsat yo'q. Qayta urinib ko'ring.");
+      } else if (raw.toLowerCase().includes('network') || err?.networkError) {
+        setErrorMessage("Internet aloqasi yo'q. Tekshiring.");
+      } else if (raw) {
+        setErrorMessage(raw);
+      } else {
+        setErrorMessage("Xatolik yuz berdi. Qayta urinib ko'ring.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -259,10 +390,20 @@ const AccountPage = () => {
 
   const handleOnboardingImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || file.size > 2 * 1024 * 1024) return;
-    const reader = new FileReader();
-    reader.onload = () => setOnboardingImage(String(reader.result));
-    reader.readAsDataURL(file);
+    if (!file || !file.type.startsWith('image/')) return;
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      const SIZE = 200;
+      const canvas = document.createElement('canvas');
+      canvas.width = SIZE; canvas.height = SIZE;
+      const ctx = canvas.getContext('2d')!;
+      const min = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width - min) / 2, (img.height - min) / 2, min, min, 0, 0, SIZE, SIZE);
+      setOnboardingImage(canvas.toDataURL('image/jpeg', 0.7));
+      URL.revokeObjectURL(objectUrl);
+    };
+    img.src = objectUrl;
   };
 
   const handleOnboardingResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -363,18 +504,18 @@ const AccountPage = () => {
           <Box sx={{ position: 'relative', overflow: 'hidden' }}>
             {/* Step 1 */}
             <Box sx={{ p: 4, pt: 2.5, transform: onboardingStep === 1 ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)', position: onboardingStep === 1 ? 'relative' : 'absolute', top: 0, left: 0, width: '100%' }}>
-              <Typography variant="h6" fontWeight={800} color="#131b2e" mb={0.5} textAlign="center">Xush kelibsiz!</Typography>
+              <Typography variant="h6" fontWeight={800} color={textPrim} mb={0.5} textAlign="center">Xush kelibsiz!</Typography>
               <Typography fontSize={13} color="text.secondary" textAlign="center" mb={3}>Siz platformadan nima uchun foydalanasiz?</Typography>
               <Stack spacing={1.5} mb={3}>
                 {[
                   { role: UserType.AGENT, icon: <Briefcase size={22} color="#3525cd" weight="fill" />, title: 'Ish beruvchi', desc: 'Ish joylayman va mutaxassis yollayman' },
-                  { role: UserType.FREELANCER, icon: <Palette size={22} color="#3525cd" weight="fill" />, title: 'Frilanser', desc: "Profil ochib, ishlarga taklif yuboraman" },
+                  { role: UserType.FREELANCER, icon: <Palette size={22} color="#3525cd" weight="fill" />, title: 'Ish Qidiruvchi', desc: "Profil ochib, ishlarga taklif yuboraman" },
                 ].map(({ role, icon, title, desc }) => (
                   <Box key={role} onClick={() => setOnboardingRole(role)} sx={{ p: 2, border: `2px solid ${onboardingRole === role ? '#3525cd' : '#e2e8f0'}`, bgcolor: onboardingRole === role ? '#f2f3ff' : 'white', borderRadius: 2.5, cursor: 'pointer', transition: 'all 0.2s ease', boxShadow: onboardingRole === role ? '0 0 0 4px rgba(53,37,205,0.1)' : 'none', '&:hover': { borderColor: '#3525cd', bgcolor: '#f2f3ff' } }}>
                     <Stack direction="row" spacing={1.5} alignItems="center">
                       <Box sx={{ width: 44, height: 44, bgcolor: onboardingRole === role ? '#c3c0ff' : '#e2dfff', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>{icon}</Box>
                       <Box>
-                        <Typography fontWeight={700} fontSize={14} color="#131b2e">{title}</Typography>
+                        <Typography fontWeight={700} fontSize={14} color={textPrim}>{title}</Typography>
                         <Typography fontSize={12} color="text.secondary">{desc}</Typography>
                       </Box>
                     </Stack>
@@ -388,7 +529,7 @@ const AccountPage = () => {
 
             {/* Step 2 */}
             <Box sx={{ p: 3, pt: 2, transform: onboardingStep === 2 ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)', position: onboardingStep === 2 ? 'relative' : 'absolute', top: 0, left: 0, width: '100%', maxHeight: '70vh', overflowY: 'auto', '&::-webkit-scrollbar': { width: 4 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#e2e8f0', borderRadius: 2 } }}>
-              <Typography variant="h6" fontWeight={800} color="#131b2e" mb={0.25} textAlign="center">Profilingizni to'ldiring</Typography>
+              <Typography variant="h6" fontWeight={800} color={textPrim} mb={0.25} textAlign="center">Profilingizni to'ldiring</Typography>
               <Typography fontSize={12} color="text.secondary" textAlign="center" mb={2.5}>Bu ma'lumotlar boshqa foydalanuvchilarga ko'rinadi</Typography>
               <Stack spacing={1.75}>
                 <Box component="label" sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1.5, border: '1px dashed #c7c4d8', borderRadius: 2, cursor: 'pointer', transition: 'all 0.15s', '&:hover': { borderColor: '#3525cd', bgcolor: '#f2f3ff' } }}>
@@ -404,21 +545,21 @@ const AccountPage = () => {
                     <Typography fontSize={11} color="#94a3b8">JPG, PNG · max 2MB</Typography>
                   </Box>
                 </Box>
-                <TextField label="To'liq ism" value={onboardingFullName} onChange={(e) => setOnboardingFullName(e.target.value)} size="small" fullWidth placeholder="Otabek Ikromov" InputProps={{ startAdornment: <InputAdornment position="start"><BadgeOutlinedIcon size={17} color="#94a3b8" /></InputAdornment> }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2 } }} />
-                <TextField label="Manzil" value={onboardingLocation} onChange={(e) => setOnboardingLocation(e.target.value)} size="small" fullWidth placeholder="Toshkent, UZ" sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2 } }} />
-                <TextField label="Telefon raqam *" value={onboardingPhone} onChange={(e) => setOnboardingPhone(e.target.value)} size="small" fullWidth placeholder="+998 90 123 45 67" helperText="Oxirgi 4 ta raqam boshqa foydalanuvchilarga ko'rinadi" FormHelperTextProps={{ sx: { fontSize: 11, color: '#94a3b8', mx: 0 } }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2 } }} />
+                <TextField label="To'liq ism" value={onboardingFullName} onChange={(e) => setOnboardingFullName(e.target.value)} size="small" fullWidth placeholder="Otabek Ikromov" InputProps={{ startAdornment: <InputAdornment position="start"><BadgeOutlinedIcon size={17} color="#94a3b8" /></InputAdornment> }} sx={inputSx} />
+                <TextField label="Manzil" value={onboardingLocation} onChange={(e) => setOnboardingLocation(e.target.value)} size="small" fullWidth placeholder="Toshkent, UZ" sx={inputSx} />
+                <TextField label="Telefon raqam *" value={onboardingPhone} onChange={(e) => setOnboardingPhone(e.target.value)} size="small" fullWidth placeholder="+998 90 123 45 67" helperText="Oxirgi 4 ta raqam boshqa foydalanuvchilarga ko'rinadi" FormHelperTextProps={{ sx: { fontSize: 11, color: '#94a3b8', mx: 0 } }} sx={inputSx} />
                 {onboardingRole === UserType.FREELANCER && (
                   <>
-                    <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2 } }}>
+                    <FormControl fullWidth size="small" sx={inputSx}>
                       <InputLabel>Ixtisoslik yo'nalishi</InputLabel>
                       <Select value={onboardingCategory} label="Ixtisoslik yo'nalishi" onChange={(e) => setOnboardingCategory(e.target.value)}>
                         {Object.values(JobCategory).map((cat) => (<MenuItem key={cat} value={cat} sx={{ fontSize: 13 }}>{JOB_CATEGORY_LABELS[cat]}</MenuItem>))}
                       </Select>
                     </FormControl>
-                    <TextField label="Soatlik narx (USD)" value={onboardingHourlyRate} onChange={(e) => setOnboardingHourlyRate(e.target.value)} type="number" size="small" fullWidth placeholder="25" inputProps={{ min: 0, step: 1 }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2 } }} />
+                    <TextField label="Soatlik narx (USD)" value={onboardingHourlyRate} onChange={(e) => setOnboardingHourlyRate(e.target.value)} type="number" size="small" fullWidth placeholder="25" inputProps={{ min: 0, step: 1 }} sx={inputSx} />
                     <Box>
                       <Stack direction="row" spacing={1}>
-                        <TextField label="Ko'nikmalar" value={onboardingSkillInput} onChange={(e) => setOnboardingSkillInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addOnboardingSkill(); } }} size="small" fullWidth placeholder="AutoCAD, SMM, Figma" sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2 } }} />
+                        <TextField label="Ko'nikmalar" value={onboardingSkillInput} onChange={(e) => setOnboardingSkillInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addOnboardingSkill(); } }} size="small" fullWidth placeholder="AutoCAD, SMM, Figma" sx={inputSx} />
                         <Button variant="outlined" onClick={addOnboardingSkill} sx={{ borderColor: '#e2e8f0', color: '#3525cd', minWidth: 70, fontSize: 12 }}>Qo'sh</Button>
                       </Stack>
                       {onboardingSkills.length > 0 && (
@@ -439,10 +580,10 @@ const AccountPage = () => {
                     </Box>
                   </>
                 )}
-                <TextField value={onboardingBio} onChange={(e) => setOnboardingBio(e.target.value)} label={onboardingRole === UserType.FREELANCER ? 'Tajribangiz haqida' : 'Qanday ishchi izlayapsiz?'} size="small" fullWidth multiline rows={3} placeholder={onboardingRole === UserType.FREELANCER ? 'Qanday xizmatlar qilasiz, tajribangiz...' : "Qaysi yo'nalishda mutaxassis kerak..."} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2 } }} />
+                <TextField value={onboardingBio} onChange={(e) => setOnboardingBio(e.target.value)} label={onboardingRole === UserType.FREELANCER ? 'Tajribangiz haqida' : 'Qanday ishchi izlayapsiz?'} size="small" fullWidth multiline rows={3} placeholder={onboardingRole === UserType.FREELANCER ? 'Qanday xizmatlar qilasiz, tajribangiz...' : "Qaysi yo'nalishda mutaxassis kerak..."} sx={inputSx} />
               </Stack>
               <Stack direction="row" spacing={1.5} mt={2.5}>
-                <Button variant="outlined" onClick={handleOnboardingBack} sx={{ borderColor: '#e2e8f0', color: '#64748b', borderRadius: 2, py: 1.2, fontWeight: 600, minWidth: 80 }}>← Orqaga</Button>
+                <Button variant="outlined" onClick={handleOnboardingBack} sx={{ borderColor: borderClr, color: textSec, bgcolor: inputBg, borderRadius: 2, py: 1.2, fontWeight: 600, minWidth: 80, '&:hover': { borderColor: '#3525cd', color: '#3525cd' } }}>← Orqaga</Button>
                 <Button fullWidth variant="contained" disabled={onboardingLoading} onClick={handleOnboardingSubmit} sx={{ bgcolor: '#3525cd', '&:hover': { bgcolor: '#2a1da8' }, borderRadius: 2, py: 1.2, fontWeight: 700 }}>
                   {onboardingLoading ? <Stack direction="row" spacing={1} alignItems="center"><CircularProgress size={16} sx={{ color: 'white' }} /><span>Saqlanmoqda...</span></Stack> : 'Boshlash'}
                 </Button>
@@ -453,13 +594,13 @@ const AccountPage = () => {
       </Dialog>
 
       {/* ── Asosiy sahifa ── */}
-      <Box sx={{ minHeight: '100vh', display: 'flex', position: 'relative', bgcolor: '#faf8ff' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', position: 'relative', bgcolor: pageBg }}>
 
         {/* Uy sahifasiga qaytish tugmasi */}
         <IconButton
           aria-label="Asosiy sahifaga qaytish"
           onClick={() => router.push('/')}
-          sx={{ position: 'absolute', top: { xs: 16, md: 24 }, right: { xs: 16, md: 24 }, zIndex: 5, width: 42, height: 42, bgcolor: 'white', color: '#3525cd', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(53,37,205,0.1)', '&:hover': { bgcolor: '#f2f3ff', borderColor: '#c3c0ff' } }}
+          sx={{ position: 'absolute', top: { xs: 16, md: 24 }, right: { xs: 16, md: 24 }, zIndex: 5, width: 42, height: 42, bgcolor: panelBg, color: '#3525cd', border: `1px solid ${borderClr}`, boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.5)' : '0 4px 16px rgba(53,37,205,0.1)', '&:hover': { bgcolor: isDark ? '#2d3748' : '#f2f3ff', borderColor: '#c3c0ff' } }}
         >
           <HouseLine size={21} weight="fill" />
         </IconButton>
@@ -512,7 +653,7 @@ const AccountPage = () => {
         </Box>
 
         {/* ── O'NG PANEL: forma ── */}
-        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#faf8ff', p: { xs: 3, md: 5 }, overflowY: 'auto' }}>
+        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: pageBg, p: { xs: 3, md: 5 }, overflowY: 'auto' }}>
           <Box sx={{ width: '100%', maxWidth: 460 }}>
 
             {/* Mobil logo */}
@@ -521,21 +662,21 @@ const AccountPage = () => {
                 <BuFuLogoSvg size={22} />
               </Box>
               <Typography sx={{ fontWeight: 900, fontSize: 20, letterSpacing: -0.5 }}>
-                <span style={{ color: '#3525cd' }}>Bu</span><span style={{ color: '#131b2e' }}>Fu</span>
+                <span style={{ color: '#3525cd' }}>Bu</span><span style={{ color: textPrim }}>Fu</span>
               </Typography>
             </Stack>
 
             {/* ── TAB TUGMALARI ── */}
-            <Box sx={{ display: 'flex', bgcolor: '#eaedff', borderRadius: 2.5, p: 0.6, mb: 4 }}>
+            <Box sx={{ display: 'flex', bgcolor: tabBarBg, borderRadius: 2.5, p: 0.6, mb: 4 }}>
               {(['login', 'signup'] as const).map((tab) => (
                 <Box
                   key={tab}
                   onClick={() => { setActiveTab(tab); setErrorMessage(''); setSignupStep(1); }}
                   sx={{
                     flex: 1, textAlign: 'center', py: 1.1, borderRadius: 2, cursor: 'pointer', fontWeight: 700, fontSize: 13, transition: 'all 0.2s',
-                    bgcolor: activeTab === tab ? 'white' : 'transparent',
-                    color: activeTab === tab ? '#131b2e' : '#464555',
-                    boxShadow: activeTab === tab ? '0 1px 4px rgba(53,37,205,0.12)' : 'none',
+                    bgcolor: activeTab === tab ? pageBg : 'transparent',
+                    color: activeTab === tab ? textPrim : textSec,
+                    boxShadow: activeTab === tab ? (isDark ? '0 1px 4px rgba(0,0,0,0.4)' : '0 1px 4px rgba(53,37,205,0.12)') : 'none',
                   }}
                 >
                   {tab === 'login' ? 'Kirish' : "Ro'yxatdan o'tish"}
@@ -547,8 +688,8 @@ const AccountPage = () => {
             {activeTab === 'login' && (
               <>
                 <Box mb={3.5}>
-                  <Typography variant="h5" fontWeight={800} color="#131b2e" mb={0.5}>Xush kelibsiz!</Typography>
-                  <Typography color="#464555" fontSize={14}>Hisobingizga kiring va davom eting</Typography>
+                  <Typography variant="h5" fontWeight={800} color={textPrim} mb={0.5}>Xush kelibsiz!</Typography>
+                  <Typography color={textSec} fontSize={14}>Hisobingizga kiring va davom eting</Typography>
                 </Box>
 
                 {/* Telegram bot linki */}
@@ -567,15 +708,32 @@ const AccountPage = () => {
                     </Box>
                   </a>
 
-                  {/* Google tugmasi (vizual only) */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, py: 1.3, px: 2, bgcolor: 'white', border: '1.5px solid #e2e8f0', borderRadius: 2, cursor: 'not-allowed', opacity: 0.7 }}>
+                  {/* Google tugmasi */}
+                  <Box
+                    component="a"
+                    href={process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL ?? 'http://localhost:4000/auth/google'}
+                    sx={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      gap: 1.5, py: 1.3, px: 2,
+                      bgcolor: inputBg,
+                      border: `1.5px solid ${isDark ? '#334155' : borderClr}`,
+                      borderRadius: 2,
+                      cursor: 'pointer',
+                      textDecoration: 'none',
+                      transition: 'all 0.15s',
+                      '&:hover': {
+                        borderColor: '#4285F4',
+                        bgcolor: isDark ? '#1e293b' : '#f8faff',
+                      },
+                    }}
+                  >
                     <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                     </svg>
-                    <Typography fontWeight={600} fontSize={14} color="#464555">Google orqali kirish (tez orada)</Typography>
+                    <Typography fontWeight={600} fontSize={14} color={textSec}>Google orqali kirish</Typography>
                   </Box>
                 </Stack>
 
@@ -587,9 +745,9 @@ const AccountPage = () => {
                 )}
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                  <Box sx={{ flex: 1, height: '1px', bgcolor: '#e2e8f0' }} />
-                  <Typography fontSize={12} color="#777587">yoki foydalanuvchi nomi bilan</Typography>
-                  <Box sx={{ flex: 1, height: '1px', bgcolor: '#e2e8f0' }} />
+                  <Box sx={{ flex: 1, height: '1px', bgcolor: divider }} />
+                  <Typography fontSize={12} color={textMuted}>yoki foydalanuvchi nomi bilan</Typography>
+                  <Box sx={{ flex: 1, height: '1px', bgcolor: divider }} />
                 </Box>
 
                 {errorMessage && <Alert severity="error" sx={{ mb: 2, fontSize: 13, borderRadius: 2 }}>{errorMessage}</Alert>}
@@ -604,7 +762,7 @@ const AccountPage = () => {
                       placeholder="otabek_dev"
                       inputProps={{ autoCapitalize: 'none' }}
                       InputProps={{ startAdornment: <InputAdornment position="start"><PersonOutlineIcon size={18} color="#777587" /></InputAdornment> }}
-                      sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2, '&:hover fieldset': { borderColor: '#3525cd' }, '&.Mui-focused fieldset': { borderColor: '#3525cd', boxShadow: '0 0 0 4px rgba(53,37,205,0.1)' } } }}
+                      sx={inputSx}
                     />
                     <TextField
                       label="Parol"
@@ -622,7 +780,7 @@ const AccountPage = () => {
                           </InputAdornment>
                         ),
                       }}
-                      sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2, '&:hover fieldset': { borderColor: '#3525cd' }, '&.Mui-focused fieldset': { borderColor: '#3525cd', boxShadow: '0 0 0 4px rgba(53,37,205,0.1)' } } }}
+                      sx={inputSx}
                     />
                     <Button
                       type="submit" variant="contained" fullWidth disabled={isLoading}
@@ -633,7 +791,7 @@ const AccountPage = () => {
                   </Stack>
                 </form>
 
-                <Typography fontSize={13} color="#464555" textAlign="center" mt={3}>
+                <Typography fontSize={13} color={textSec} textAlign="center" mt={3}>
                   Hisobingiz yo'qmi?{' '}
                   <Box component="span" sx={{ color: '#3525cd', cursor: 'pointer', fontWeight: 700, '&:hover': { textDecoration: 'underline' } }} onClick={() => { setActiveTab('signup'); setErrorMessage(''); }}>
                     Ro'yxatdan o'ting
@@ -648,17 +806,17 @@ const AccountPage = () => {
                 {/* Progress bar */}
                 <Box mb={3}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-                    <Typography fontWeight={800} fontSize={16} color="#131b2e">
+                    <Typography fontWeight={800} fontSize={16} color={textPrim}>
                       {signupStep === 1 ? 'Rolni tanlang' : signupStep === 2 ? "Ma'lumotlarni kiriting" : 'Yakunlash'}
                     </Typography>
                     <Typography fontSize={12} color="#3525cd" fontWeight={700}>
                       {signupStep} / 2 qadam
                     </Typography>
                   </Stack>
-                  <Box sx={{ height: 6, bgcolor: '#eaedff', borderRadius: 3, overflow: 'hidden' }}>
+                  <Box sx={{ height: 6, bgcolor: tabBarBg, borderRadius: 3, overflow: 'hidden' }}>
                     <Box sx={{ height: '100%', bgcolor: '#3525cd', width: `${signupProgress}%`, transition: 'width 0.5s ease', borderRadius: 3 }} />
                   </Box>
-                  <Typography fontSize={13} color="#464555" mt={1}>
+                  <Typography fontSize={13} color={textSec} mt={1}>
                     {signupStep === 1 ? "O'z faoliyatingizni boshlash uchun rolni tanlang" : "Profilingizni to'ldiring va hisob oching"}
                   </Typography>
                 </Box>
@@ -679,7 +837,7 @@ const AccountPage = () => {
                         {
                           role: UserType.FREELANCER,
                           icon: <Palette size={32} color={selectedRole === UserType.FREELANCER ? '#3525cd' : '#464555'} weight="fill" />,
-                          title: 'Frilanser',
+                          title: 'Ish Qidiruvchi',
                           desc: "Men o'z xizmatlarimni taklif qilish va loyihalarda ishtirok etish orqali pul topishni xohlayman.",
                         },
                       ].map(({ role, icon, title, desc }) => (
@@ -687,11 +845,11 @@ const AccountPage = () => {
                           key={role}
                           onClick={() => setSelectedRole(role)}
                           sx={{
-                            p: 3, border: `2px solid ${selectedRole === role ? '#3525cd' : '#c7c4d8'}`,
-                            bgcolor: selectedRole === role ? '#f2f3ff' : 'white',
+                            p: 3, border: `2px solid ${selectedRole === role ? '#3525cd' : (isDark ? 'transparent' : '#c7c4d8')}`,
+                            bgcolor: selectedRole === role ? (isDark ? '#1e3a5f' : '#f2f3ff') : inputBg,
                             borderRadius: 2.5, cursor: 'pointer', transition: 'all 0.2s',
-                            boxShadow: selectedRole === role ? '0 0 0 4px rgba(53,37,205,0.1)' : 'none',
-                            '&:hover': { borderColor: '#3525cd', bgcolor: '#f2f3ff' },
+                            boxShadow: selectedRole === role ? (isDark ? '0 0 0 4px rgba(53,37,205,0.2)' : '0 0 0 4px rgba(53,37,205,0.1)') : 'none',
+                            '&:hover': { border: '2px solid #3525cd', bgcolor: isDark ? '#1e3a5f' : '#f2f3ff' },
                           }}
                         >
                           <Stack direction="row" spacing={2.5} alignItems="center">
@@ -700,12 +858,12 @@ const AccountPage = () => {
                             </Box>
                             <Box flex={1}>
                               <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                                <Typography fontWeight={800} fontSize={15} color="#131b2e" mb={0.5}>{title}</Typography>
+                                <Typography fontWeight={800} fontSize={15} color={textPrim} mb={0.5}>{title}</Typography>
                                 <Box sx={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${selectedRole === role ? '#3525cd' : '#c7c4d8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, mt: 0.25 }}>
                                   {selectedRole === role && <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#3525cd' }} />}
                                 </Box>
                               </Stack>
-                              <Typography fontSize={13} color="#464555" lineHeight={1.5}>{desc}</Typography>
+                              <Typography fontSize={13} color={textSec} lineHeight={1.5}>{desc}</Typography>
                             </Box>
                           </Stack>
                         </Box>
@@ -722,7 +880,7 @@ const AccountPage = () => {
                       Davom etish
                     </Button>
 
-                    <Typography fontSize={13} color="#464555" textAlign="center">
+                    <Typography fontSize={13} color={textSec} textAlign="center">
                       Hisobingiz bormi?{' '}
                       <Box component="span" sx={{ color: '#3525cd', cursor: 'pointer', fontWeight: 700, '&:hover': { textDecoration: 'underline' } }} onClick={() => { setActiveTab('login'); setErrorMessage(''); }}>
                         Kirish
@@ -736,7 +894,7 @@ const AccountPage = () => {
                   <form onSubmit={handleSignupSubmit}>
                     <Stack spacing={2}>
                       {/* Profil rasm yuklash */}
-                      <Box component="label" sx={{ p: 2, bgcolor: 'white', border: '1.5px dashed #c7c4d8', borderRadius: 2, display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer', transition: 'all 0.15s', '&:hover': { borderColor: '#3525cd', bgcolor: '#f2f3ff' } }}>
+                      <Box component="label" sx={{ p: 2, bgcolor: inputBg, border: `1.5px dashed ${isDark ? 'transparent' : '#c7c4d8'}`, borderRadius: 2, display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer', transition: 'all 0.15s', '&:hover': { borderColor: '#3525cd', borderStyle: 'dashed', bgcolor: isDark ? '#1e293b' : '#f2f3ff' } }}>
                         <input type="file" accept="image/*" hidden onChange={handleProfileImageChange} />
                         <Avatar src={profileImage || undefined} sx={{ width: 52, height: 52, bgcolor: '#3525cd', color: 'white', fontSize: 18, fontWeight: 800, flexShrink: 0 }}>
                           {getInitials(fullName, username)}
@@ -746,7 +904,7 @@ const AccountPage = () => {
                             <Camera size={15} color="#3525cd" weight="fill" />
                             <Typography fontSize={13} fontWeight={700} color="#3525cd">{profileImage ? 'Rasm tanlandi' : 'Profil rasmi qo\'shish'}</Typography>
                           </Stack>
-                          <Typography fontSize={12} color="#464555">Kamera yoki galereyadan rasm yuklash</Typography>
+                          <Typography fontSize={12} color={textSec}>Kamera yoki galereyadan rasm yuklash</Typography>
                           <Typography fontSize={11} color="#777587" mt={0.25}>Rasm bo'lmasa bosh harflar ko'rsatiladi</Typography>
                         </Box>
                         <UploadSimple size={18} color="#777587" />
@@ -757,46 +915,184 @@ const AccountPage = () => {
                         label="To'liq ism-sharifingiz" value={fullName} onChange={(e) => setFullName(e.target.value)}
                         size="small" fullWidth required placeholder="Masalan: Azizbek Temirov"
                         InputProps={{ startAdornment: <InputAdornment position="start"><BadgeOutlinedIcon size={18} color="#777587" /></InputAdornment> }}
-                        sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2, '&:hover fieldset': { borderColor: '#3525cd' }, '&.Mui-focused fieldset': { borderColor: '#3525cd', boxShadow: '0 0 0 4px rgba(53,37,205,0.1)' } } }}
+                        sx={inputSx}
                       />
 
-                      {/* Manzil */}
+                      {/* Telefon raqam */}
                       <TextField
-                        label="Manzil" value={location} onChange={(e) => setLocation(e.target.value)}
-                        size="small" fullWidth required placeholder="Toshkent, UZ"
-                        sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2, '&:hover fieldset': { borderColor: '#3525cd' }, '&.Mui-focused fieldset': { borderColor: '#3525cd', boxShadow: '0 0 0 4px rgba(53,37,205,0.1)' } } }}
+                        label="Telefon raqam" value={signupPhone} onChange={(e) => setSignupPhone(e.target.value)}
+                        size="small" fullWidth placeholder="+998 90 123 45 67"
+                        helperText="Ish beruvchilar siz bilan bog'lanish uchun ishlatiladi"
+                        FormHelperTextProps={{ sx: { fontSize: 11, color: '#94a3b8', mx: 0 } }}
+                        InputProps={{ startAdornment: <InputAdornment position="start"><Phone size={18} color="#777587" /></InputAdornment> }}
+                        sx={inputSx}
                       />
+
+                      {/* Manzil — suggest + Yandex Map */}
+                      <Box sx={{ position: 'relative' }}>
+                        <TextField
+                          label="Manzil" value={location}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setLocation(val);
+                            if (locationTimerRef.current) clearTimeout(locationTimerRef.current);
+                            if (val.trim().length < 2) { setLocationSuggests([]); return; }
+                            locationTimerRef.current = setTimeout(() => {
+                              getYandexSuggests(val).then(setLocationSuggests);
+                            }, 350);
+                          }}
+                          size="small" fullWidth required placeholder="Manzil yozing yoki xaritadan tanlang..."
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <MapPin size={18} color="#6366f1" weight="fill" />
+                              </InputAdornment>
+                            ),
+                            endAdornment: (
+                              <InputAdornment position="end" sx={{ gap: 0.5 }}>
+                                {location && (
+                                  <IconButton size="small" onClick={() => { setLocation(''); setLocationSuggests([]); }} sx={{ color: '#94a3b8', p: 0.3 }}>
+                                    <X size={13} />
+                                  </IconButton>
+                                )}
+                                <Box onClick={() => setMapOpen(true)} sx={{ display: 'flex', alignItems: 'center', gap: 0.4, cursor: 'pointer', px: 1, py: 0.4, borderRadius: 1.5, bgcolor: isDark ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.08)', '&:hover': { bgcolor: isDark ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.15)' } }}>
+                                  <MapPin size={12} color="#6366f1" weight="fill" />
+                                  <Typography fontSize={11} color="#6366f1" fontWeight={700}>Xarita</Typography>
+                                </Box>
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={inputSx}
+                        />
+
+                        {/* Suggest dropdown */}
+                        {locationSuggests.length > 0 && (
+                          <Box sx={{
+                            position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
+                            mt: 0.5, borderRadius: 2, overflow: 'hidden',
+                            border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                            bgcolor: isDark ? '#1e293b' : '#ffffff',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                          }}>
+                            {locationSuggests.map((s, i) => (
+                              <Box key={i} onClick={() => {
+                                setLocation(s);
+                                setLocationSuggests([]);
+                              }} sx={{
+                                display: 'flex', alignItems: 'center', gap: 1.5,
+                                px: 2, py: 1.2, cursor: 'pointer',
+                                borderBottom: i < locationSuggests.length - 1 ? `1px solid ${isDark ? '#334155' : '#f1f5f9'}` : 'none',
+                                '&:hover': { bgcolor: isDark ? '#0f172a' : '#f8fafc' },
+                              }}>
+                                <MapPin size={13} color="#6366f1" weight="fill" style={{ flexShrink: 0 }} />
+                                <Typography fontSize={13} color={isDark ? '#e2e8f0' : '#1e293b'} noWrap>{s}</Typography>
+                              </Box>
+                            ))}
+                          </Box>
+                        )}
+
+                        <YandexMapModal
+                          open={mapOpen}
+                          onClose={() => setMapOpen(false)}
+                          onSelect={(addr) => { setLocation(addr); setLocationSuggests([]); }}
+                          initialAddress={location}
+                        />
+                      </Box>
 
                       {/* Foydalanuvchi nomi */}
                       <TextField
-                        label="Foydalanuvchi nomi" value={username} onChange={(e) => setUsername(e.target.value)}
+                        label="Foydalanuvchi nomi" value={username}
+                        onChange={(e) => handleUsernameChange(e.target.value)}
                         size="small" fullWidth required placeholder="azizbek_dev"
                         inputProps={{ autoCapitalize: 'none' }}
-                        InputProps={{ startAdornment: <InputAdornment position="start"><PersonOutlineIcon size={18} color="#777587" /></InputAdornment> }}
-                        sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2, '&:hover fieldset': { borderColor: '#3525cd' }, '&.Mui-focused fieldset': { borderColor: '#3525cd', boxShadow: '0 0 0 4px rgba(53,37,205,0.1)' } } }}
+                        error={usernameAvailable === false}
+                        helperText={
+                          usernameChecking ? 'Tekshirilmoqda...' :
+                          usernameAvailable === false ? 'Bu nom band, boshqa nom tanlang' :
+                          usernameAvailable === true ? '✓ Bu nom bo\'sh' : ''
+                        }
+                        FormHelperTextProps={{
+                          sx: {
+                            color: usernameChecking ? '#94a3b8' : usernameAvailable === false ? '#ef4444' : '#22c55e',
+                            fontSize: 11, mx: 0,
+                          }
+                        }}
+                        InputProps={{
+                          startAdornment: <InputAdornment position="start"><PersonOutlineIcon size={18} color="#777587" /></InputAdornment>,
+                          endAdornment: usernameChecking ? (
+                            <InputAdornment position="end">
+                              <CircularProgress size={14} sx={{ color: '#94a3b8' }} />
+                            </InputAdornment>
+                          ) : usernameAvailable === true ? (
+                            <InputAdornment position="end">
+                              <CheckCircle size={16} color="#22c55e" weight="fill" />
+                            </InputAdornment>
+                          ) : usernameAvailable === false ? (
+                            <InputAdornment position="end">
+                              <span style={{ color: '#ef4444', fontSize: 16 }}>✕</span>
+                            </InputAdornment>
+                          ) : undefined,
+                        }}
+                        sx={inputSx}
                       />
 
                       {/* Parol */}
-                      <TextField
-                        label="Parol" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
-                        size="small" fullWidth required
-                        InputProps={{
-                          startAdornment: <InputAdornment position="start"><LockOutlinedIcon size={18} color="#777587" /></InputAdornment>,
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton size="small" onClick={() => setShowPassword(v => !v)} edge="end" sx={{ color: '#777587' }}>
-                                {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                        sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2, '&:hover fieldset': { borderColor: '#3525cd' }, '&.Mui-focused fieldset': { borderColor: '#3525cd', boxShadow: '0 0 0 4px rgba(53,37,205,0.1)' } } }}
-                      />
+                      <Box>
+                        <TextField
+                          label="Parol" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
+                          size="small" fullWidth required
+                          InputProps={{
+                            startAdornment: <InputAdornment position="start"><LockOutlinedIcon size={18} color="#777587" /></InputAdornment>,
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton size="small" onClick={() => setShowPassword(v => !v)} edge="end" sx={{ color: '#777587' }}>
+                                  {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={inputSx}
+                        />
+                        {/* Kuchli parol yaratish tugmasi */}
+                        <Box
+                          onClick={() => {
+                            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+                            const len = 14;
+                            let pwd = '';
+                            pwd += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
+                            pwd += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
+                            pwd += '0123456789'[Math.floor(Math.random() * 10)];
+                            pwd += '!@#$%^&*'[Math.floor(Math.random() * 8)];
+                            for (let i = 4; i < len; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+                            pwd = pwd.split('').sort(() => Math.random() - 0.5).join('');
+                            setPassword(pwd);
+                            setShowPassword(true);
+                          }}
+                          sx={{
+                            display: 'inline-flex', alignItems: 'center', gap: 0.6,
+                            mt: 0.8, cursor: 'pointer', width: 'fit-content',
+                            px: 1.2, py: 0.5, borderRadius: 1.5,
+                            bgcolor: isDark ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.07)',
+                            border: '1px dashed',
+                            borderColor: isDark ? 'rgba(99,102,241,0.35)' : 'rgba(99,102,241,0.3)',
+                            transition: 'all 0.15s',
+                            '&:hover': {
+                              bgcolor: isDark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.13)',
+                              borderColor: '#6366f1',
+                            },
+                          }}
+                        >
+                          <Lightning size={13} color="#6366f1" weight="fill" />
+                          <Typography fontSize={11} fontWeight={600} color="#6366f1">
+                            Ishonchli parol yaratish
+                          </Typography>
+                        </Box>
+                      </Box>
 
                       {/* Frilanser uchun qo'shimcha maydonlar */}
                       {selectedRole === UserType.FREELANCER && (
                         <>
-                          <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2, '&:hover fieldset': { borderColor: '#3525cd' }, '&.Mui-focused fieldset': { borderColor: '#3525cd' } } }}>
+                          <FormControl fullWidth size="small" sx={inputSx}>
                             <InputLabel>Ixtisoslik yo'nalishi</InputLabel>
                             <Select value={freelancerCategory} label="Ixtisoslik yo'nalishi" onChange={(e) => setFreelancerCategory(e.target.value)}>
                               {Object.values(JobCategory).map((cat) => (<MenuItem key={cat} value={cat}>{JOB_CATEGORY_LABELS[cat]}</MenuItem>))}
@@ -807,7 +1103,7 @@ const AccountPage = () => {
                             label="Soatlik narx (USD)" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)}
                             type="number" size="small" fullWidth placeholder="25"
                             inputProps={{ min: 0, step: 1 }}
-                            sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2 } }}
+                            sx={inputSx}
                           />
 
                           <Stack direction="row" spacing={1}>
@@ -815,9 +1111,9 @@ const AccountPage = () => {
                               label="Ko'nikmalar" value={skillInput} onChange={(e) => setSkillInput(e.target.value)}
                               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSkill(); } }}
                               size="small" fullWidth placeholder="Figma, React, SMM"
-                              sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2 } }}
+                              sx={inputSx}
                             />
-                            <Button variant="outlined" onClick={addSkill} sx={{ borderColor: '#c7c4d8', color: '#3525cd', minWidth: 80, fontWeight: 700 }}>Qo'sh</Button>
+                            <Button variant="outlined" onClick={addSkill} sx={{ borderColor: isDark ? 'transparent' : borderClr, color: '#3525cd', bgcolor: inputBg, minWidth: 80, fontWeight: 700, borderRadius: 2, '&:hover': { borderColor: '#3525cd', bgcolor: isDark ? '#1e293b' : '#f2f3ff' } }}>Qo'sh</Button>
                           </Stack>
                           {skills.length > 0 && (
                             <Stack direction="row" flexWrap="wrap" gap={1}>
@@ -837,7 +1133,7 @@ const AccountPage = () => {
                           inputProps={{ maxLength: 500 }}
                           helperText={`${bio.length}/500`}
                           FormHelperTextProps={{ sx: { textAlign: 'right', mr: 0 } }}
-                          sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 2 } }}
+                          sx={inputSx}
                         />
                       </Box>
 
@@ -847,7 +1143,7 @@ const AccountPage = () => {
                           variant="outlined"
                           onClick={() => { setSignupStep(1); setErrorMessage(''); }}
                           startIcon={<ArrowLeft size={16} weight="bold" />}
-                          sx={{ borderColor: '#c7c4d8', color: '#464555', borderRadius: 2, py: 1.3, fontWeight: 600, minWidth: 100, '&:hover': { borderColor: '#3525cd', color: '#3525cd', bgcolor: '#f2f3ff' } }}
+                          sx={backBtnSx}
                         >
                           Orqaga
                         </Button>
@@ -860,7 +1156,7 @@ const AccountPage = () => {
                         </Button>
                       </Stack>
 
-                      <Typography fontSize={13} color="#464555" textAlign="center">
+                      <Typography fontSize={13} color={textSec} textAlign="center">
                         Hisobingiz bormi?{' '}
                         <Box component="span" sx={{ color: '#3525cd', cursor: 'pointer', fontWeight: 700, '&:hover': { textDecoration: 'underline' } }} onClick={() => { setActiveTab('login'); setErrorMessage(''); }}>
                           Kirish

@@ -290,6 +290,13 @@ const UsersPage = () => {
                 <p className="text-xs text-slate-400">Bosh administrator</p>
               </div>
             </div>
+            <Link
+              href="/"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors mb-1"
+            >
+              <span className="material-symbols-outlined text-[20px]">home</span>
+              <span>Bosh sahifaga</span>
+            </Link>
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl transition-colors"

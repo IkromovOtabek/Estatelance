@@ -46,6 +46,10 @@ export class Job extends Document {
   @Field(() => String, { nullable: true })
   agentName?: string;
 
+  @Prop({ trim: true })
+  @Field(() => String, { nullable: true })
+  agentAvatar?: string;
+
   // Count of bids received (denormalized for quick display)
   @Prop({ default: 0 })
   @Field(() => Int)
@@ -87,6 +91,18 @@ export class Job extends Document {
   @Prop({ type: [String], default: [] })
   @Field(() => [String], { nullable: true })
   requiredSkills?: string[];
+
+  @Prop({ trim: true })
+  @Field(() => String, { nullable: true })
+  contactPhone?: string;
+
+  @Prop({ default: 0 })
+  @Field(() => Int)
+  viewCount: number;
+
+  // Stores IDs of users who already viewed (deduplication)
+  @Prop({ type: [SchemaTypes.ObjectId], default: [] })
+  viewedBy: string[];
 
   // The freelancer who was hired (set when a bid is accepted)
   @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })

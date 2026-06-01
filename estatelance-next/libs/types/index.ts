@@ -58,6 +58,8 @@ export interface Job {
   agentId: string;
   agentName?: string;
   agentPhone?: string;
+  contactPhone?: string;
+  viewCount?: number;
   agentAvatar?: string;
   bidCount: number;
   hiredFreelancerId?: string;

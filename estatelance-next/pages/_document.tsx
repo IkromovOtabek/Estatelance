@@ -2,7 +2,7 @@ import { Html, Head, Main, NextScript } from 'next/document';
 
 export default function Document() {
   return (
-    <Html lang="en">
+    <Html lang="uz">
       <Head>
         <meta charSet="utf-8" />
         <meta name="google-site-verification" content="VRFENrwRjM4ww5GdWgSECw6guWew_Xbt5mDZW00IZfE" />
@@ -35,7 +35,7 @@ export default function Document() {
           rel="stylesheet"
         />
       </Head>
-      <body>
+      <body className="overflow-x-hidden">
         <Main />
         <NextScript />
       </body>

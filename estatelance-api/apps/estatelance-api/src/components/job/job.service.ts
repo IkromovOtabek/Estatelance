@@ -35,6 +35,21 @@ export class JobService {
     return job;
   }
 
+  // ─── Increment View Count (once per user) ─────────────────────────────────
+  async incrementJobView(jobId: string, userId: string): Promise<Job> {
+    const job = await this.jobModel.findById(jobId);
+    if (!job) throw new NotFoundException('Job not found');
+
+    const alreadyViewed = job.viewedBy?.some(id => String(id) === String(userId));
+    if (alreadyViewed) return job;
+
+    return this.jobModel.findByIdAndUpdate(
+      jobId,
+      { $inc: { viewCount: 1 }, $addToSet: { viewedBy: userId } },
+      { new: true },
+    );
+  }
+
   // ─── Get All Jobs (with filter + pagination) ──────────────────────────────
   async getJobs(input: GetJobsInput): Promise<Job[]> {
     const filter: any = {};

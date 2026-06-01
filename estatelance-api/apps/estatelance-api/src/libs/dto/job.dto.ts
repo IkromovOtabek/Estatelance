@@ -27,7 +27,7 @@ export class CreateJobInput {
   @Field(() => String)
   category: JobCategory;
 
-  @Min(10)
+  @Min(0)
   @Field(() => Float)
   budget: number;
 
@@ -66,6 +66,10 @@ export class CreateJobInput {
   @IsOptional()
   @Field(() => [String], { nullable: true })
   requiredSkills?: string[];
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  contactPhone?: string;
 }
 
 // ─── Input: Update an existing Job ───────────────────────────────────────────
@@ -131,6 +135,10 @@ export class UpdateJobInput {
   @IsOptional()
   @Field(() => [String], { nullable: true })
   requiredSkills?: string[];
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  contactPhone?: string;
 }
 
 // ─── Input: Filter and search jobs ───────────────────────────────────────────

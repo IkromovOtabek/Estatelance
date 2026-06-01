@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useTheme } from 'next-themes';
 import { useQuery, useReactiveVar } from '@apollo/client';
 import {
   MagnifyingGlass,
@@ -35,22 +36,22 @@ import { JobStatus } from '../libs/enums';
 import { getCatIcon } from '../libs/utils/jobCategoryIcons';
 
 // ─── Category meta ─────────────────────────────────────────────────────────────
-const CAT: Record<string, { label: string; bg: string; text: string }> = {
-  VISUALS:     { label: 'Foto & Dron',           bg: '#fef3c7', text: '#92400e' },
-  STAGING:     { label: 'Virtual Staging',       bg: '#ede9fe', text: '#5b21b6' },
-  MARKETING:   { label: 'SMM & Kontent',         bg: '#dcfce7', text: '#166534' },
-  LEGAL:       { label: 'Yuridik & Kadastr',     bg: '#fee2e2', text: '#991b1b' },
-  RENDERING:   { label: '3D Vizualizatsiya',     bg: '#e0f2fe', text: '#075985' },
-  DESIGN:      { label: 'Interyer Dizayn',       bg: '#fce7f3', text: '#9d174d' },
-  REPAIR:      { label: "Ta'mirlash & Remont",   bg: '#fff7ed', text: '#9a3412' },
-  CLEANING:    { label: 'Tozalash',              bg: '#ecfdf5', text: '#065f46' },
-  INSPECTION:  { label: "Ko'rikdan o'tkazish",   bg: '#f0f9ff', text: '#0c4a6e' },
-  IT:          { label: 'IT & Dasturlash',       bg: '#f5f3ff', text: '#4c1d95' },
-  TRANSLATION: { label: 'Tarjima',               bg: '#fff1f2', text: '#881337' },
-  MOVING:      { label: "Ko'chish & Yuk",        bg: '#fefce8', text: '#713f12' },
-  ACCOUNTING:  { label: 'Buxgalteriya',          bg: '#f0fdf4', text: '#14532d' },
-  SECURITY:    { label: "Qo'riqlash",            bg: '#eff6ff', text: '#1e3a8a' },
-  OTHER:       { label: 'Boshqa xizmatlar',      bg: '#f1f5f9', text: '#475569' },
+const CAT: Record<string, { label: string; bg: string; text: string; darkBg: string; darkText: string }> = {
+  VISUALS:     { label: 'Foto & Dron',           bg: '#fef3c7', text: '#92400e', darkBg: 'rgba(245,158,11,0.18)',  darkText: '#fbbf24' },
+  STAGING:     { label: 'Virtual Staging',       bg: '#ede9fe', text: '#5b21b6', darkBg: 'rgba(139,92,246,0.18)', darkText: '#c4b5fd' },
+  MARKETING:   { label: 'SMM & Kontent',         bg: '#dcfce7', text: '#166534', darkBg: 'rgba(34,197,94,0.15)',  darkText: '#86efac' },
+  LEGAL:       { label: 'Yuridik & Kadastr',     bg: '#fee2e2', text: '#991b1b', darkBg: 'rgba(239,68,68,0.15)',  darkText: '#fca5a5' },
+  RENDERING:   { label: '3D Vizualizatsiya',     bg: '#e0f2fe', text: '#075985', darkBg: 'rgba(14,165,233,0.18)', darkText: '#7dd3fc' },
+  DESIGN:      { label: 'Interyer Dizayn',       bg: '#fce7f3', text: '#9d174d', darkBg: 'rgba(236,72,153,0.15)', darkText: '#f9a8d4' },
+  REPAIR:      { label: "Ta'mirlash & Remont",   bg: '#fff7ed', text: '#9a3412', darkBg: 'rgba(234,88,12,0.15)',  darkText: '#fdba74' },
+  CLEANING:    { label: 'Tozalash',              bg: '#ecfdf5', text: '#065f46', darkBg: 'rgba(16,185,129,0.15)', darkText: '#6ee7b7' },
+  INSPECTION:  { label: "Ko'rikdan o'tkazish",   bg: '#f0f9ff', text: '#0c4a6e', darkBg: 'rgba(56,189,248,0.15)', darkText: '#7dd3fc' },
+  IT:          { label: 'IT & Dasturlash',       bg: '#f5f3ff', text: '#4c1d95', darkBg: 'rgba(99,102,241,0.18)', darkText: '#a5b4fc' },
+  TRANSLATION: { label: 'Tarjima',               bg: '#fff1f2', text: '#881337', darkBg: 'rgba(244,63,94,0.15)',  darkText: '#fda4af' },
+  MOVING:      { label: "Ko'chish & Yuk",        bg: '#fefce8', text: '#713f12', darkBg: 'rgba(202,138,4,0.15)',  darkText: '#fde047' },
+  ACCOUNTING:  { label: 'Buxgalteriya',          bg: '#f0fdf4', text: '#14532d', darkBg: 'rgba(22,163,74,0.15)',  darkText: '#86efac' },
+  SECURITY:    { label: "Qo'riqlash",            bg: '#eff6ff', text: '#1e3a8a', darkBg: 'rgba(59,130,246,0.15)', darkText: '#93c5fd' },
+  OTHER:       { label: 'Boshqa xizmatlar',      bg: '#f1f5f9', text: '#475569', darkBg: 'rgba(100,116,139,0.18)',darkText: '#94a3b8' },
 };
 
 const CATEGORIES_DISPLAY = [
@@ -127,13 +128,20 @@ function timeAgo(dateStr?: string): string {
 }
 
 // ─── Job Card ─────────────────────────────────────────────────────────────────
-const JobCard = ({ job, hot }: { job: Job; hot?: boolean }) => {
+const JobCard = ({ job, hot, isDark }: { job: Job; hot?: boolean; isDark?: boolean }) => {
   const cat = CAT[job.category] ?? CAT.OTHER;
   return (
     <Link href={`/jobs/${job._id}`} className="no-underline block group">
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer">
+      <div
+        className="rounded-2xl p-6 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer border"
+        style={{
+          backgroundColor: isDark ? '#1e293b' : '#ffffff',
+          borderColor: isDark ? '#334155' : '#e2e8f0',
+          boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.4)' : undefined,
+        }}
+      >
         <div className="flex justify-between items-start mb-4">
-          <h3 className="font-semibold text-sm text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug flex-1 pr-2 line-clamp-2">
+          <h3 className={`font-semibold text-sm group-hover:text-indigo-600 transition-colors leading-snug flex-1 pr-2 line-clamp-2 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
             {job.title}
           </h3>
           <BookmarkSimple size={20} className="text-slate-400 shrink-0" />
@@ -141,12 +149,12 @@ const JobCard = ({ job, hot }: { job: Job; hot?: boolean }) => {
         <div className="flex flex-wrap gap-2 mb-5">
           <span
             className="px-3 py-1 rounded-full text-xs font-semibold"
-            style={{ backgroundColor: cat.bg, color: cat.text }}
+            style={{ backgroundColor: isDark ? cat.darkBg : cat.bg, color: isDark ? cat.darkText : cat.text }}
           >
             {cat.label}
           </span>
           {hot && job.bidCount > 0 && (
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600 flex items-center gap-1">
+            <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${isDark ? 'bg-red-900/40 text-red-400' : 'bg-red-50 text-red-600'}`}>
               <Fire size={12} weight="fill" />
               {job.bidCount} ta taklif
             </span>
@@ -158,9 +166,9 @@ const JobCard = ({ job, hot }: { job: Job; hot?: boolean }) => {
             </span>
           )}
         </div>
-        <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+        <div className={`flex items-center justify-between border-t pt-4 ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
           <span className="font-bold text-indigo-600">${job.budget}</span>
-          <button className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors">
+          <button className={`text-sm font-semibold hover:text-indigo-600 transition-colors ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             Ariza yuborish
           </button>
         </div>
@@ -170,12 +178,19 @@ const JobCard = ({ job, hot }: { job: Job; hot?: boolean }) => {
 };
 
 // ─── Freelancer Card ──────────────────────────────────────────────────────────
-const FreelancerCard = ({ freelancer }: { freelancer: User }) => {
+const FreelancerCard = ({ freelancer, isDark }: { freelancer: User; isDark?: boolean }) => {
   const cat = CAT[freelancer.freelancerCategory ?? ''] ?? CAT.OTHER;
   const displayName = freelancer.fullName ?? freelancer.username ?? '';
   return (
     <Link href={`/profile/${freelancer._id}`} className="no-underline block">
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-lg hover:border-indigo-200 transition-all cursor-pointer">
+      <div
+        className="rounded-2xl p-6 hover:shadow-lg hover:border-indigo-200 transition-all cursor-pointer border"
+        style={{
+          backgroundColor: isDark ? '#1e293b' : '#ffffff',
+          borderColor: isDark ? '#334155' : '#f1f5f9',
+          boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.05)',
+        }}
+      >
         <div className="relative w-20 h-20 mx-auto mb-4">
           {freelancer.profileImage ? (
             <img
@@ -189,20 +204,23 @@ const FreelancerCard = ({ freelancer }: { freelancer: User }) => {
             </div>
           )}
           <div
-            className="absolute -bottom-1 -right-1 w-5 h-5 border-[3px] border-white rounded-full"
-            style={{ backgroundColor: freelancer.availability === 'AVAILABLE' ? '#22c55e' : '#f59e0b' }}
+            className="absolute -bottom-1 -right-1 w-5 h-5 border-[3px] rounded-full"
+            style={{
+              backgroundColor: freelancer.availability === 'AVAILABLE' ? '#22c55e' : '#f59e0b',
+              borderColor: isDark ? '#1e293b' : '#ffffff',
+            }}
           />
         </div>
         <div className="text-center mb-4">
-          <h4 className="font-bold text-slate-900 text-sm truncate">{displayName}</h4>
+          <h4 className={`font-bold text-sm truncate ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{displayName}</h4>
           <span
             className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-            style={{ backgroundColor: cat.bg, color: cat.text }}
+            style={{ backgroundColor: isDark ? cat.darkBg : cat.bg, color: isDark ? cat.darkText : cat.text }}
           >
             {cat.label}
           </span>
         </div>
-        <div className="grid grid-cols-3 gap-2 py-4 border-y border-slate-100 mb-4">
+        <div className={`grid grid-cols-3 gap-2 py-4 border-y mb-4 ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
           <div className="text-center">
             <p className="text-xs font-bold text-indigo-600">{freelancer.averageRating?.toFixed(1) ?? '5.0'}</p>
             <p className="text-[10px] text-slate-400">Reyting</p>
@@ -218,7 +236,7 @@ const FreelancerCard = ({ freelancer }: { freelancer: User }) => {
             <p className="text-[10px] text-slate-400">Soat</p>
           </div>
         </div>
-        <button className="w-full py-2 bg-slate-100 text-indigo-600 text-sm font-semibold rounded-xl hover:bg-indigo-600 hover:text-white transition-all">
+        <button className={`w-full py-2 text-indigo-600 text-sm font-semibold rounded-xl hover:bg-indigo-600 hover:text-white transition-all ${isDark ? 'bg-slate-700/60' : 'bg-slate-100'}`}>
           Profilni ko'rish
         </button>
       </div>
@@ -227,13 +245,16 @@ const FreelancerCard = ({ freelancer }: { freelancer: User }) => {
 };
 
 // ─── FAQ Item ─────────────────────────────────────────────────────────────────
-const FaqItem = ({ question, answer }: { question: string; answer: string }) => {
+const FaqItem = ({ question, answer, isDark }: { question: string; answer: string; isDark?: boolean }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+    <div
+      className="rounded-xl overflow-hidden border"
+      style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', borderColor: isDark ? '#334155' : '#e2e8f0' }}
+    >
       <button
         onClick={() => setOpen((p) => !p)}
-        className="w-full flex items-center justify-between p-5 text-left font-semibold text-sm text-slate-900"
+        className={`w-full flex items-center justify-between p-5 text-left font-semibold text-sm ${isDark ? 'text-slate-100' : 'text-slate-900'}`}
       >
         <span>{question}</span>
         <CaretDown
@@ -242,7 +263,7 @@ const FaqItem = ({ question, answer }: { question: string; answer: string }) => 
         />
       </button>
       {open && (
-        <div className="px-5 pb-5 text-slate-600 text-sm border-t border-slate-100 pt-4 leading-relaxed">
+        <div className={`px-5 pb-5 text-sm border-t pt-4 leading-relaxed ${isDark ? 'text-slate-400 border-slate-700' : 'text-slate-600 border-slate-100'}`}>
           {answer}
         </div>
       )}
@@ -253,10 +274,12 @@ const FaqItem = ({ question, answer }: { question: string; answer: string }) => 
 // ─── Home Page ────────────────────────────────────────────────────────────────
 const HomePage = () => {
   const user = useReactiveVar(userVar);
+  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => { setMounted(true); }, []);
+  const isDark = mounted && resolvedTheme === 'dark';
   const isLoggedIn = mounted && !!user._id;
 
   const { data: jobsData, loading: jobsLoading } = useQuery(GET_JOBS, {
@@ -301,42 +324,71 @@ const HomePage = () => {
       {/* ─── HERO ─────────────────────────────────────────────────────────── */}
       <section
         className="relative w-screen min-h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden"
-        style={{ backgroundColor: '#0f172a', marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' }}
+        style={{
+          backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+          marginLeft: 'calc(-50vw + 50%)',
+          marginRight: 'calc(-50vw + 50%)',
+          transition: 'background-color 0.25s ease',
+        }}
       >
         {/* Glow orb */}
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(79,70,229,0.4) 0%, transparent 70%)', filter: 'blur(60px)' }}
+          style={{
+            background: isDark
+              ? 'radial-gradient(circle, rgba(79,70,229,0.4) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)',
+            filter: 'blur(60px)',
+          }}
         />
+        {/* Light mode decorative circles */}
+        {!isDark && (
+          <>
+            <div className="absolute top-20 right-20 w-72 h-72 bg-indigo-100/60 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-20 left-20 w-56 h-56 bg-purple-100/60 rounded-full blur-3xl pointer-events-none" />
+          </>
+        )}
 
         <div className="relative z-10 max-w-3xl mx-auto w-full">
           {/* Badge */}
-          <span className="inline-block px-4 py-1.5 mb-6 rounded-full text-xs font-bold tracking-wider uppercase text-indigo-300 border border-indigo-500/30 bg-white/5 backdrop-blur-sm">
+          <span className={`inline-block px-4 py-1.5 mb-6 rounded-full text-xs font-bold tracking-wider uppercase border backdrop-blur-sm ${
+            isDark
+              ? 'text-indigo-300 border-indigo-500/30 bg-white/5'
+              : 'text-indigo-600 border-indigo-200 bg-indigo-50/80'
+          }`}>
             O'zbekistonda 1-raqamli platforma
           </span>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6 leading-tight tracking-tight">
+          <h1 className={`text-4xl sm:text-5xl md:text-6xl font-black mb-6 leading-tight tracking-tight ${
+            isDark ? 'text-white' : 'text-slate-900'
+          }`}>
             Build Future —{' '}
-            <span className="text-indigo-400">O'zbekiston</span>{' '}
+            <span className={isDark ? 'text-indigo-400' : 'text-indigo-600'}>O'zbekiston</span>{' '}
             frilanserlar platformasi
           </h1>
 
-          <p className="text-lg text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className={`text-lg mb-10 max-w-2xl mx-auto leading-relaxed ${
+            isDark ? 'text-slate-300' : 'text-slate-600'
+          }`}>
             Eng malakali mutaxassislarni toping yoki o'z mahoratingiz orqali daromad olishni bugundan boshlang.
             Frilans — kelajak iqtisodiyoti.
           </p>
 
           {/* Search Bar */}
           <div className="w-full max-w-2xl mx-auto mb-16">
-            <div className="flex flex-col md:flex-row gap-2 p-2 bg-white rounded-xl shadow-2xl">
+            <div className={`flex flex-col md:flex-row gap-2 p-2 rounded-xl shadow-2xl ${
+              isDark ? 'bg-slate-800 shadow-black/40' : 'bg-white shadow-indigo-100/60'
+            }`}>
               <div className="flex-1 flex items-center px-4 gap-3">
-                <MagnifyingGlass size={20} className="text-slate-400 shrink-0" />
+                <MagnifyingGlass size={20} className={isDark ? 'text-slate-400' : 'text-slate-400'} />
                 <input
                   type="text"
                   placeholder="Qanday ish yoki mutaxassis kerak?"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full border-none outline-none text-slate-900 text-sm py-3 bg-transparent placeholder-slate-400"
+                  className={`w-full border-none outline-none text-sm py-3 bg-transparent placeholder-slate-400 ${
+                    isDark ? 'text-slate-100' : 'text-slate-900'
+                  }`}
                 />
               </div>
               <Link
@@ -349,19 +401,19 @@ const HomePage = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-xl mx-auto border-t border-white/10 pt-12">
-            <div className="flex flex-col items-center">
-              <span className="text-3xl font-black text-white">500+</span>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Frilanserlar</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="text-3xl font-black text-white">1000+</span>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Loyihalar</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="text-3xl font-black text-white">200+</span>
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Mijozlar</span>
-            </div>
+          <div className={`grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-xl mx-auto border-t pt-12 ${
+            isDark ? 'border-white/10' : 'border-slate-200'
+          }`}>
+            {[
+              { val: '500+', label: 'Frilanserlar' },
+              { val: '1000+', label: 'Loyihalar' },
+              { val: '200+', label: 'Mijozlar' },
+            ].map(s => (
+              <div key={s.label} className="flex flex-col items-center">
+                <span className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{s.val}</span>
+                <span className={`text-xs font-bold uppercase tracking-widest mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{s.label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -369,22 +421,32 @@ const HomePage = () => {
       {/* ─── CATEGORIES ───────────────────────────────────────────────────── */}
       <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-black text-slate-900 mb-4">Yo'nalishlar bo'yicha izlash</h2>
-          <p className="text-slate-500">Har qanday murakkablikdagi vazifalar uchun mutaxassislar</p>
+          <h2 className={`text-3xl font-black mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>Yo'nalishlar bo'yicha izlash</h2>
+          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Har qanday murakkablikdagi vazifalar uchun mutaxassislar</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {CATEGORIES_DISPLAY.map(({ key }) => {
             const cat = CAT[key] ?? CAT.OTHER;
             return (
               <Link key={key} href={`/browse?category=${key}`} className="no-underline group">
-                <div className="p-5 bg-white border border-slate-200 rounded-2xl flex flex-col items-center text-center hover:border-indigo-300 hover:shadow-lg transition-all cursor-pointer">
+                <div
+                  className="p-5 rounded-2xl flex flex-col items-center text-center hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer border"
+                  style={{
+                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                    borderColor: isDark ? '#334155' : '#e2e8f0',
+                    boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.4)' : undefined,
+                  }}
+                >
                   <div
                     className="w-14 h-14 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
-                    style={{ backgroundColor: cat.bg, color: cat.text }}
+                    style={{
+                      backgroundColor: isDark ? cat.darkBg : cat.bg,
+                      color: isDark ? cat.darkText : cat.text,
+                    }}
                   >
                     {getCatIcon(key, 28)}
                   </div>
-                  <span className="text-xs font-semibold text-slate-800 leading-tight">{cat.label}</span>
+                  <span className={`text-xs font-semibold leading-tight ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{cat.label}</span>
                 </div>
               </Link>
             );
@@ -393,11 +455,14 @@ const HomePage = () => {
       </section>
 
       {/* ─── HOW IT WORKS ─────────────────────────────────────────────────── */}
-      <section className="py-24 bg-slate-50 px-6 md:px-12 overflow-hidden">
+      <section
+        className="py-24 px-6 md:px-12 overflow-hidden"
+        style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc' }}
+      >
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row gap-16 items-center">
             <div className="flex-1">
-              <h2 className="text-3xl font-black text-slate-900 mb-8">Platforma qanday ishlaydi?</h2>
+              <h2 className={`text-3xl font-black mb-8 ${isDark ? 'text-white' : 'text-slate-900'}`}>Platforma qanday ishlaydi?</h2>
               <div className="space-y-8">
                 {[
                   {
@@ -430,22 +495,91 @@ const HomePage = () => {
                       {step.num}
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold text-slate-900 mb-1">{step.title}</h4>
-                      <p className="text-slate-500 text-sm leading-relaxed">{step.desc}</p>
+                      <h4 className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>{step.title}</h4>
+                      <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{step.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
             <div className="flex-1 relative">
-              <div className="w-full aspect-square rounded-3xl overflow-hidden shadow-2xl relative z-10 bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center">
-                <div className="text-center">
-                  <Buildings size={120} className="text-indigo-400 mx-auto mb-4" />
-                  <p className="text-indigo-600 font-bold text-lg">BuFu Workspace</p>
-                  <p className="text-indigo-400 text-sm mt-1">Hamkorlik va ijod makoni</p>
+              {/* Glow blobs */}
+              <div className="absolute -top-10 -right-10 w-56 h-56 bg-indigo-400/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-purple-400/20 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="w-full aspect-square rounded-3xl overflow-hidden shadow-2xl relative z-10"
+                style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%)' }}>
+
+                {/* Floating cards */}
+                <div className="absolute inset-0 p-6 flex flex-col justify-between">
+
+                  {/* Top row */}
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex-1 border border-white/10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-green-400 flex items-center justify-center">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <span className="text-white/70 text-xs font-medium">Ish topildi</span>
+                      </div>
+                      <p className="text-white font-bold text-sm">3D Vizualizatsiya</p>
+                      <p className="text-indigo-300 text-xs mt-0.5">$1,200 • Toshkent</p>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex-1 border border-white/10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-amber-400 flex items-center justify-center">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        </div>
+                        <span className="text-white/70 text-xs font-medium">Top frilanser</span>
+                      </div>
+                      <p className="text-white font-bold text-sm">Azizbek T.</p>
+                      <p className="text-indigo-300 text-xs mt-0.5">★ 4.9 • 48 ish</p>
+                    </div>
+                  </div>
+
+                  {/* Center 3D abstract */}
+                  <div className="flex items-center justify-center flex-1 py-4">
+                    <svg width="180" height="160" viewBox="0 0 180 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      {/* Back cube */}
+                      <polygon points="90,10 150,45 150,115 90,150 30,115 30,45" fill="none" stroke="rgba(167,139,250,0.3)" strokeWidth="1.5"/>
+                      {/* Main cube top */}
+                      <polygon points="90,30 130,52 90,74 50,52" fill="rgba(139,92,246,0.4)" stroke="rgba(167,139,250,0.6)" strokeWidth="1.5"/>
+                      {/* Main cube left */}
+                      <polygon points="50,52 90,74 90,114 50,92" fill="rgba(109,40,217,0.5)" stroke="rgba(167,139,250,0.4)" strokeWidth="1.5"/>
+                      {/* Main cube right */}
+                      <polygon points="130,52 90,74 90,114 130,92" fill="rgba(124,58,237,0.6)" stroke="rgba(196,181,253,0.4)" strokeWidth="1.5"/>
+                      {/* Small cube top */}
+                      <polygon points="90,48 110,58 90,68 70,58" fill="rgba(196,181,253,0.5)" stroke="rgba(221,214,254,0.7)" strokeWidth="1"/>
+                      {/* Small cube left */}
+                      <polygon points="70,58 90,68 90,88 70,78" fill="rgba(167,139,250,0.4)" stroke="rgba(196,181,253,0.5)" strokeWidth="1"/>
+                      {/* Small cube right */}
+                      <polygon points="110,58 90,68 90,88 110,78" fill="rgba(139,92,246,0.5)" stroke="rgba(196,181,253,0.5)" strokeWidth="1"/>
+                      {/* Floating dots */}
+                      <circle cx="30" cy="35" r="4" fill="rgba(167,139,250,0.6)"/>
+                      <circle cx="150" cy="35" r="3" fill="rgba(196,181,253,0.5)"/>
+                      <circle cx="18" cy="80" r="2.5" fill="rgba(139,92,246,0.5)"/>
+                      <circle cx="162" cy="90" r="2" fill="rgba(167,139,250,0.4)"/>
+                      {/* Lines */}
+                      <line x1="30" y1="35" x2="50" y2="52" stroke="rgba(167,139,250,0.3)" strokeWidth="1" strokeDasharray="3,3"/>
+                      <line x1="150" y1="35" x2="130" y2="52" stroke="rgba(167,139,250,0.3)" strokeWidth="1" strokeDasharray="3,3"/>
+                    </svg>
+                  </div>
+
+                  {/* Bottom stats */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: 'Frilanserlar', value: '500+', color: '#a78bfa' },
+                      { label: 'Ishlar',        value: '124',   color: '#34d399' },
+                      { label: "Muvaffaqiyat",  value: '98%',   color: '#fbbf24' },
+                    ].map((s) => (
+                      <div key={s.label} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center border border-white/10">
+                        <p className="text-lg font-extrabold" style={{ color: s.color }}>{s.value}</p>
+                        <p className="text-white/50 text-[10px] mt-0.5">{s.label}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-purple-200/40 rounded-full blur-3xl pointer-events-none" />
             </div>
           </div>
         </div>
@@ -455,8 +589,8 @@ const HomePage = () => {
       <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
         <div className="flex justify-between items-end mb-12">
           <div>
-            <h2 className="text-3xl font-black text-slate-900 mb-2">Oxirgi loyihalar</h2>
-            <p className="text-slate-500">Siz uchun mos keladigan yangi buyurtmalar</p>
+            <h2 className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Oxirgi loyihalar</h2>
+            <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Siz uchun mos keladigan yangi buyurtmalar</p>
           </div>
           <Link href="/jobs" className="text-indigo-600 text-sm font-semibold flex items-center gap-1 hover:underline no-underline">
             Hammasini ko'rish <ArrowRight size={16} />
@@ -468,14 +602,14 @@ const HomePage = () => {
             <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
           </div>
         ) : latestJobs.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
+          <div className="text-center py-16 rounded-2xl border" style={{ backgroundColor: isDark ? '#1e293b' : '#fff', borderColor: isDark ? '#334155' : '#e2e8f0' }}>
             <ClipboardText size={48} className="text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 text-sm">Hozircha ish e'lonlari yo'q</p>
+            <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Hozircha ish e'lonlari yo'q</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {latestJobs.map((job) => (
-              <JobCard key={job._id} job={job} />
+              <JobCard key={job._id} job={job} isDark={isDark} />
             ))}
           </div>
         )}
@@ -487,9 +621,9 @@ const HomePage = () => {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Fire size={22} weight="fill" className="text-red-500" />
-              <h2 className="text-3xl font-black text-slate-900">Eng mashhur ishlar</h2>
+              <h2 className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Eng mashhur ishlar</h2>
             </div>
-            <p className="text-slate-500">Eng ko'p taklif olgan va talabgir bo'lgan ish e'lonlari</p>
+            <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Eng ko'p taklif olgan va talabgir bo'lgan ish e'lonlari</p>
           </div>
           <Link href="/jobs" className="text-indigo-600 text-sm font-semibold flex items-center gap-1 hover:underline no-underline">
             Barcha ishlar <ArrowRight size={16} />
@@ -501,28 +635,28 @@ const HomePage = () => {
             <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
           </div>
         ) : popularJobs.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
+          <div className="text-center py-16 rounded-2xl border" style={{ backgroundColor: isDark ? '#1e293b' : '#fff', borderColor: isDark ? '#334155' : '#e2e8f0' }}>
             <Fire size={48} className="text-slate-300 mx-auto mb-3" />
             <p className="text-slate-500 text-sm">Hozircha ma'lumot yo'q</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {popularJobs.map((job) => (
-              <JobCard key={job._id} job={job} hot />
+              <JobCard key={job._id} job={job} hot isDark={isDark} />
             ))}
           </div>
         )}
       </section>
 
       {/* ─── TOP FREELANCERS ──────────────────────────────────────────────── */}
-      <section className="py-24 bg-slate-50">
+      <section className="py-24" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc' }}>
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="text-center mb-16">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Star size={24} weight="fill" className="text-amber-400" />
-              <h2 className="text-3xl font-black text-slate-900">Top Frilanserlar</h2>
+              <h2 className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Top Frilanserlar</h2>
             </div>
-            <p className="text-slate-500 mt-2">Ishonchli va tajribali mutaxassislar bilan ishlang</p>
+            <p className={`mt-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ishonchli va tajribali mutaxassislar bilan ishlang</p>
           </div>
 
           {freelancersLoading ? (
@@ -530,14 +664,14 @@ const HomePage = () => {
               <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
             </div>
           ) : topFreelancers.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
+            <div className="text-center py-16 rounded-2xl border" style={{ backgroundColor: isDark ? '#1e293b' : '#fff', borderColor: isDark ? '#334155' : '#e2e8f0' }}>
               <UserIcon size={48} className="text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 text-sm">Hozircha frilanserlar yo'q</p>
+              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Hozircha frilanserlar yo'q</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
               {topFreelancers.map((f) => (
-                <FreelancerCard key={f._id} freelancer={f} />
+                <FreelancerCard key={f._id} freelancer={f} isDark={isDark} />
               ))}
             </div>
           )}
@@ -556,32 +690,36 @@ const HomePage = () => {
       {/* ─── PRICING ──────────────────────────────────────────────────────── */}
       <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-black text-slate-900 mb-4">Platforma paketlari</h2>
-          <p className="text-slate-500">Ehtiyojlaringizga mos tarifni tanlang</p>
+          <h2 className={`text-3xl font-black mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>Platforma paketlari</h2>
+          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Ehtiyojlaringizga mos tarifni tanlang</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
           {PRICING_PLANS.map((plan) => (
             <div
               key={plan.name}
-              className={`p-8 bg-white border rounded-2xl flex flex-col transition-all relative overflow-hidden ${
-                plan.popular
-                  ? 'border-t-4 border-t-indigo-600 border-x border-b border-slate-200 shadow-xl md:-translate-y-4'
-                  : 'border-slate-200 hover:shadow-xl'
+              className={`p-8 rounded-2xl flex flex-col transition-all relative overflow-hidden border ${
+                plan.popular ? 'shadow-xl md:-translate-y-4' : 'hover:shadow-xl'
               }`}
+              style={{
+                backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                borderColor: plan.popular ? '#6366f1' : (isDark ? '#334155' : '#e2e8f0'),
+                borderTopWidth: plan.popular ? '4px' : '1px',
+                boxShadow: isDark ? '0 4px 24px rgba(0,0,0,0.5)' : undefined,
+              }}
             >
               {plan.popular && (
                 <div className="absolute top-4 right-4 px-3 py-1 bg-indigo-600 text-white text-[10px] font-black rounded-full tracking-wider">
                   POPULAR
                 </div>
               )}
-              <h3 className="text-lg font-black text-slate-900 mb-2">{plan.name}</h3>
+              <h3 className={`text-lg font-black mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{plan.name}</h3>
               <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-4xl font-black text-slate-900">{plan.price}</span>
-                <span className="text-slate-400 text-xs font-semibold">{plan.period}</span>
+                <span className={`text-4xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{plan.price}</span>
+                <span className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>{plan.period}</span>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
                 {plan.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-slate-600 text-sm">
+                  <li key={f} className={`flex items-center gap-2 text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                     <CheckCircle size={16} weight="fill" className="text-green-500 shrink-0" />
                     {f}
                   </li>
@@ -592,7 +730,7 @@ const HomePage = () => {
                   {plan.cta}
                 </button>
               ) : (
-                <button className="w-full py-3 border border-indigo-600 text-indigo-600 font-semibold text-sm rounded-xl hover:bg-indigo-50 transition-all">
+                <button className={`w-full py-3 border border-indigo-600 font-semibold text-sm rounded-xl transition-all ${isDark ? 'text-indigo-400 hover:bg-indigo-900/30' : 'text-indigo-600 hover:bg-indigo-50'}`}>
                   {plan.cta}
                 </button>
               )}
@@ -602,12 +740,12 @@ const HomePage = () => {
       </section>
 
       {/* ─── FAQ ──────────────────────────────────────────────────────────── */}
-      <section className="py-24 bg-slate-50">
+      <section className="py-24" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc' }}>
         <div className="max-w-3xl mx-auto px-6">
-          <h2 className="text-3xl font-black text-slate-900 text-center mb-12">Ko'p so'raladigan savollar</h2>
+          <h2 className={`text-3xl font-black text-center mb-12 ${isDark ? 'text-white' : 'text-slate-900'}`}>Ko'p so'raladigan savollar</h2>
           <div className="space-y-3">
             {FAQS.map(([question, answer]) => (
-              <FaqItem key={question} question={question} answer={answer} />
+              <FaqItem key={question} question={question} answer={answer} isDark={isDark} />
             ))}
           </div>
         </div>

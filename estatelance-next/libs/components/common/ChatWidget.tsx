@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { useReactiveVar, useQuery, useMutation } from '@apollo/client';
+import { useTheme } from 'next-themes';
 import {
   Avatar, Box, Button, IconButton,
   Stack, TextField, Typography,
@@ -242,10 +243,18 @@ export default function ChatWidget() {
     }
   }, [input, peerId, user._id]);
 
+  const { resolvedTheme } = useTheme();
+  const isDark = mounted && resolvedTheme === 'dark';
+
   if (!mounted) return null;
   if (router.pathname === '/messages') return null;
 
   const myId = user._id || guestId;
+
+  // Background for the messages area
+  const chatBg = isDark
+    ? 'linear-gradient(160deg, #1a0533 0%, #0d1b4b 40%, #0a2a4a 70%, #130826 100%)'
+    : 'linear-gradient(160deg, #eef2ff 0%, #e0e7ff 40%, #ddd6fe 70%, #fae8ff 100%)';
 
   return (
     <Box sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1300 }}>
@@ -255,12 +264,12 @@ export default function ChatWidget() {
         <Box sx={{
           position: 'absolute', bottom: 72, right: 0,
           width: 340, height: 490,
-          bgcolor: '#f0f4ff',
+          background: chatBg,
           borderRadius: 3,
-          boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
+          boxShadow: isDark ? '0 8px 40px rgba(0,0,0,0.5)' : '0 8px 40px rgba(99,102,241,0.18)',
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
-          border: '1px solid #dde3f5',
+          border: isDark ? '1px solid #1e293b' : '1px solid #c7d2fe',
         }}>
 
           {/* Header */}
@@ -310,23 +319,6 @@ export default function ChatWidget() {
                   <ArrowSquareOut size={15} />
                 </IconButton>
               )}
-              {/* DM conversations button (logged in only) */}
-              {user._id && view === 'public' && (
-                <Stack direction="row" alignItems="center" sx={{
-                  bgcolor: 'rgba(255,255,255,0.15)', borderRadius: 10,
-                  px: 1, py: 0.3, cursor: 'pointer', gap: 0.5,
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
-                }}
-                  onClick={() => router.push('/messages')}
-                >
-                  {unread > 0 && (
-                    <Box sx={{ bgcolor: '#ef4444', color: 'white', borderRadius: '50%', minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800 }}>
-                      {unread > 9 ? '9+' : unread}
-                    </Box>
-                  )}
-                  <Typography fontSize={11} color="white" fontWeight={600}>Xabarlar</Typography>
-                </Stack>
-              )}
               <IconButton size="small" onClick={() => setOpen(false)} sx={{ color: 'rgba(255,255,255,0.8)', p: 0.5 }}>
                 <X size={17} />
               </IconButton>
@@ -337,11 +329,11 @@ export default function ChatWidget() {
           {view === 'namePrompt' && (
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', px: 3, gap: 2 }}>
               <Box sx={{ textAlign: 'center' }}>
-                <Box sx={{ width: 56, height: 56, borderRadius: '50%', bgcolor: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
-                  <Users size={28} color="#4f46e5" weight="fill" />
+                <Box sx={{ width: 56, height: 56, borderRadius: '50%', bgcolor: isDark ? 'rgba(99,102,241,0.2)' : '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
+                  <Users size={28} color="#818cf8" weight="fill" />
                 </Box>
-                <Typography fontWeight={800} fontSize={15} color="#0f172a" mb={0.5}>Chatga kirish</Typography>
-                <Typography fontSize={13} color="#64748b">Ismingizni kiriting — ro'yxatdan o'tish shart emas</Typography>
+                <Typography fontWeight={800} fontSize={15} color={isDark ? '#e2e8f0' : '#0f172a'} mb={0.5}>Chatga kirish</Typography>
+                <Typography fontSize={13} color={isDark ? '#94a3b8' : '#64748b'}>Ismingizni kiriting — ro'yxatdan o'tish shart emas</Typography>
               </Box>
               <TextField
                 autoFocus size="small"
@@ -362,7 +354,7 @@ export default function ChatWidget() {
           {/* ── PUBLIC CHAT ── */}
           {view === 'public' && (
             <>
-              <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5 }}>
+              <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5, background: 'transparent' }}>
                 {publicMsgs.length === 0 && (
                   <Box sx={{ textAlign: 'center', py: 5 }}>
                     <Typography fontSize={12} color="#94a3b8">Birinchi xabarni yuboring! 👋</Typography>
@@ -400,9 +392,10 @@ export default function ChatWidget() {
                           <Box sx={{
                             px: 1.5, py: 0.75,
                             borderRadius: isMine ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                            bgcolor: isMine ? '#4f46e5' : 'white',
-                            color: isMine ? 'white' : '#0f172a',
-                            boxShadow: isMine ? '0 2px 8px rgba(79,70,229,0.3)' : '0 1px 4px rgba(0,0,0,0.08)',
+                            bgcolor: isMine ? '#4f46e5' : (isDark ? 'rgba(30,41,59,0.85)' : 'rgba(255,255,255,0.9)'),
+                            color: isMine ? 'white' : (isDark ? '#e2e8f0' : '#0f172a'),
+                            boxShadow: isMine ? '0 2px 8px rgba(79,70,229,0.35)' : (isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.08)'),
+                            backdropFilter: 'blur(4px)',
                           }}>
                             <Typography fontSize={13} lineHeight={1.5}>{msg.text}</Typography>
                             <Typography fontSize={10} sx={{ opacity: 0.5, mt: 0.25, textAlign: 'right' }}>
@@ -417,7 +410,7 @@ export default function ChatWidget() {
                 </Stack>
               </Box>
 
-              <Box sx={{ p: 1.5, bgcolor: 'white', borderTop: '1px solid #e2e8f0', flexShrink: 0 }}>
+              <Box sx={{ p: 1.5, bgcolor: isDark ? 'rgba(15,23,42,0.7)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', borderTop: `1px solid ${isDark ? '#1e293b' : '#c7d2fe'}`, flexShrink: 0 }}>
                 <Stack direction="row" spacing={1} alignItems="flex-end">
                   <TextField
                     size="small" fullWidth multiline maxRows={3}
@@ -425,7 +418,7 @@ export default function ChatWidget() {
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPublic(); } }}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#f8fafc', fontSize: 13, '&.Mui-focused fieldset': { borderColor: '#4f46e5' } } }}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: isDark ? 'rgba(30,41,59,0.8)' : 'rgba(255,255,255,0.9)', fontSize: 13, '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? '#334155' : '#c7d2fe' }, '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1' } }, '& .MuiInputBase-input': { color: isDark ? '#e2e8f0' : '#0f172a' } }}
                   />
                   <IconButton onClick={sendPublic} disabled={!input.trim()}
                     sx={{ bgcolor: input.trim() ? '#4f46e5' : '#e2e8f0', color: input.trim() ? 'white' : '#94a3b8', width: 36, height: 36, borderRadius: 2, flexShrink: 0, '&:hover': { bgcolor: input.trim() ? '#4338ca' : '#e2e8f0' }, transition: 'all 0.15s' }}>
@@ -439,7 +432,7 @@ export default function ChatWidget() {
           {/* ── DM CHAT ── */}
           {view === 'dm' && (
             <>
-              <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5 }}>
+              <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5, background: 'transparent' }}>
                 {allMsgs.length === 0 && (
                   <Box sx={{ textAlign: 'center', py: 4 }}>
                     <Typography fontSize={12} color="#94a3b8">Salomlashing! 👋</Typography>
@@ -466,9 +459,10 @@ export default function ChatWidget() {
                         <Box sx={{
                           maxWidth: '72%', px: 1.5, py: 0.75,
                           borderRadius: isMine ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                          bgcolor: isMine ? '#4f46e5' : 'white',
-                          color: isMine ? 'white' : '#0f172a',
-                          boxShadow: isMine ? '0 2px 8px rgba(79,70,229,0.3)' : '0 1px 4px rgba(0,0,0,0.08)',
+                          bgcolor: isMine ? '#4f46e5' : (isDark ? 'rgba(30,41,59,0.85)' : 'rgba(255,255,255,0.9)'),
+                          color: isMine ? 'white' : (isDark ? '#e2e8f0' : '#0f172a'),
+                          boxShadow: isMine ? '0 2px 8px rgba(79,70,229,0.35)' : (isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.08)'),
+                          backdropFilter: 'blur(4px)',
                         }}>
                           <Typography fontSize={13} lineHeight={1.5}>{msg.text}</Typography>
                           <Typography fontSize={10} sx={{ opacity: 0.55, mt: 0.25, textAlign: 'right' }}>
@@ -482,14 +476,14 @@ export default function ChatWidget() {
                   <div ref={dmBottom} />
                 </Stack>
               </Box>
-              <Box sx={{ p: 1.5, bgcolor: 'white', borderTop: '1px solid #e2e8f0', flexShrink: 0 }}>
+              <Box sx={{ p: 1.5, bgcolor: isDark ? 'rgba(15,23,42,0.7)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', borderTop: `1px solid ${isDark ? '#1e293b' : '#c7d2fe'}`, flexShrink: 0 }}>
                 <Stack direction="row" spacing={1} alignItems="flex-end">
                   <TextField
                     size="small" fullWidth multiline maxRows={3}
                     placeholder="Xabar yozing..."
                     value={input} onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDm(); } }}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#f8fafc', fontSize: 13, '&.Mui-focused fieldset': { borderColor: '#4f46e5' } } }}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: isDark ? 'rgba(30,41,59,0.8)' : 'rgba(255,255,255,0.9)', fontSize: 13, '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? '#334155' : '#c7d2fe' }, '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1' } }, '& .MuiInputBase-input': { color: isDark ? '#e2e8f0' : '#0f172a' } }}
                   />
                   <IconButton onClick={sendDm} disabled={!input.trim()}
                     sx={{ bgcolor: input.trim() ? '#4f46e5' : '#e2e8f0', color: input.trim() ? 'white' : '#94a3b8', width: 36, height: 36, borderRadius: 2, flexShrink: 0, transition: 'all 0.15s' }}>

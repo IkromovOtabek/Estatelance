@@ -114,6 +114,11 @@ export class UserService {
   }
 
   // ─── Get Current User ─────────────────────────────────────────────────────
+  async checkUsername(username: string): Promise<boolean> {
+    const exists = await this.userModel.findOne({ username: username.toLowerCase().trim() });
+    return !exists; // true = available, false = taken
+  }
+
   async getMyProfile(userId: string): Promise<User> {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('User not found');
@@ -225,6 +230,55 @@ export class UserService {
 
       return true; // Now following
     }
+  }
+
+  // ─── Google OAuth — Find or Create User ───────────────────────────────────
+  async findOrCreateGoogleUser(googleUser: {
+    googleId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    displayName: string;
+    profileImage: string;
+  }): Promise<User> {
+    // Check if user already exists by googleId
+    let user = await this.userModel.findOne({ googleId: googleUser.googleId });
+
+    if (!user) {
+      // Check by email (user may have signed up with email before)
+      user = await this.userModel.findOne({ email: googleUser.email });
+
+      if (user) {
+        // Link Google to existing account
+        user.googleId = googleUser.googleId;
+        if (!user.profileImage && googleUser.profileImage) {
+          user.profileImage = googleUser.profileImage;
+        }
+        await user.save();
+      } else {
+        // Create brand new Google user
+        const fullName = googleUser.displayName ||
+          `${googleUser.firstName} ${googleUser.lastName}`.trim();
+        const baseUsername = googleUser.email.split('@')[0];
+        const username = await this.getUniqueUsername(baseUsername);
+
+        user = await this.userModel.create({
+          googleId:     googleUser.googleId,
+          email:        googleUser.email,
+          username,
+          fullName,
+          profileImage: googleUser.profileImage ?? '',
+          userType:     UserType.AGENT,
+          userStatus:   UserStatus.ACTIVE,
+          authProvider: AuthProvider.GOOGLE,
+          needsOnboarding: true,
+          location: 'Toshkent, UZ',
+        });
+      }
+    }
+
+    user.accessToken = await this.authService.createToken(user);
+    return user;
   }
 
   // ─── Private Helpers ──────────────────────────────────────────────────────

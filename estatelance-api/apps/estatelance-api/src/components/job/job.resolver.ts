@@ -66,6 +66,15 @@ export class JobResolver {
     return this.jobService.boostJob(agentId, jobId, plan);
   }
 
+  @UseGuards(AuthGuard)
+  @Mutation(() => Job)
+  async incrementJobView(
+    @AuthUser('_id') userId: string,
+    @Args('jobId') jobId: string,
+  ): Promise<Job> {
+    return this.jobService.incrementJobView(jobId, userId);
+  }
+
   @UseGuards(ActiveUserGuard)
   @Mutation(() => Job)
   async completeJob(

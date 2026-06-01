@@ -2,16 +2,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
-// ─── Image Upload API ─────────────────────────────────────────────────────────
+// ─── File Upload API ──────────────────────────────────────────────────────────
 // Accepts: POST with JSON body { base64: string, fileName: string }
-// Returns: { url: "/uploads/filename.jpg" }
-//
-// The client converts the file to base64 using FileReader, then sends it here.
-// We decode it, save to /public/uploads/, and return the public URL.
-// In production, replace this with Cloudinary / S3 upload.
+// Returns: { url: "/uploads/filename.ext" }
+// Supports: images (jpeg/png/gif/webp) and PDF files
 
 export const config = {
-  api: { bodyParser: { sizeLimit: '5mb' } },
+  api: { bodyParser: { sizeLimit: '10mb' } },
 };
 
 export default function uploadHandler(req: NextApiRequest, res: NextApiResponse) {
@@ -26,14 +23,17 @@ export default function uploadHandler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'base64 and fileName are required' });
     }
 
-    // Strip the data URL prefix (e.g. "data:image/jpeg;base64,")
-    const pureBase64 = base64.replace(/^data:image\/\w+;base64,/, '');
+    // Strip the data URL prefix — works for any MIME type:
+    // "data:image/jpeg;base64,"  →  pure base64
+    // "data:application/pdf;base64,"  →  pure base64
+    const pureBase64 = base64.replace(/^data:[^;]+;base64,/, '');
     const buffer = Buffer.from(pureBase64, 'base64');
 
-    // Create a unique filename to avoid collisions
+    // Create a unique filename, preserving original extension
     const timestamp = Date.now();
-    const ext = path.extname(fileName) || '.jpg';
-    const safeName = `avatar_${timestamp}${ext}`;
+    const ext = path.extname(fileName).toLowerCase() || '.bin';
+    const prefix = ext === '.pdf' ? 'file' : 'avatar';
+    const safeName = `${prefix}_${timestamp}${ext}`;
 
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
     if (!fs.existsSync(uploadsDir)) {

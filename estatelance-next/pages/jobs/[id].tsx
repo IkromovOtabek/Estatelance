@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
+import MiniMap from '../../libs/components/common/MiniMap';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -18,25 +20,38 @@ import {
   Tag,
   Info,
   Trophy,
+  Phone,
 } from '@phosphor-icons/react';
-import { GET_JOB_BY_ID, GET_BIDS_FOR_JOB } from '../../apollo/user/query';
-import { CREATE_BID, ACCEPT_BID, COMPLETE_JOB } from '../../apollo/user/mutation';
+import { GET_JOB_BY_ID, GET_BIDS_FOR_JOB, GET_USER_BY_ID, GET_JOBS } from '../../apollo/user/query';
+import { CREATE_BID, ACCEPT_BID, COMPLETE_JOB, INCREMENT_JOB_VIEW } from '../../apollo/user/mutation';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { Bid, Job } from '../../libs/types';
 import { BidStatus, JobCategory, JOB_CATEGORY_LABELS, JobStatus, UserType } from '../../libs/enums';
 import { getCatIcon } from '../../libs/utils/jobCategoryIcons';
 
-function timeAgo(dateStr?: string): string {
+function timeAgo(dateStr?: string | number | null): string {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
+  const raw = String(dateStr);
+  // Raqamli string (Unix ms yoki seconds)
+  let d: Date;
+  if (/^\d+$/.test(raw)) {
+    const num = Number(raw);
+    d = new Date(num < 1e12 ? num * 1000 : num);
+  } else {
+    d = new Date(raw);
+  }
   if (isNaN(d.getTime())) return '';
   const m = Math.floor((Date.now() - d.getTime()) / 60000);
-  if (m < 1) return 'hozirgina';
-  if (m < 60) return `${m} daq oldin`;
+  if (m < 1)   return 'hozirgina';
+  if (m < 60)  return `${m} daqiqa oldin`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h} soat oldin`;
-  return `${Math.floor(h / 24)} kun oldin`;
+  if (h < 24)  return `${h} soat oldin`;
+  const days = Math.floor(h / 24);
+  if (days < 30) return `${days} kun oldin`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} oy oldin`;
+  return `${Math.floor(months / 12)} yil oldin`;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
@@ -52,10 +67,155 @@ const BID_STATUS_CONFIG: Record<string, { label: string; color: string; bg: stri
   [BidStatus.DECLINED]: { label: 'Rad etildi',         color: '#dc2626', bg: '#fef2f2' },
 };
 
+// ─── Similar Jobs Carousel ────────────────────────────────────────────────────
+
+const FORMAT_LABEL: Record<string, string> = {
+  REMOTE: 'Masofaviy', ONSITE: 'Ofisda', HYBRID: 'Gibrid',
+};
+
+function SimilarJobs({ jobs, isDark }: { jobs: Job[]; isDark: boolean }) {
+  const [idx, setIdx] = React.useState(0);
+  const visible = 3;
+  const max = Math.max(0, jobs.length - visible);
+
+  const prev = () => setIdx(i => Math.max(0, i - 1));
+  const next = () => setIdx(i => Math.min(max, i + 1));
+
+  const cardBg     = isDark ? '#1e293b' : '#ffffff';
+  const cardBorder = isDark ? '#334155' : '#e2e8f0';
+  const textPrim   = isDark ? '#f1f5f9' : '#0f172a';
+  const textSec    = isDark ? '#94a3b8' : '#64748b';
+  const pageBg     = isDark ? '#0f172a' : '#f8f7ff';
+  const tagBg      = isDark ? '#334155' : '#f1f5f9';
+  const tagClr     = isDark ? '#cbd5e1' : '#475569';
+
+  return (
+    <div className="mt-10 rounded-2xl px-6 py-8" style={{ backgroundColor: pageBg }}>
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-extrabold tracking-tight" style={{ color: textPrim }}>
+            O&apos;xshash ishlar
+          </h2>
+          <p className="text-sm mt-1" style={{ color: textSec }}>
+            Sizning ko&apos;nikmalaringizga mos keladigan boshqa takliflar
+          </p>
+        </div>
+        {jobs.length > visible && (
+          <div className="flex items-center gap-2 flex-shrink-0 mt-1">
+            <button
+              onClick={prev}
+              disabled={idx === 0}
+              className="w-10 h-10 rounded-full border flex items-center justify-center transition-all disabled:opacity-30"
+              style={{ borderColor: cardBorder, backgroundColor: cardBg, color: textSec }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={next}
+              disabled={idx >= max}
+              className="w-10 h-10 rounded-full border flex items-center justify-center transition-all disabled:opacity-30"
+              style={{ borderColor: cardBorder, backgroundColor: cardBg, color: textSec }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Cards */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {jobs.slice(idx, idx + visible).map((sj, i) => {
+          const ageHours = sj.createdAt
+            ? (Date.now() - new Date(sj.createdAt).getTime()) / 3_600_000
+            : 999;
+          const isNew    = ageHours < 48;
+          const isUrgent = (sj.bidCount ?? 0) >= 5;
+          const formats  = Array.isArray(sj.workFormat) ? sj.workFormat : sj.workFormat ? [sj.workFormat] : [];
+          const formatStr = formats.map((f: string) => FORMAT_LABEL[f] ?? f).join(' • ');
+          const budgetStr = sj.salaryFrom && sj.salaryTo
+            ? `$${sj.salaryFrom.toLocaleString()} - $${sj.salaryTo.toLocaleString()}`
+            : sj.budget ? `$${sj.budget.toLocaleString()}` : 'Kelishiladi';
+
+          return (
+            <Link key={sj._id} href={`/jobs/${sj._id}`} className="no-underline group">
+              <div
+                className="rounded-2xl p-5 flex flex-col gap-3 h-full transition-all hover:shadow-lg"
+                style={{
+                  backgroundColor: cardBg,
+                  border: `1.5px solid ${cardBorder}`,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = '#6366f1')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = cardBorder)}
+              >
+                {/* Top row: badge + budget */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    {isNew && (
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded"
+                        style={{ backgroundColor: isDark ? 'rgba(99,102,241,0.2)' : '#ede9fe', color: '#7c3aed' }}>
+                        NEW
+                      </span>
+                    )}
+                    {isUrgent && (
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded"
+                        style={{ backgroundColor: isDark ? 'rgba(239,68,68,0.15)' : '#fef2f2', color: '#dc2626' }}>
+                        URGENT
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm font-bold" style={{ color: '#4f46e5' }}>{budgetStr}</span>
+                </div>
+
+                {/* Title */}
+                <p className="text-base font-extrabold leading-snug line-clamp-2 transition-colors group-hover:text-indigo-600"
+                  style={{ color: textPrim }}>
+                  {sj.title}
+                </p>
+
+                {/* Location + format */}
+                {(sj.location || formatStr) && (
+                  <p className="flex items-center gap-1 text-xs" style={{ color: textSec }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {[sj.location?.split(',')[0], formatStr].filter(Boolean).join(' • ')}
+                  </p>
+                )}
+
+                {/* Skill tags */}
+                {(sj.requiredSkills ?? []).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-auto">
+                    {(sj.requiredSkills ?? []).slice(0, 3).map((sk: string) => (
+                      <span key={sk} className="text-xs px-2.5 py-1 rounded-lg font-medium"
+                        style={{ backgroundColor: tagBg, color: tagClr }}>
+                        {sk}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const JobDetailPage = () => {
   const router = useRouter();
   const jobId = router.query.id as string;
   const user = useReactiveVar(userVar);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -63,10 +223,11 @@ const JobDetailPage = () => {
   const isAgent      = mounted && user.userType === UserType.AGENT;
   const isLoggedIn   = mounted && !!user._id;
 
-  const [bidAmount, setBidAmount]     = useState('');
-  const [coverLetter, setCoverLetter] = useState('');
-  const [bidError, setBidError]       = useState('');
-  const [bidSuccess, setBidSuccess]   = useState(false);
+  const [bidAmount, setBidAmount]         = useState('');
+  const [coverLetter, setCoverLetter]     = useState('');
+  const [bidError, setBidError]           = useState('');
+  const [bidSuccess, setBidSuccess]       = useState(false);
+  const [locationCopied, setLocationCopied] = useState(false);
 
   const { data: jobData, loading: jobLoading } = useQuery(GET_JOB_BY_ID, {
     variables: { jobId },
@@ -81,9 +242,38 @@ const JobDetailPage = () => {
   const [createBid, { loading: submitting }]    = useMutation(CREATE_BID);
   const [acceptBid, { loading: accepting }]     = useMutation(ACCEPT_BID);
   const [completeJob, { loading: completing }]  = useMutation(COMPLETE_JOB);
+  const [incrementJobView] = useMutation(INCREMENT_JOB_VIEW);
+
+  // Increment view once when page loads and user is logged in
+  useEffect(() => {
+    if (jobId && user._id) {
+      incrementJobView({ variables: { jobId } });
+    }
+  }, [jobId, user._id]);
 
   const job: Job | null = jobData?.getJobById ?? null;
   const bids: Bid[]     = bidsData?.getBidsForJob ?? [];
+
+  // Agent's phone number — to display on "Aloqa" button
+  const { data: agentData } = useQuery(GET_USER_BY_ID, {
+    variables: { userId: job?.agentId },
+    skip: !job?.agentId,
+  });
+  const agentPhone = job?.contactPhone || agentData?.getUserById?.phoneNumber || null;
+
+  const { data: similarJobsData } = useQuery(GET_JOBS, {
+    variables: {
+      input: {
+        category: job?.category,
+        limit: 5,
+        page: 1,
+      },
+    },
+    skip: !job?.category,
+  });
+  const similarJobs: Job[] = (similarJobsData?.getJobs ?? []).filter(
+    (j: Job) => j._id !== jobId,
+  ).slice(0, 4);
 
   const handleBidSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,10 +332,23 @@ const JobDetailPage = () => {
 
   const status = STATUS_CONFIG[job.status] ?? STATUS_CONFIG[JobStatus.OPEN];
   const isOwn  = isAgent && user._id === job.agentId;
+  const handleCopyLocation = () => {
+    if (!job.location) return;
+    navigator.clipboard.writeText(job.location).then(() => {
+      setLocationCopied(true);
+      setTimeout(() => setLocationCopied(false), 2000);
+    });
+  };
 
   return (
     <>
-      <Head><title>{job.title} — BuFu</title></Head>
+      <Head>
+        <title>{job.title} — BuFu</title>
+        <meta name="description" content={job.description?.slice(0, 155)} />
+        <meta property="og:title" content={`${job.title} — BuFu`} />
+        <meta property="og:description" content={job.description?.slice(0, 155)} />
+        <meta property="og:type" content="article" />
+      </Head>
 
       {/* ── Breadcrumb ── */}
       <div className="flex items-center gap-2 mb-6">
@@ -211,7 +414,14 @@ const JobDetailPage = () => {
                   <AttachMoneyIcon size={18} color="#16a34a" />
                 </div>
                 <div>
-                  <p className="text-lg font-black text-slate-900 leading-none">${job.budget}</p>
+                  {job.budget === 0 ? (
+                    <p className="text-base font-black leading-none flex items-center gap-1" style={{ color: '#22c55e' }}>
+                      <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
+                      Kelishiladi
+                    </p>
+                  ) : (
+                    <p className="text-lg font-black text-slate-900 leading-none">${job.budget}</p>
+                  )}
                   <p className="text-xs text-slate-400">byudjet</p>
                 </div>
               </div>
@@ -221,11 +431,33 @@ const JobDetailPage = () => {
               {/* Bid count */}
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                  <UsersIcon size={18} color="#4f46e5" />
+                  <SendIcon size={18} color="#4f46e5" />
                 </div>
                 <div>
                   <p className="text-lg font-black text-slate-900 leading-none">{job.bidCount}</p>
                   <p className="text-xs text-slate-400">taklif</p>
+                </div>
+              </div>
+
+              <div className="w-px bg-slate-100 self-stretch" />
+
+              {/* View count */}
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: isDark ? 'rgba(2,132,199,0.15)' : '#e0f2fe' }}
+                >
+                  <svg width="18" height="18" fill="none" strokeWidth={2} viewBox="0 0 24 24"
+                    stroke={isDark ? '#38bdf8' : '#0284c7'}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-lg font-black leading-none" style={{ color: isDark ? '#f1f5f9' : '#0f172a' }}>
+                    {job.viewCount ?? 0}
+                  </p>
+                  <p className="text-xs text-slate-400">ko&apos;rish</p>
                 </div>
               </div>
 
@@ -237,7 +469,9 @@ const JobDetailPage = () => {
                   <AccessTimeIcon size={18} color="#64748b" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-900 leading-tight">{timeAgo(job.createdAt)}</p>
+                  <p className="text-sm font-bold text-slate-900 leading-tight">
+                    {timeAgo(job.createdAt) || '—'}
+                  </p>
                   <p className="text-xs text-slate-400">joylashtirilgan</p>
                 </div>
               </div>
@@ -265,6 +499,43 @@ const JobDetailPage = () => {
               )}
             </div>
           </div>
+
+          {/* Location map */}
+          {job.location && (
+            <div className="bg-white border border-slate-200 rounded-2xl px-5 py-4 shadow-sm">
+              <h2 className="font-bold text-sm text-slate-900 mb-3 flex items-center gap-2">
+                <Briefcase size={15} color="#6366f1" />
+                Ish manzili
+              </h2>
+              {/* Address + copy inline */}
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className="flex items-start gap-1.5 flex-1 min-w-0">
+                  <LocationOnIcon size={14} color="#6366f1" weight="fill" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <span className="text-xs text-slate-600 leading-relaxed">
+                    {job.location.split(',').slice(0, 4).join(', ')}
+                  </span>
+                </div>
+                <button
+                  onClick={handleCopyLocation}
+                  title="Nusxa olish"
+                  className="flex-shrink-0 p-1.5 rounded-lg transition-all"
+                  style={{ color: locationCopied ? '#22c55e' : '#94a3b8', backgroundColor: locationCopied ? 'rgba(34,197,94,0.1)' : 'transparent' }}
+                >
+                  {locationCopied ? (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  ) : (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+              <MiniMap address={job.location} height={180} hideAddressRow />
+            </div>
+          )}
 
           {/* Skills required (chips from category label) */}
           <div className="bg-white border border-slate-200 rounded-2xl px-6 py-5">
@@ -356,7 +627,7 @@ const JobDetailPage = () => {
         </div>
 
         {/* ════ RIGHT: Sticky sidebar ════ */}
-        <div className="w-full md:w-80 flex-shrink-0 md:sticky md:top-20 space-y-4">
+        <div className="w-full md:w-80 flex-shrink-0 space-y-4 md:sticky md:top-20 md:self-start">
 
           {/* ── Bid form (freelancers, open job) ── */}
           {isFreelancer && job.status === JobStatus.OPEN && (
@@ -469,43 +740,65 @@ const JobDetailPage = () => {
               <h3 className="font-bold text-sm text-slate-900">Ish haqida</h3>
             </div>
             <div className="p-5 space-y-3.5">
-              {([
-                {
-                  label: 'Byudjet',
-                  value: `$${job.budget}`,
-                  icon: <AttachMoneyIcon size={15} color="#16a34a" />,
-                  valueClass: 'text-green-700 font-bold',
-                },
-                {
-                  label: 'Takliflar',
-                  value: `${job.bidCount} ta`,
-                  icon: <EnvelopeSimple size={15} color="#4f46e5" />,
-                  valueClass: 'text-indigo-600 font-bold',
-                },
-                {
-                  label: 'Holati',
-                  value: status.label,
-                  icon: <CheckCircleIcon size={15} color={status.color} />,
-                  valueClass: 'font-bold',
-                  valueStyle: { color: status.color },
-                },
-                {
-                  label: 'Kategoriya',
-                  value: JOB_CATEGORY_LABELS[job.category as JobCategory],
-                  icon: <Tag size={15} color="#64748b" />,
-                  valueClass: 'text-slate-700 font-semibold',
-                },
-              ] as Array<{ label: string; value: string; icon: React.ReactNode; valueClass: string; valueStyle?: React.CSSProperties }>).map(item => (
-                <div key={item.label} className="flex items-center justify-between">
+              {/* Byudjet */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-slate-500 text-sm">
+                  <AttachMoneyIcon size={15} color="#16a34a" />
+                  Byudjet
+                </div>
+                {job.budget === 0 ? (
+                  <span className="flex items-center gap-1 text-sm font-bold" style={{ color: '#22c55e' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
+                    Kelishiladi
+                  </span>
+                ) : (
+                  <span className="text-sm text-green-700 font-bold">
+                    {job.salaryFrom && job.salaryTo
+                      ? `$${job.salaryFrom.toLocaleString()} – $${job.salaryTo.toLocaleString()}`
+                      : `$${job.budget}`}
+                  </span>
+                )}
+              </div>
+
+              {/* Takliflar */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-slate-500 text-sm">
+                  <EnvelopeSimple size={15} color="#4f46e5" />
+                  Takliflar
+                </div>
+                <span className="text-sm text-indigo-600 font-bold">{job.bidCount} ta</span>
+              </div>
+
+              {/* Holati */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-slate-500 text-sm">
+                  <CheckCircleIcon size={15} color={status.color} />
+                  Holati
+                </div>
+                <span className="text-sm font-bold" style={{ color: status.color }}>{status.label}</span>
+              </div>
+
+              {/* Kategoriya */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-slate-500 text-sm">
+                  <Tag size={15} color="#64748b" />
+                  Kategoriya
+                </div>
+                <span className="text-sm text-slate-700 font-semibold">{JOB_CATEGORY_LABELS[job.category as JobCategory]}</span>
+              </div>
+
+              {/* Joylashtirilgan sana */}
+              {job.createdAt && (
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-slate-500 text-sm">
-                    <span className="flex-shrink-0">{item.icon}</span>
-                    {item.label}
+                    <AccessTimeIcon size={15} color="#64748b" />
+                    Joylashtirilgan
                   </div>
-                  <span className={`text-sm ${item.valueClass}`} style={item.valueStyle}>
-                    {item.value}
+                  <span className="text-sm text-slate-700 font-semibold">
+                    {timeAgo(job.createdAt) || '—'}
                   </span>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
@@ -515,7 +808,7 @@ const JobDetailPage = () => {
               <div className="px-5 py-3.5 border-b border-slate-100">
                 <h3 className="font-bold text-sm text-slate-900">Ish beruvchi</h3>
               </div>
-              <div className="p-5">
+              <div className="p-5 space-y-3">
                 <Link href={`/profile/${job.agentId}`} className="flex items-center gap-3 no-underline group">
                   <div className="w-11 h-11 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-lg flex-shrink-0">
                     {job.agentName?.[0]?.toUpperCase() ?? 'A'}
@@ -527,11 +820,31 @@ const JobDetailPage = () => {
                     <p className="text-xs text-slate-400">Ish beruvchi</p>
                   </div>
                 </Link>
+
+                {agentPhone ? (
+                  <a
+                    href={`tel:${agentPhone.replace(/\s/g, '')}`}
+                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-colors"
+                  >
+                    <Phone size={16} weight="fill" />
+                    Aloqa: {agentPhone}
+                  </a>
+                ) : (
+                  <div className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-slate-100 text-slate-400 text-sm font-semibold cursor-not-allowed">
+                    <Phone size={16} />
+                    Telefon ko&apos;rsatilmagan
+                  </div>
+                )}
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* ── Recommended jobs ── */}
+      {similarJobs.length > 0 && (
+        <SimilarJobs jobs={similarJobs} isDark={isDark} />
+      )}
     </>
   );
 };

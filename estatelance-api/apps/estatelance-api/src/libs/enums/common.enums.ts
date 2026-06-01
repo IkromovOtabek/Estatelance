@@ -50,10 +50,11 @@ registerEnumType(JobCategory, { name: 'JobCategory' });
 // ─── Property Type ────────────────────────────────────────────────────────────
 // What kind of real estate is involved in the job
 export enum PropertyType {
-  APARTMENT = 'APARTMENT',
-  VILLA = 'VILLA',
+  APARTMENT  = 'APARTMENT',
+  VILLA      = 'VILLA',
   COMMERCIAL = 'COMMERCIAL',
-  LAND = 'LAND',
+  LAND       = 'LAND',
+  OTHER      = 'OTHER',
 }
 registerEnumType(PropertyType, { name: 'PropertyType' });
 
@@ -85,8 +86,9 @@ registerEnumType(NotificationType, { name: 'NotificationType' });
 // ─── Auth Provider ────────────────────────────────────────────────────────────
 // How the user signed up
 export enum AuthProvider {
-  EMAIL = 'EMAIL',       // Traditional email + password
+  EMAIL    = 'EMAIL',    // Traditional email + password
   TELEGRAM = 'TELEGRAM', // Signed up via Telegram Login
+  GOOGLE   = 'GOOGLE',   // Signed up via Google OAuth
 }
 registerEnumType(AuthProvider, { name: 'AuthProvider' });
 

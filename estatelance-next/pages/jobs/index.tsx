@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useTheme } from 'next-themes';
 import { useReactiveVar, useQuery, useMutation } from '@apollo/client';
 import { GET_JOBS } from '../../apollo/user/query';
-import { SEND_MESSAGE } from '../../apollo/user/mutation';
+import { SEND_MESSAGE, INCREMENT_JOB_VIEW } from '../../apollo/user/mutation';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { Job } from '../../libs/types';
@@ -47,12 +48,6 @@ const SORT_OPTIONS = [
   { val: 'low',    label: 'Budjet past' },
 ];
 
-// Simulated viewer counts
-const VIEWER_COUNTS: Record<string, number> = {};
-function getViewers(id: string) {
-  if (!VIEWER_COUNTS[id]) VIEWER_COUNTS[id] = Math.floor(Math.random() * 50) + 1;
-  return VIEWER_COUNTS[id];
-}
 
 const BOOST_BADGES: { label: string; bg: string; text: string }[] = [
   { label: 'TOP', bg: 'bg-indigo-100', text: 'text-indigo-700' },
@@ -76,6 +71,8 @@ const JobsPage = () => {
   const user = useReactiveVar(userVar);
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+  const { resolvedTheme } = useTheme();
+  const isDark = mounted && resolvedTheme === 'dark';
   const isFreelancer = mounted && user.userType === UserType.FREELANCER;
   const isAgent      = mounted && user.userType === UserType.AGENT;
 
@@ -97,6 +94,7 @@ const JobsPage = () => {
   const [snackMsg, setSnackMsg]         = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
   const [sendMessage, { loading: sending }] = useMutation(SEND_MESSAGE);
+  const [incrementJobView] = useMutation(INCREMENT_JOB_VIEW);
 
   // Auto-dismiss snack
   useEffect(() => {
@@ -244,7 +242,14 @@ const JobsPage = () => {
       </Head>
 
       {/* ── Sticky search header ─────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm -mx-6 px-6 py-3 mb-8">
+      <div
+        className="sticky top-0 z-30 backdrop-blur-md border-b -mx-6 px-6 py-3 mb-8"
+        style={{
+          backgroundColor: isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.92)',
+          borderColor: isDark ? '#334155' : '#e2e8f0',
+          boxShadow: isDark ? '0 1px 8px rgba(0,0,0,0.5)' : '0 1px 4px rgba(0,0,0,0.06)',
+        }}
+      >
         <div className="max-w-5xl mx-auto flex gap-2">
           <div className="relative flex-1">
             <span className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -258,7 +263,12 @@ const JobsPage = () => {
               onChange={e => setSearchInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}
               placeholder="Kasb, lavozim yoki kalit so'z..."
-              className="w-full h-11 pl-12 pr-10 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
+              className="w-full h-11 pl-12 pr-10 rounded-xl border text-sm focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
+              style={{
+                backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                borderColor: isDark ? '#334155' : '#e2e8f0',
+                color: isDark ? '#f1f5f9' : '#0f172a',
+              }}
             />
             {searchInput && (
               <button
@@ -283,14 +293,14 @@ const JobsPage = () => {
       {/* ── Page header ─────────────────────────────────────────────────────── */}
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 leading-tight mb-1">
+          <h1 className={`text-3xl font-extrabold leading-tight mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>
             Keyingi ishingizni toping
           </h1>
-          <p className="text-slate-500 text-base">
+          <p className={`text-base ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             O'zbekistonning eng yaxshi frilanserlarini premium mahalliy va xalqaro imkoniyatlar bilan bog'laymiz.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-slate-500 bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg shrink-0">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-lg shrink-0" style={{ color: isDark ? '#94a3b8' : '#64748b', backgroundColor: isDark ? '#1e293b' : '#f8fafc', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
           <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
@@ -321,7 +331,7 @@ const JobsPage = () => {
 
         {/* ════ LEFT SIDEBAR ════ */}
         <aside className="hidden lg:block lg:col-span-3 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <div className="rounded-xl p-5" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
 
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
@@ -501,10 +511,28 @@ const JobsPage = () => {
             </div>
           </div>
 
-          {/* Loading */}
+          {/* Skeleton loader */}
           {loading && (
-            <div className="flex justify-center py-20">
-              <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="rounded-2xl p-5 animate-pulse"
+                  style={{ backgroundColor: isDark ? '#0f172a' : '#ffffff', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}` }}>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl flex-shrink-0" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 rounded-lg w-2/3" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
+                      <div className="h-3 rounded-lg w-full" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
+                      <div className="h-3 rounded-lg w-4/5" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
+                      <div className="flex gap-2 pt-1">
+                        <div className="h-5 w-16 rounded-full" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
+                        <div className="h-5 w-20 rounded-full" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
+                        <div className="h-5 w-14 rounded-full" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
+                      </div>
+                    </div>
+                    <div className="w-24 h-8 rounded-xl flex-shrink-0" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -533,7 +561,7 @@ const JobsPage = () => {
               {pagedJobs.map((job, idx) => {
                 const globalIdx = (page - 1) * ITEMS_PER_PAGE + idx;
                 const boost = getBoostBadge(globalIdx);
-                const viewers = getViewers(job._id);
+                const viewers = job.viewCount ?? 0;
                 const isOwn = isAgent && user._id === job.agentId;
                 const salary = job.salaryFrom && job.salaryTo
                   ? `$${job.salaryFrom.toLocaleString()} – $${job.salaryTo.toLocaleString()}`
@@ -541,6 +569,8 @@ const JobsPage = () => {
                   ? `$${job.salaryFrom.toLocaleString()} dan`
                   : job.salaryTo
                   ? `$${job.salaryTo.toLocaleString()} gacha`
+                  : job.budget === 0
+                  ? 'Kelishiladi'
                   : job.budget
                   ? `$${job.budget.toLocaleString()}`
                   : null;
@@ -589,9 +619,18 @@ const JobsPage = () => {
                           </span>
                         )}
                         {salary && (
-                          <span className="text-base font-bold text-indigo-600 whitespace-nowrap">
-                            {salary}
-                          </span>
+                          salary === 'Kelishiladi' ? (
+                            <span className="flex items-center gap-1 text-sm font-bold whitespace-nowrap" style={{ color: '#22c55e' }}>
+                              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="2 6 5 9 10 3"/>
+                              </svg>
+                              Kelishiladi
+                            </span>
+                          ) : (
+                            <span className="text-base font-bold text-indigo-600 whitespace-nowrap">
+                              {salary}
+                            </span>
+                          )
                         )}
                       </div>
                     </div>
@@ -645,7 +684,13 @@ const JobsPage = () => {
                           {job.bidCount ?? 0} ta taklif
                         </span>
                         {/* Viewers */}
-                        <span className="text-[11px]">{viewers} kishi ko'rmoqda</span>
+                        <span className="flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          {viewers}
+                        </span>
                       </div>
 
                       {/* Actions */}
@@ -679,9 +724,15 @@ const JobsPage = () => {
                           </>
                         ) : (
                           <>
-                            <Link href={`/jobs/${job._id}`} className="no-underline">
+                            <Link
+                              href={`/jobs/${job._id}`}
+                              className="no-underline"
+                              onClick={() => {
+                                if (user._id) incrementJobView({ variables: { jobId: job._id } });
+                              }}
+                            >
                               <button className="px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-50 transition-all flex items-center gap-1">
-                                Ko'rish
+                                Ko&apos;rish
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>

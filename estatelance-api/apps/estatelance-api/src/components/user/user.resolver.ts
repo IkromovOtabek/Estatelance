@@ -37,6 +37,11 @@ export class UserResolver {
   }
 
   // ─── Get My Own Profile ────────────────────────────────────────────────────
+  @Query(() => Boolean)
+  async checkUsername(@Args('username') username: string): Promise<boolean> {
+    return this.userService.checkUsername(username);
+  }
+
   @UseGuards(AuthGuard)
   @Query(() => User)
   async getMyProfile(@AuthUser('_id') userId: string): Promise<User> {

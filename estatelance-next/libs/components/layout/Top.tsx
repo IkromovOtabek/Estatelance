@@ -518,8 +518,9 @@ const Top = () => {
                   sx: {
                     width: 380, maxHeight: '80vh',
                     borderRadius: 3,
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-                    border: '1px solid #e2e8f0',
+                    boxShadow: isDark ? '0 20px 60px rgba(0,0,0,0.5)' : '0 20px 60px rgba(0,0,0,0.15)',
+                    border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                    bgcolor: isDark ? '#1e293b' : '#ffffff',
                     overflow: 'hidden', mt: 1,
                   },
                 }}
@@ -553,13 +554,13 @@ const Top = () => {
                 </Box>
 
                 {/* Scrollable content */}
-                <Box sx={{ overflowY: 'auto', maxHeight: 'calc(80vh - 56px)' }}>
+                <Box sx={{ overflowY: 'auto', maxHeight: 'calc(80vh - 56px)', bgcolor: isDark ? '#1e293b' : '#ffffff' }}>
                   {notifications.length === 0 && announcements.length === 0 ? (
                     <Box sx={{ py: 6, textAlign: 'center' }}>
                       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-                        <NotificationsNoneIcon size={40} color="#94a3b8" />
+                        <NotificationsNoneIcon size={40} color={isDark ? '#475569' : '#94a3b8'} />
                       </Box>
-                      <Typography fontSize={13} color="text.secondary">Hozircha bildirishnoma yo&apos;q</Typography>
+                      <Typography fontSize={13} color={isDark ? '#64748b' : 'text.secondary'}>Hozircha bildirishnoma yo&apos;q</Typography>
                     </Box>
                   ) : (
                     <>
@@ -570,17 +571,17 @@ const Top = () => {
                               key={n._id}
                               sx={{
                                 px: 2.5, py: 1.75,
-                                bgcolor: n.isRead ? 'transparent' : '#f8f7ff',
-                                borderLeft: n.isRead ? '3px solid transparent' : '3px solid #4f46e5',
-                                borderBottom: idx < notifications.length - 1 ? '1px solid #f1f5f9' : 'none',
+                                bgcolor: n.isRead ? 'transparent' : (isDark ? 'rgba(99,102,241,0.08)' : '#f8f7ff'),
+                                borderLeft: n.isRead ? '3px solid transparent' : '3px solid #6366f1',
+                                borderBottom: `1px solid ${isDark ? '#334155' : '#f1f5f9'}`,
                                 transition: 'background 0.2s',
-                                '&:hover': { bgcolor: '#f8fafc' },
+                                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc' },
                               }}
                             >
                               <Stack direction="row" spacing={1.5} alignItems="flex-start">
                                 <Box sx={{
                                   width: 36, height: 36, borderRadius: '50%',
-                                  bgcolor: n.isRead ? '#f1f5f9' : '#eef2ff',
+                                  bgcolor: n.isRead ? (isDark ? '#334155' : '#f1f5f9') : (isDark ? 'rgba(99,102,241,0.2)' : '#eef2ff'),
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                                   flexShrink: 0,
                                 }}>
@@ -590,21 +591,21 @@ const Top = () => {
                                   <Stack direction="row" justifyContent="space-between" alignItems="center">
                                     <Typography
                                       fontSize={13} fontWeight={n.isRead ? 500 : 700}
-                                      color={n.isRead ? '#475569' : '#0f172a'} noWrap
+                                      color={n.isRead ? (isDark ? '#94a3b8' : '#475569') : (isDark ? '#f1f5f9' : '#0f172a')} noWrap
                                     >
                                       {n.title}
                                     </Typography>
                                     {!n.isRead && (
-                                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#4f46e5', flexShrink: 0, ml: 1 }} />
+                                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#6366f1', flexShrink: 0, ml: 1 }} />
                                     )}
                                   </Stack>
-                                  <Typography fontSize={12} color="#64748b" sx={{
+                                  <Typography fontSize={12} color={isDark ? '#64748b' : '#64748b'} sx={{
                                     display: '-webkit-box', WebkitLineClamp: 2,
                                     WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.5,
                                   }}>
                                     {n.description}
                                   </Typography>
-                                  <Typography fontSize={11} color="#94a3b8" mt={0.25}>{timeAgo(n.createdAt)}</Typography>
+                                  <Typography fontSize={11} color={isDark ? '#475569' : '#94a3b8'} mt={0.25}>{timeAgo(n.createdAt)}</Typography>
                                 </Box>
                               </Stack>
                             </Box>
@@ -614,7 +615,12 @@ const Top = () => {
 
                       {announcements.length > 0 && (
                         <Box>
-                          <Box sx={{ px: 2.5, py: 1, bgcolor: '#fffbeb', borderTop: notifications.length > 0 ? '1px solid #e2e8f0' : 'none', borderBottom: '1px solid #fde68a' }}>
+                          <Box sx={{
+                            px: 2.5, py: 1,
+                            bgcolor: isDark ? 'rgba(217,119,6,0.1)' : '#fffbeb',
+                            borderTop: notifications.length > 0 ? `1px solid ${isDark ? '#334155' : '#e2e8f0'}` : 'none',
+                            borderBottom: `1px solid ${isDark ? 'rgba(217,119,6,0.3)' : '#fde68a'}`,
+                          }}>
                             <Stack direction="row" spacing={1} alignItems="center">
                               <CampaignIcon size={14} color="#d97706" />
                               <Typography fontSize={11} fontWeight={700} color="#d97706" textTransform="uppercase" letterSpacing={0.5}>
@@ -627,19 +633,19 @@ const Top = () => {
                             return (
                               <Box key={ann._id} sx={{
                                 px: 2.5, py: 1.75,
-                                borderBottom: idx < announcements.length - 1 ? '1px solid #f1f5f9' : 'none',
-                                '&:hover': { bgcolor: '#fffbeb' },
+                                borderBottom: idx < announcements.length - 1 ? `1px solid ${isDark ? '#334155' : '#f1f5f9'}` : 'none',
+                                '&:hover': { bgcolor: isDark ? 'rgba(217,119,6,0.06)' : '#fffbeb' },
                               }}>
                                 <Stack direction="row" spacing={1.5} alignItems="flex-start">
                                   <Box sx={{
                                     width: 36, height: 36, borderRadius: '50%',
-                                    bgcolor: isAd ? '#fef3c7' : '#eef2ff',
+                                    bgcolor: isAd ? (isDark ? 'rgba(217,119,6,0.15)' : '#fef3c7') : (isDark ? 'rgba(99,102,241,0.15)' : '#eef2ff'),
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     flexShrink: 0,
                                   }}>
                                     {isAd
                                       ? <CampaignIcon size={18} color="#d97706" />
-                                      : <NewsIcon size={18} color="#4f46e5" />}
+                                      : <NewsIcon size={18} color={isDark ? '#818cf8' : '#4f46e5'} />}
                                   </Box>
                                   <Box flex={1} minWidth={0}>
                                     <Stack direction="row" spacing={0.75} alignItems="center" mb={0.25}>
@@ -648,14 +654,14 @@ const Top = () => {
                                         size="small"
                                         sx={{
                                           height: 16, fontSize: 9, fontWeight: 700, px: 0.5,
-                                          bgcolor: isAd ? '#fef3c7' : '#eef2ff',
-                                          color: isAd ? '#d97706' : '#4f46e5',
+                                          bgcolor: isAd ? (isDark ? 'rgba(217,119,6,0.2)' : '#fef3c7') : (isDark ? 'rgba(99,102,241,0.2)' : '#eef2ff'),
+                                          color: isAd ? '#d97706' : (isDark ? '#818cf8' : '#4f46e5'),
                                         }}
                                       />
-                                      <Typography fontSize={11} color="#94a3b8">{timeAgo(ann.createdAt)}</Typography>
+                                      <Typography fontSize={11} color={isDark ? '#475569' : '#94a3b8'}>{timeAgo(ann.createdAt)}</Typography>
                                     </Stack>
-                                    <Typography fontSize={13} fontWeight={600} color="#0f172a" noWrap>{ann.title}</Typography>
-                                    <Typography fontSize={12} color="#64748b" sx={{
+                                    <Typography fontSize={13} fontWeight={600} color={isDark ? '#f1f5f9' : '#0f172a'} noWrap>{ann.title}</Typography>
+                                    <Typography fontSize={12} color={isDark ? '#94a3b8' : '#64748b'} sx={{
                                       display: '-webkit-box', WebkitLineClamp: 2,
                                       WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.5,
                                     }}>
@@ -673,18 +679,23 @@ const Top = () => {
                 </Box>
 
                 {/* Footer */}
-                <Box sx={{ px: 2.5, py: 1.5, borderTop: '1px solid #f1f5f9', bgcolor: '#fafafa', display: 'flex', gap: 1 }}>
+                <Box sx={{
+                  px: 2.5, py: 1.5,
+                  borderTop: `1px solid ${isDark ? '#334155' : '#f1f5f9'}`,
+                  bgcolor: isDark ? '#0f172a' : '#fafafa',
+                  display: 'flex', gap: 1,
+                }}>
                   <Button
                     size="small" fullWidth
                     onClick={() => { setNotifAnchor(null); router.push('/notifications'); }}
-                    sx={{ fontSize: 12, color: '#4f46e5', textTransform: 'none' }}
+                    sx={{ fontSize: 12, color: isDark ? '#818cf8' : '#4f46e5', textTransform: 'none' }}
                   >
                     Barcha bildirishnomalarni ko&apos;rish →
                   </Button>
                   <Button
                     size="small" fullWidth
                     onClick={() => { setNotifAnchor(null); router.push('/announcements'); }}
-                    sx={{ fontSize: 12, color: '#64748b', textTransform: 'none' }}
+                    sx={{ fontSize: 12, color: isDark ? '#94a3b8' : '#64748b', textTransform: 'none' }}
                   >
                     E&apos;lonlar →
                   </Button>

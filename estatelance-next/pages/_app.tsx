@@ -155,10 +155,12 @@ const darkMuiTheme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          backgroundColor: '#1e293b',
-          '& .MuiOutlinedInput-notchedOutline': { borderColor: '#475569' },
+          backgroundColor: 'transparent',
+          outline: 'none',
+          '& .MuiOutlinedInput-notchedOutline': { borderColor: '#334155' },
           '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1' },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#818cf8', borderWidth: '1.5px' },
+          '&.Mui-focused': { outline: 'none', boxShadow: 'none' },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1', borderWidth: '1px', boxShadow: 'none' },
         },
       },
     },

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Box, Divider, Stack, Typography } from '@mui/material';
 import { Lock, DeviceMobile, Envelope, MapPin } from '@phosphor-icons/react';
+import { useTheme } from 'next-themes';
 
 const QUICK_LINKS = [
   { label: 'Bosh sahifa', href: '/' },
@@ -23,8 +24,21 @@ const CATEGORIES = [
 const CITIES = ['Toshkent', 'Samarqand', 'Buxoro', 'Namangan', 'Andijon', 'Farg\'ona'];
 
 const Footer = () => {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const isDark = mounted && resolvedTheme === 'dark';
+
+  // Color tokens
+  const bg       = isDark ? '#0f172a' : '#f8fafc';
+  const border   = isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0';
+  const heading  = isDark ? '#ffffff' : '#0f172a';
+  const body     = isDark ? '#64748b' : '#64748b';
+  const subtle   = isDark ? '#94a3b8' : '#475569';
+  const accent   = isDark ? '#818cf8' : '#6366f1';
+
   return (
-    <Box component="footer" sx={{ bgcolor: '#0f172a', color: '#94a3b8', mt: 'auto' }}>
+    <Box component="footer" sx={{ bgcolor: bg, color: subtle, mt: 'auto', borderTop: `1px solid ${border}` }}>
 
       {/* ── Main footer content ── */}
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 3, lg: 4 }, pt: { xs: 5, md: 7 }, pb: 4 }}>
@@ -56,15 +70,15 @@ const Footer = () => {
               </Box>
               <Box>
                 <Typography fontWeight={800} fontSize={20} lineHeight={1} letterSpacing={-0.5}>
-                  <span style={{ color: '#818cf8' }}>Bu</span><span style={{ color: 'white' }}>Fu</span>
+                  <span style={{ color: accent }}>Bu</span><span style={{ color: heading }}>Fu</span>
                 </Typography>
-                <Typography fontSize={10} color="#818cf8" fontWeight={700} textTransform="uppercase" letterSpacing={1}>
+                <Typography fontSize={10} color={accent} fontWeight={700} textTransform="uppercase" letterSpacing={1}>
                   Build Future
                 </Typography>
               </Box>
             </Stack>
 
-            <Typography fontSize={13} lineHeight={1.8} color="#64748b" maxWidth={280} mb={3}>
+            <Typography fontSize={13} lineHeight={1.8} color={body} maxWidth={280} mb={3}>
               O&apos;zbekistonda frilanserlar va mijozlarni bog&apos;laydigan platforma.
               Foto, dizayn, yuridik, IT va boshqa ko&apos;plab xizmatlar.
             </Typography>
@@ -81,8 +95,8 @@ const Footer = () => {
                   borderRadius: 10, px: 1.5, py: 0.4,
                   display: 'flex', alignItems: 'center', gap: 0.75,
                 }}>
-                  <Typography fontSize={12} fontWeight={800} color="#818cf8">{s.val}</Typography>
-                  <Typography fontSize={11} color="#64748b">{s.lbl}</Typography>
+                  <Typography fontSize={12} fontWeight={800} color={accent}>{s.val}</Typography>
+                  <Typography fontSize={11} color={body}>{s.lbl}</Typography>
                 </Box>
               ))}
             </Stack>
@@ -104,7 +118,7 @@ const Footer = () => {
           {/* ── Quick links ── */}
           <Box>
             <Typography
-              fontSize={11} fontWeight={700} color="white"
+              fontSize={11} fontWeight={700} color={heading}
               textTransform="uppercase" letterSpacing={1} mb={2}
             >
               Sahifalar
@@ -113,8 +127,8 @@ const Footer = () => {
               {QUICK_LINKS.map((l) => (
                 <Link key={l.href} href={l.href} style={{ textDecoration: 'none' }}>
                   <Typography
-                    fontSize={13} color="#64748b"
-                    sx={{ '&:hover': { color: '#818cf8' }, transition: 'color 0.15s', cursor: 'pointer' }}
+                    fontSize={13} color={body}
+                    sx={{ '&:hover': { color: accent }, transition: 'color 0.15s', cursor: 'pointer' }}
                   >
                     {l.label}
                   </Typography>
@@ -126,7 +140,7 @@ const Footer = () => {
           {/* ── Categories ── */}
           <Box>
             <Typography
-              fontSize={11} fontWeight={700} color="white"
+              fontSize={11} fontWeight={700} color={heading}
               textTransform="uppercase" letterSpacing={1} mb={2}
             >
               Kategoriyalar
@@ -135,8 +149,8 @@ const Footer = () => {
               {CATEGORIES.map((l) => (
                 <Link key={l.href} href={l.href} style={{ textDecoration: 'none' }}>
                   <Typography
-                    fontSize={13} color="#64748b"
-                    sx={{ '&:hover': { color: '#818cf8' }, transition: 'color 0.15s', cursor: 'pointer' }}
+                    fontSize={13} color={body}
+                    sx={{ '&:hover': { color: accent }, transition: 'color 0.15s', cursor: 'pointer' }}
                   >
                     {l.label}
                   </Typography>
@@ -148,45 +162,46 @@ const Footer = () => {
           {/* ── Contact & Cities ── */}
           <Box>
             <Typography
-              fontSize={11} fontWeight={700} color="white"
+              fontSize={11} fontWeight={700} color={heading}
               textTransform="uppercase" letterSpacing={1} mb={2}
             >
               Aloqa
             </Typography>
             <Stack spacing={1.5} mb={3}>
               <Stack direction="row" spacing={1} alignItems="center">
-                <DeviceMobile size={18} color="#475569" />
+                <DeviceMobile size={18} color={subtle} />
                 <Box>
-                  <Typography fontSize={12} color="#64748b">Telegram</Typography>
-                  <Typography fontSize={13} color="#94a3b8">@bufu_uz</Typography>
+                  <Typography fontSize={12} color={body}>Telegram</Typography>
+                  <Typography fontSize={13} color={subtle}>@bufu_uz</Typography>
                 </Box>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Envelope size={18} color="#475569" />
+                <Envelope size={18} color={subtle} />
                 <Box>
-                  <Typography fontSize={12} color="#64748b">Email</Typography>
-                  <Typography fontSize={13} color="#94a3b8">info@bufu.uz</Typography>
+                  <Typography fontSize={12} color={body}>Email</Typography>
+                  <Typography fontSize={13} color={subtle}>info@bufu.uz</Typography>
                 </Box>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">
-                <MapPin size={18} color="#475569" />
+                <MapPin size={18} color={subtle} />
                 <Box>
-                  <Typography fontSize={12} color="#64748b">Joylashuv</Typography>
-                  <Typography fontSize={13} color="#94a3b8">Toshkent, O&apos;zbekiston</Typography>
+                  <Typography fontSize={12} color={body}>Joylashuv</Typography>
+                  <Typography fontSize={13} color={subtle}>Toshkent, O&apos;zbekiston</Typography>
                 </Box>
               </Stack>
             </Stack>
 
-            <Typography fontSize={11} fontWeight={700} color="white" textTransform="uppercase" letterSpacing={1} mb={1.5}>
+            <Typography fontSize={11} fontWeight={700} color={heading} textTransform="uppercase" letterSpacing={1} mb={1.5}>
               Shaharlar
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
               {CITIES.map((city) => (
                 <Box key={city} sx={{
-                  bgcolor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
+                  bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
                   borderRadius: 10, px: 1.25, py: 0.3,
                 }}>
-                  <Typography fontSize={11} color="#64748b">{city}</Typography>
+                  <Typography fontSize={11} color={body}>{city}</Typography>
                 </Box>
               ))}
             </Box>
@@ -195,7 +210,7 @@ const Footer = () => {
       </Box>
 
       {/* ── Bottom bar ── */}
-      <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+      <Divider sx={{ borderColor: border }} />
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 3, lg: 4 }, py: 2.5 }}>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
@@ -203,14 +218,14 @@ const Footer = () => {
           alignItems={{ xs: 'flex-start', sm: 'center' }}
           spacing={1.5}
         >
-          <Typography fontSize={12} color="#475569">
+          <Typography fontSize={12} color={body}>
             © 2026 BuFu — Build Future
           </Typography>
           <Stack direction="row" spacing={2.5}>
             {['Foydalanish shartlari', 'Maxfiylik siyosati', 'Yordam'].map((t) => (
               <Typography
-                key={t} fontSize={12} color="#475569"
-                sx={{ cursor: 'pointer', '&:hover': { color: '#818cf8' }, transition: 'color 0.15s' }}
+                key={t} fontSize={12} color={body}
+                sx={{ cursor: 'pointer', '&:hover': { color: accent }, transition: 'color 0.15s' }}
               >
                 {t}
               </Typography>

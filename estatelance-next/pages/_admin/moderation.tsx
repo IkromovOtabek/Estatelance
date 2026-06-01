@@ -153,8 +153,9 @@ const ModerationPage = () => {
                 <p className="text-[10px] text-slate-400">Admin</p>
               </div>
             </div>
-            <Link href="/" className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-800 px-2">
-              <ArrowLeft size={14} /> Chiqish
+            <Link href="/" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors">
+              <span className="material-symbols-outlined text-[20px]">home</span>
+              <span>Bosh sahifaga</span>
             </Link>
           </div>
         </aside>

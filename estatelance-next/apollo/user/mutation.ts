@@ -67,6 +67,7 @@ export const UPDATE_PROFILE = gql`
       availability
       needsOnboarding
       resumeUrl
+      phoneNumber
       accessToken
       portfolio {
         title
@@ -104,6 +105,7 @@ export const CREATE_JOB = gql`
       location
       requiredSkills
       agentName
+      contactPhone
       createdAt
     }
   }
@@ -241,6 +243,15 @@ export const SEND_MESSAGE = gql`
 export const MARK_MESSAGES_READ = gql`
   mutation MarkMessagesAsRead($otherUserId: String!) {
     markMessagesAsRead(otherUserId: $otherUserId)
+  }
+`;
+
+export const INCREMENT_JOB_VIEW = gql`
+  mutation IncrementJobView($jobId: String!) {
+    incrementJobView(jobId: $jobId) {
+      _id
+      viewCount
+    }
   }
 `;
 

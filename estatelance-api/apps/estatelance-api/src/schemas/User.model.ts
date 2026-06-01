@@ -153,6 +153,16 @@ export class User extends Document {
   @Field(() => String, { nullable: true })
   telegramId?: string;
 
+  // Email (used for Google OAuth matching)
+  @Prop({ trim: true, lowercase: true })
+  @Field(() => String, { nullable: true })
+  email?: string;
+
+  // Google-specific data (only filled when authProvider === GOOGLE)
+  @Prop()
+  @Field(() => String, { nullable: true })
+  googleId?: string;
+
   @Prop()
   @Field(() => String, { nullable: true })
   telegramUsername?: string;

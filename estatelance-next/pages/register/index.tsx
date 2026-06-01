@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useMutation } from '@apollo/client';
 import {
   Briefcase, User, ArrowRight, ArrowLeft, CheckCircle,
   Phone, Buildings, TrendUp, Sparkle, X, MagnifyingGlass
 } from '@phosphor-icons/react';
-import { SIGNUP } from '../../apollo/user/mutation';
+import { signupWithPassword } from '../../libs/auth';
 
 type Role = 'CLIENT' | 'FREELANCER' | '';
 type Experience = 'JUNIOR' | 'MIDDLE' | 'SENIOR' | '';
@@ -40,10 +39,12 @@ const RegisterPage = () => {
   const [bio, setBio] = useState('');
   const [agreed, setAgreed] = useState(false);
 
+  // Credentials (Step 2)
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const [signUp] = useMutation(SIGNUP);
 
   const toggleSkill = (s: string) => {
     setSkills(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
@@ -61,6 +62,9 @@ const RegisterPage = () => {
     if (step === 1 && !role) return;
     if (step === 2) {
       if (!fullName.trim()) { setError("Ism-familiya kiriting"); return; }
+      if (!username.trim()) { setError("Foydalanuvchi nomi kiriting"); return; }
+      if (username.trim().length < 3) { setError("Foydalanuvchi nomi kamida 3 ta belgi bo'lishi kerak"); return; }
+      if (!password || password.length < 6) { setError("Parol kamida 6 ta belgidan iborat bo'lishi kerak"); return; }
     }
     setError('');
     setStep(prev => (prev + 1) as Step);
@@ -69,13 +73,17 @@ const RegisterPage = () => {
   const handleSubmit = async () => {
     if (!agreed) return;
     setLoading(true);
+    setError('');
     try {
-      // In real app: call signUp mutation with collected data
-      // await signUp({ variables: { input: { fullName, phone, memberType: role, ... } } });
-      await new Promise(r => setTimeout(r, 1200));
+      await signupWithPassword(username.trim(), password, role as string, fullName.trim());
       router.push('/account?registered=1');
     } catch (err: any) {
-      setError(err.message ?? "Xatolik yuz berdi");
+      const msg = err?.graphQLErrors?.[0]?.message ?? err?.message ?? "Xatolik yuz berdi";
+      if (msg.includes('already') || msg.includes('exists') || msg.includes('duplicate')) {
+        setError("Bu foydalanuvchi nomi band. Boshqa nom tanlang.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -128,7 +136,7 @@ const RegisterPage = () => {
                     {
                       value: 'FREELANCER',
                       icon: <User size={32} color="#4f46e5" />,
-                      title: 'Frilanser',
+                      title: 'Ish Qidiruvchi',
                       desc: "Men o'z xizmatlarimni taklif qilish va loyihalarda ishtirok etish orqali pul topishni xohlayman.",
                     },
                   ] as { value: Role; icon: React.ReactElement; title: string; desc: string }[]).map(opt => (
@@ -222,6 +230,32 @@ const RegisterPage = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* ─── Credentials ─── */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 mb-1.5 block">Foydalanuvchi nomi *</label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={e => setUsername(e.target.value.replace(/\s/g, ''))}
+                      placeholder="Masalan: azizbek_temirov"
+                      autoComplete="username"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">Faqat lotin harflari, raqamlar va _ belgisi</p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 mb-1.5 block">Parol * (kamida 6 belgi)</label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                  </div>
 
                   <div>
                     <label className="text-xs font-bold text-slate-700 mb-1.5 block">Telefon raqamingiz</label>

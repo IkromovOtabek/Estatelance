@@ -169,12 +169,21 @@ body {
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
   textarea,
   select {
-    background-color: #1e293b !important;
+    background-color: transparent !important;
     color: #f1f5f9 !important;
-    border-color: #475569 !important;
+    border-color: #334155 !important;
     color-scheme: dark;
     &::placeholder { color: #475569 !important; }
-    &:focus { border-color: #818cf8 !important; }
+    &:focus, &:focus-visible { border-color: #334155 !important; outline: none !important; box-shadow: none !important; }
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus,
+    &:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+      -webkit-text-fill-color: #f1f5f9 !important;
+      caret-color: #f1f5f9 !important;
+      transition: background-color 9999s ease-in-out 0s;
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -564,6 +573,26 @@ input, select, textarea {
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
 }
 
+// ─── MUI Input — tashqi to'rtburchak outline/box-shadow ni olib tashlash ─────
+.MuiOutlinedInput-root,
+.MuiInputBase-root,
+.MuiOutlinedInput-root *,
+.MuiInputBase-root * {
+  outline: none !important;
+  &:focus,
+  &:focus-within,
+  &:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+}
+
+.MuiOutlinedInput-root.Mui-focused,
+.MuiInputBase-root.Mui-focused {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 // ─── Input base ───────────────────────────────────────────────────────────────
 .input-base {
   width: 100%;
@@ -696,3 +725,4 @@ input, select, textarea {
   header, footer, nav { display: none !important; }
   body { background: white; }
 }
+
