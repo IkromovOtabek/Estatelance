@@ -12,6 +12,7 @@ import { PostModule } from './components/post/post.module';
 import { MessageModule } from './components/message/message.module';
 import { NotificationModule } from './components/notification/notification.module';
 import { AdminModule } from './components/admin/admin.module';
+import { GoogleController } from './components/auth/google.controller';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -19,13 +20,11 @@ const isProd = process.env.NODE_ENV === 'production';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
 
-    // Rate limiting: max 120 requests per 60 seconds per IP
     ThrottlerModule.forRoot([{
       ttl:   60_000,
       limit: 120,
     }]),
 
-    // GraphQL — playground only in development
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       playground:     !isProd,
@@ -47,5 +46,6 @@ const isProd = process.env.NODE_ENV === 'production';
     NotificationModule,
     AdminModule,
   ],
+  controllers: [GoogleController],
 })
 export class AppModule {}

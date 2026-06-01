@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserResolver } from './user.resolver';
 import { UserService } from './user.service';
@@ -15,10 +15,10 @@ import { NotificationModule } from '../notification/notification.module';
       { name: Follow.name, schema: FollowSchema },
       { name: ProfileView.name, schema: ProfileViewSchema },
     ]),
-    forwardRef(() => AuthModule),
+    AuthModule,
     NotificationModule,
   ],
   providers: [UserResolver, UserService],
-  exports: [UserService, MongooseModule],
+  exports: [UserService],
 })
 export class UserModule {}
