@@ -8,46 +8,43 @@ export default function TelegramCallback() {
   useEffect(() => {
     if (!router.isReady) return;
 
-    // oauth.telegram.org → tgAuthResult (base64 encoded JSON)
-    // telegram widget redirect → individual params (id, hash, ...)
-    const { tgAuthResult, id, hash, first_name, last_name, username, photo_url, auth_date } = router.query;
+    const q = router.query;
 
-    let telegramData: any = null;
+    // oauth.telegram.org → tgAuthResult (base64 JSON)
+    // widget data-auth-url → individual params (id, hash, ...)
+    let data: any = null;
 
-    if (tgAuthResult) {
-      // oauth.telegram.org flow — base64 encoded JSON
+    if (q.tgAuthResult) {
       try {
-        const decoded = JSON.parse(atob(String(tgAuthResult)));
-        telegramData = {
-          id: Number(decoded.id),
-          first_name: decoded.first_name ?? '',
-          auth_date: Number(decoded.auth_date),
-          hash: decoded.hash,
-          ...(decoded.last_name  && { last_name:  decoded.last_name  }),
-          ...(decoded.username   && { username:   decoded.username   }),
-          ...(decoded.photo_url  && { photo_url:  decoded.photo_url  }),
-        };
+        data = JSON.parse(atob(String(q.tgAuthResult)));
       } catch {
-        router.replace('/account?error=telegram_failed');
+        closeOrRedirect('/account?error=telegram_failed');
         return;
       }
-    } else if (id && hash) {
-      // Widget redirect flow — individual params
-      telegramData = {
-        id: Number(id),
-        first_name: String(first_name ?? ''),
-        auth_date: Number(auth_date),
-        hash: String(hash),
-        ...(last_name  && { last_name:  String(last_name)  }),
-        ...(username   && { username:   String(username)   }),
-        ...(photo_url  && { photo_url:  String(photo_url)  }),
+    } else if (q.id && q.hash) {
+      data = {
+        id:         Number(q.id),
+        first_name: String(q.first_name ?? ''),
+        auth_date:  Number(q.auth_date),
+        hash:       String(q.hash),
+        ...(q.last_name  && { last_name:  String(q.last_name)  }),
+        ...(q.username   && { username:   String(q.username)   }),
+        ...(q.photo_url  && { photo_url:  String(q.photo_url)  }),
       };
     } else {
-      router.replace('/account?error=telegram_failed');
+      closeOrRedirect('/account?error=telegram_failed');
       return;
     }
 
-    loginWithTelegram(telegramData)
+    // Desktop popup: opener ga xabar yuborib oynani yopamiz
+    if (typeof window !== 'undefined' && window.opener && !window.opener.closed) {
+      window.opener.postMessage({ type: 'telegram_auth', data }, window.location.origin);
+      window.close();
+      return;
+    }
+
+    // Mobile / to'g'ridan redirect: loginWithTelegram chaqiramiz
+    loginWithTelegram(data)
       .then((needsOnboarding) => {
         router.replace(needsOnboarding ? '/account?onboarding=telegram' : '/');
       })
@@ -55,6 +52,15 @@ export default function TelegramCallback() {
         router.replace('/account?error=telegram_failed');
       });
   }, [router.isReady]);
+
+  function closeOrRedirect(url: string) {
+    if (typeof window !== 'undefined' && window.opener && !window.opener.closed) {
+      window.opener.postMessage({ type: 'telegram_error' }, window.location.origin);
+      window.close();
+    } else {
+      router.replace(url);
+    }
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen">
