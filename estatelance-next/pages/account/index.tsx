@@ -784,22 +784,8 @@ const AccountPage = () => {
                   <Typography color={textSec} fontSize={14}>Hisobingizga kiring va davom eting</Typography>
                 </Box>
 
-                {/* Telegram bot linki */}
+                {/* Social login tugmalari */}
                 <Stack spacing={1.5} mb={3}>
-                  <a
-                    href="https://t.me/buildfuture_bot?start=auth"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ textDecoration: 'none' }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, py: 1.3, px: 2, bgcolor: '#229ED9', borderRadius: 2, cursor: 'pointer', transition: 'all 0.15s', '&:hover': { bgcolor: '#1a8bbf' }, boxShadow: '0 2px 8px rgba(34,158,217,0.25)' }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.032 9.569c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.895.652z"/>
-                      </svg>
-                      <Typography fontWeight={700} fontSize={14} color="white">Telegram orqali kirish</Typography>
-                    </Box>
-                  </a>
-
                   {/* Google tugmasi */}
                   <Box
                     component="a"
