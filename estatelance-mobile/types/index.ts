@@ -8,9 +8,11 @@ export interface User {
   bio?: string;
   skills?: string[];
   hourlyRate?: number;
-  title?: string;
+  freelancerCategory?: string;
   availability?: string;
   completedJobCount?: number;
+  followerCount?: number;
+  followingCount?: number;
   accessToken?: string;
 }
 
@@ -75,19 +77,17 @@ export interface Comment {
 
 export interface Message {
   _id: string;
-  conversationId: string;
   senderId: string;
+  senderName: string;
+  senderUsername?: string;
+  senderAvatar?: string;
+  receiverId: string;
+  receiverName: string;
+  receiverUsername?: string;
+  receiverAvatar?: string;
   text: string;
+  isRead: boolean;
   createdAt?: string;
-}
-
-export interface Conversation {
-  _id: string;
-  participants: string[];
-  otherUser?: { _id: string; name: string; avatar?: string };
-  lastMessage?: string;
-  updatedAt?: string;
-  unreadCount?: number;
 }
 
 export interface Notification {

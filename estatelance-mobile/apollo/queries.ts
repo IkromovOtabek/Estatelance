@@ -5,8 +5,8 @@ export const GET_ME = gql`
   query GetMe {
     getMe {
       _id username fullName userType userStatus
-      profileImage bio skills hourlyRate title
-      availability completedJobCount
+      profileImage bio skills hourlyRate freelancerCategory
+      availability completedJobCount followerCount followingCount
     }
   }
 `;
@@ -56,10 +56,10 @@ export const GET_BIDS_FOR_JOB = gql`
 
 // ─── Users / Freelancers ──────────────────────────────────────────────────────
 export const GET_FREELANCERS = gql`
-  query GetFreelancers($input: GetUsersInput!) {
+  query GetFreelancers($input: GetFreelancersInput!) {
     getFreelancers(input: $input) {
       _id username fullName profileImage bio
-      skills hourlyRate title availability
+      skills hourlyRate freelancerCategory availability
       completedJobCount
     }
   }
@@ -69,9 +69,15 @@ export const GET_USER_BY_ID = gql`
   query GetUserById($userId: String!) {
     getUserById(userId: $userId) {
       _id username fullName profileImage bio
-      skills hourlyRate title availability
-      completedJobCount userType
+      skills hourlyRate freelancerCategory availability
+      completedJobCount userType followerCount followingCount
     }
+  }
+`;
+
+export const CHECK_IS_FOLLOWING = gql`
+  query CheckIsFollowing($targetUserId: String!) {
+    checkIsFollowing(targetUserId: $targetUserId)
   }
 `;
 
@@ -91,18 +97,26 @@ export const GET_POSTS = gql`
 export const GET_MY_CONVERSATIONS = gql`
   query GetMyConversations {
     getMyConversations {
-      _id participants updatedAt
-      otherUser { _id name avatar }
-      lastMessage unreadCount
+      _id senderId senderName senderUsername senderAvatar
+      receiverId receiverName receiverUsername receiverAvatar
+      text isRead createdAt
     }
   }
 `;
 
-export const GET_MESSAGES = gql`
-  query GetMessages($conversationId: String!) {
-    getMessages(conversationId: $conversationId) {
-      _id conversationId senderId text createdAt
+export const GET_CONVERSATION = gql`
+  query GetConversation($otherUserId: String!) {
+    getConversation(otherUserId: $otherUserId) {
+      _id senderId senderName senderUsername senderAvatar
+      receiverId receiverName receiverUsername receiverAvatar
+      text isRead createdAt
     }
+  }
+`;
+
+export const GET_UNREAD_MESSAGE_COUNT = gql`
+  query GetUnreadMessageCount {
+    getUnreadMessageCount
   }
 `;
 

@@ -103,8 +103,14 @@ export const ADD_COMMENT = gql`
 export const SEND_MESSAGE = gql`
   mutation SendMessage($input: SendMessageInput!) {
     sendMessage(input: $input) {
-      _id conversationId senderId text createdAt
+      _id senderId senderName receiverId receiverName text isRead createdAt
     }
+  }
+`;
+
+export const MARK_MESSAGES_AS_READ = gql`
+  mutation MarkMessagesAsRead($otherUserId: String!) {
+    markMessagesAsRead(otherUserId: $otherUserId)
   }
 `;
 
@@ -112,5 +118,12 @@ export const SEND_MESSAGE = gql`
 export const MARK_NOTIFICATIONS_READ = gql`
   mutation MarkNotificationsAsRead {
     markNotificationsAsRead
+  }
+`;
+
+// ─── Follow ───────────────────────────────────────────────────────────────────
+export const TOGGLE_FOLLOW = gql`
+  mutation ToggleFollow($targetUserId: String!) {
+    toggleFollow(targetUserId: $targetUserId)
   }
 `;

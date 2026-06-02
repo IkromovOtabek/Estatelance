@@ -24,7 +24,7 @@ export default function FreelancerCard({ user, onPress }: Props) {
         )}
         <View style={styles.info}>
           <Text style={styles.name}>{user.fullName ?? user.username}</Text>
-          {user.title && <Text style={styles.title} numberOfLines={1}>{user.title}</Text>}
+          {user.freelancerCategory && <Text style={styles.title} numberOfLines={1}>{user.freelancerCategory}</Text>}
           <View style={styles.metaRow}>
             {user.hourlyRate && (
               <View style={styles.chip}>

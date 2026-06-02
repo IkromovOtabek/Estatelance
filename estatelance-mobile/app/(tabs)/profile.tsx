@@ -28,7 +28,7 @@ export default function ProfileScreen() {
 
   const [eName, setEName]       = useState('');
   const [eBio, setEBio]         = useState('');
-  const [eTitle, setETitle]     = useState('');
+  const [eCategory, setECategory] = useState('');
   const [eRate, setERate]       = useState('');
   const [eAvail, setEAvail]     = useState('AVAILABLE');
   const [eSkills, setESkills]   = useState('');
@@ -41,7 +41,7 @@ export default function ProfileScreen() {
         variables: { input: {
           fullName: eName.trim() || undefined,
           bio: eBio.trim() || undefined,
-          title: eTitle.trim() || undefined,
+          freelancerCategory: eCategory.trim() || undefined,
           hourlyRate: eRate ? parseFloat(eRate) : undefined,
           availability: eAvail,
           skills: eSkills.split(',').map(s => s.trim()).filter(Boolean),
@@ -77,7 +77,7 @@ export default function ProfileScreen() {
           )}
           <Text style={styles.name}>{profile?.fullName ?? profile?.username}</Text>
           <Text style={styles.username}>@{profile?.username}</Text>
-          {profile?.title && <Text style={styles.userTitle}>{profile.title}</Text>}
+          {profile?.freelancerCategory && <Text style={styles.userTitle}>{profile.freelancerCategory}</Text>}
 
           {/* Type badge */}
           <View style={[styles.typeBadge, user?.userType === 'AGENT' ? styles.agentBadge : styles.freelancerBadge]}>
@@ -142,7 +142,7 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.editBtn} onPress={() => {
             setEName(profile?.fullName ?? '');
             setEBio(profile?.bio ?? '');
-            setETitle(profile?.title ?? '');
+            setECategory(profile?.freelancerCategory ?? '');
             setERate(String(profile?.hourlyRate ?? ''));
             setEAvail(profile?.availability ?? 'AVAILABLE');
             setESkills((profile?.skills ?? []).join(', '));
@@ -172,8 +172,8 @@ export default function ProfileScreen() {
             <Text style={styles.fieldLabel}>To'liq ism</Text>
             <TextInput style={styles.fieldInput} value={eName} onChangeText={setEName} />
 
-            <Text style={styles.fieldLabel}>Mutaxassislik sarlavhasi</Text>
-            <TextInput style={styles.fieldInput} value={eTitle} onChangeText={setETitle} placeholder="Masalan: 3D Dizayner" placeholderTextColor={Colors.textMuted} />
+            <Text style={styles.fieldLabel}>Kategoriya</Text>
+            <TextInput style={styles.fieldInput} value={eCategory} onChangeText={setECategory} placeholder="Masalan: PHOTOGRAPHY" placeholderTextColor={Colors.textMuted} />
 
             <Text style={styles.fieldLabel}>Bio</Text>
             <TextInput style={[styles.fieldInput, { height: 100, textAlignVertical: 'top' }]} value={eBio} onChangeText={setEBio} multiline placeholder="O'zingiz haqingizda..." placeholderTextColor={Colors.textMuted} />

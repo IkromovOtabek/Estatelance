@@ -88,6 +88,7 @@ export default function RootLayout() {
               <Stack.Screen name="jobs/[id]" options={{ headerShown: false }} />
               <Stack.Screen name="profile/[id]" options={{ headerShown: false }} />
               <Stack.Screen name="messages" options={{ headerShown: false, animation: 'slide_from_right' }} />
+              <Stack.Screen name="messages/[userId]" options={{ headerShown: false, animation: 'slide_from_right' }} />
             </Stack>
           </AuthContext.Provider>
         </ApolloProvider>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface TelegramAuthData {
   id: number;
@@ -11,21 +11,18 @@ interface TelegramAuthData {
 }
 
 interface TelegramLoginButtonProps {
-  botName: string;          // Your Telegram bot username (without @)
-  onAuth: (data: TelegramAuthData) => void; // Called when user authenticates
+  botName: string;
+  onAuth: (data: TelegramAuthData) => void;
   buttonSize?: 'large' | 'medium' | 'small';
   cornerRadius?: number;
-  requestAccess?: boolean;  // Request permission to send messages
+  requestAccess?: boolean;
 }
 
-// This component injects the official Telegram Login Widget script.
-// When the user clicks the button and authenticates, Telegram calls our callback
-// with signed user data that we send to our backend for verification.
-//
-// SETUP REQUIRED:
-// 1. Create a bot with @BotFather on Telegram
-// 2. Use /setdomain command to register your website's domain with the bot
-// 3. Set NEXT_PUBLIC_TELEGRAM_BOT_NAME in your .env.local file
+function isMobile(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
 const TelegramLoginButton = ({
   botName,
   onAuth,
@@ -34,16 +31,45 @@ const TelegramLoginButton = ({
   requestAccess = true,
 }: TelegramLoginButtonProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [mobile, setMobile] = useState(false);
 
   useEffect(() => {
-    if (!containerRef.current || !botName) return;
+    setMobile(isMobile());
+  }, []);
 
-    // Make the callback globally accessible so Telegram's script can call it
+  // ── Redirect mode (mobil) ──────────────────────────────────────────────────
+  // Telegram callback sahifasini Next.js da /auth/telegram/callback ga yo'naltiramiz
+  useEffect(() => {
+    if (!mobile) return;
+
+    // Redirect mode uchun: Telegram token ni URL dan o'qiymiz
+    const params = new URLSearchParams(window.location.search);
+    const tgHash = params.get('hash');
+    if (!tgHash) return;
+
+    // Barcha tg_ parametrlarni yig'ib onAuth ga uzatamiz
+    const data: any = {};
+    ['id','first_name','last_name','username','photo_url','auth_date','hash'].forEach(k => {
+      const v = params.get(k);
+      if (v) data[k] = k === 'id' || k === 'auth_date' ? Number(v) : v;
+    });
+
+    if (data.id && data.hash) {
+      onAuth(data as TelegramAuthData);
+      // URL ni tozalaymiz
+      const clean = window.location.pathname;
+      window.history.replaceState({}, '', clean);
+    }
+  }, [mobile]);
+
+  // ── Widget mode (desktop) ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (mobile || !containerRef.current || !botName) return;
+
     (window as any).onTelegramAuth = (user: TelegramAuthData) => {
       onAuth(user);
     };
 
-    // Create and inject the Telegram Login Widget script
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
     script.setAttribute('data-telegram-login', botName);
@@ -56,19 +82,44 @@ const TelegramLoginButton = ({
     containerRef.current.appendChild(script);
 
     return () => {
-      // Cleanup when the component unmounts
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
-      }
+      if (containerRef.current) containerRef.current.innerHTML = '';
       delete (window as any).onTelegramAuth;
     };
-  }, [botName, buttonSize, cornerRadius, requestAccess]);
+  }, [mobile, botName, buttonSize, cornerRadius, requestAccess]);
 
-  if (!botName) {
+  if (!botName) return null;
+
+  // Mobil uchun — redirect URL ga yo'naltiruvchi tugma
+  if (mobile) {
+    const returnUrl = typeof window !== 'undefined'
+      ? encodeURIComponent(window.location.href)
+      : '';
+    // botName = "buildfuture_bot" → bot_id = 8501731906
+    const BOT_ID = process.env.NEXT_PUBLIC_TELEGRAM_BOT_ID || botName;
+    const tgAuthUrl = `https://oauth.telegram.org/auth?bot_id=${BOT_ID}&origin=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}&embed=0&request_access=${requestAccess ? 'write' : 'read'}&return_to=${returnUrl}`;
+
     return (
-      <div style={{ padding: '8px', color: '#999', fontSize: '12px', textAlign: 'center' }}>
-        Telegram bot name not configured
-      </div>
+      <a
+        href={tgAuthUrl}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '10px 20px',
+          backgroundColor: '#2AABEE',
+          color: 'white',
+          borderRadius: cornerRadius,
+          textDecoration: 'none',
+          fontWeight: 600,
+          fontSize: 14,
+          fontFamily: 'sans-serif',
+        }}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.01 9.47c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 14.668l-2.95-.924c-.642-.204-.657-.642.136-.953l11.527-4.444c.535-.194 1.003.13.589.901z"/>
+        </svg>
+        Telegram orqali kirish
+      </a>
     );
   }
 
