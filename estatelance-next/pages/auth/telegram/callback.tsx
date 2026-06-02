@@ -8,30 +8,48 @@ export default function TelegramCallback() {
   useEffect(() => {
     if (!router.isReady) return;
 
-    const { id, first_name, last_name, username, photo_url, auth_date, hash } = router.query;
+    // oauth.telegram.org → tgAuthResult (base64 encoded JSON)
+    // telegram widget redirect → individual params (id, hash, ...)
+    const { tgAuthResult, id, hash, first_name, last_name, username, photo_url, auth_date } = router.query;
 
-    if (!id || !hash) {
+    let telegramData: any = null;
+
+    if (tgAuthResult) {
+      // oauth.telegram.org flow — base64 encoded JSON
+      try {
+        const decoded = JSON.parse(atob(String(tgAuthResult)));
+        telegramData = {
+          id: Number(decoded.id),
+          first_name: decoded.first_name ?? '',
+          auth_date: Number(decoded.auth_date),
+          hash: decoded.hash,
+          ...(decoded.last_name  && { last_name:  decoded.last_name  }),
+          ...(decoded.username   && { username:   decoded.username   }),
+          ...(decoded.photo_url  && { photo_url:  decoded.photo_url  }),
+        };
+      } catch {
+        router.replace('/account?error=telegram_failed');
+        return;
+      }
+    } else if (id && hash) {
+      // Widget redirect flow — individual params
+      telegramData = {
+        id: Number(id),
+        first_name: String(first_name ?? ''),
+        auth_date: Number(auth_date),
+        hash: String(hash),
+        ...(last_name  && { last_name:  String(last_name)  }),
+        ...(username   && { username:   String(username)   }),
+        ...(photo_url  && { photo_url:  String(photo_url)  }),
+      };
+    } else {
       router.replace('/account?error=telegram_failed');
       return;
     }
 
-    const telegramData = {
-      id: Number(id),
-      first_name: String(first_name ?? ''),
-      auth_date: Number(auth_date),
-      hash: String(hash),
-      ...(last_name  && { last_name:  String(last_name)  }),
-      ...(username   && { username:   String(username)   }),
-      ...(photo_url  && { photo_url:  String(photo_url)  }),
-    };
-
     loginWithTelegram(telegramData)
       .then((needsOnboarding) => {
-        if (needsOnboarding) {
-          router.replace('/account?onboarding=telegram');
-        } else {
-          router.replace('/');
-        }
+        router.replace(needsOnboarding ? '/account?onboarding=telegram' : '/');
       })
       .catch(() => {
         router.replace('/account?error=telegram_failed');
