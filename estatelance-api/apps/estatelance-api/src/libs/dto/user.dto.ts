@@ -3,6 +3,19 @@ import { IsEnum, IsNotEmpty, IsOptional, Length, Min } from 'class-validator';
 import { UserType } from '../enums/common.enums';
 import { PaginationInput } from '../types/common.types';
 
+@InputType()
+export class AddressInput {
+  @Field(() => Float)
+  latitude: number;
+
+  @Field(() => Float)
+  longitude: number;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  name?: string;
+}
+
 // ─── Input: Sign Up with email/password ──────────────────────────────────────
 @InputType()
 export class SignupInput {
@@ -47,6 +60,14 @@ export class SignupInput {
   @IsOptional()
   @Field(() => String, { nullable: true })
   resumeUrl?: string;
+
+  @IsOptional()
+  @Field(() => AddressInput, { nullable: true })
+  address?: AddressInput;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  companyImage?: string;
 }
 
 // ─── Input: Log In with email/password ───────────────────────────────────────
@@ -165,6 +186,14 @@ export class UpdateProfileInput {
   @IsOptional()
   @Field(() => Boolean, { nullable: true })
   needsOnboarding?: boolean;
+
+  @IsOptional()
+  @Field(() => AddressInput, { nullable: true })
+  address?: AddressInput;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  companyImage?: string;
 }
 
 // ─── Input: Get List of Users / Freelancers ───────────────────────────────────

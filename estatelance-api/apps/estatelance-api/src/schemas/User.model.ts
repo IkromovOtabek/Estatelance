@@ -4,6 +4,19 @@ import { Field, Float, Int, ObjectType } from '@nestjs/graphql';
 import { AuthProvider, FreelancerAvailability, UserStatus, UserType } from '../libs/enums/common.enums';
 import { JobCategory } from '../libs/enums/common.enums';
 
+// ─── Address ──────────────────────────────────────────────────────────────────
+@ObjectType()
+export class Address {
+  @Field(() => Float)
+  latitude: number;
+
+  @Field(() => Float)
+  longitude: number;
+
+  @Field(() => String, { nullable: true })
+  name?: string;
+}
+
 // ─── Portfolio Item ───────────────────────────────────────────────────────────
 @ObjectType()
 export class PortfolioItem {
@@ -74,6 +87,14 @@ export class User extends Document {
   @Prop({ trim: true, default: 'Toshkent, UZ' })
   @Field(() => String)
   location: string;
+
+  @Prop({ type: Object })
+  @Field(() => Address, { nullable: true })
+  address?: Address;
+
+  @Prop()
+  @Field(() => String, { nullable: true })
+  companyImage?: string;
 
   // Social stats
   @Prop({ default: 0 })

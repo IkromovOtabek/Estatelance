@@ -7,7 +7,8 @@ export const GET_ME = gql`
       _id username fullName userType userStatus
       profileImage bio skills hourlyRate freelancerCategory
       availability completedJobCount followerCount followingCount
-      needsOnboarding
+      needsOnboarding location companyImage
+      address { latitude longitude name }
     }
   }
 `;

@@ -1,0 +1,319 @@
+{
+  "model": {
+    "id": "estatelance-model",
+    "name": "EstateLance DB",
+    "type": "MONGODB",
+    "version": "7.0",
+    "desc": "EstateLance - Ko'chmas mulk freelance platformasi ER modeli",
+    "def_coltable": "col",
+    "def_collocation": "col",
+    "collections": {
+      "col_user": {
+        "id": "col_user",
+        "name": "users",
+        "desc": "Platforma foydalanuvchilari (agentlar va frilanserlar)",
+        "cols": {
+          "f_user_id": { "id": "f_user_id", "name": "_id", "type": "ObjectId", "pk": true, "nn": true, "comment": "Primary key" },
+          "f_user_username": { "id": "f_user_username", "name": "username", "type": "string", "nn": true, "u": true },
+          "f_user_password": { "id": "f_user_password", "name": "password", "type": "string", "nn": false },
+          "f_user_usertype": { "id": "f_user_usertype", "name": "userType", "type": "string", "nn": true, "comment": "AGENT | FREELANCER | ADMIN" },
+          "f_user_userstatus": { "id": "f_user_userstatus", "name": "userStatus", "type": "string", "nn": true, "comment": "ACTIVE | BLOCKED" },
+          "f_user_fullname": { "id": "f_user_fullname", "name": "fullName", "type": "string", "nn": false },
+          "f_user_profileimage": { "id": "f_user_profileimage", "name": "profileImage", "type": "string", "nn": false },
+          "f_user_bio": { "id": "f_user_bio", "name": "bio", "type": "string", "nn": false },
+          "f_user_location": { "id": "f_user_location", "name": "location", "type": "string", "nn": false },
+          "f_user_email": { "id": "f_user_email", "name": "email", "type": "string", "nn": false },
+          "f_user_followercount": { "id": "f_user_followercount", "name": "followerCount", "type": "number", "nn": true },
+          "f_user_followingcount": { "id": "f_user_followingcount", "name": "followingCount", "type": "number", "nn": true },
+          "f_user_profileviewcount": { "id": "f_user_profileviewcount", "name": "profileViewCount", "type": "number", "nn": true },
+          "f_user_likecount": { "id": "f_user_likecount", "name": "likeCount", "type": "number", "nn": true },
+          "f_user_freelancercategory": { "id": "f_user_freelancercategory", "name": "freelancerCategory", "type": "string", "nn": false, "comment": "PHOTOGRAPHER | VISUALIZER | SMM | LAWYER | ..." },
+          "f_user_hourlyrate": { "id": "f_user_hourlyrate", "name": "hourlyRate", "type": "number", "nn": false },
+          "f_user_averagerating": { "id": "f_user_averagerating", "name": "averageRating", "type": "number", "nn": false },
+          "f_user_completedjobcount": { "id": "f_user_completedjobcount", "name": "completedJobCount", "type": "number", "nn": false },
+          "f_user_skills": { "id": "f_user_skills", "name": "skills", "type": "array<string>", "nn": false },
+          "f_user_reviews": { "id": "f_user_reviews", "name": "reviews", "type": "array<FreelancerReview>", "nn": false, "comment": "{ authorName, rating, reviewText, createdAt }" },
+          "f_user_portfolio": { "id": "f_user_portfolio", "name": "portfolio", "type": "array<PortfolioItem>", "nn": false, "comment": "{ title, imageUrl, description }" },
+          "f_user_availability": { "id": "f_user_availability", "name": "availability", "type": "string", "nn": false, "comment": "AVAILABLE | BUSY | VACATION" },
+          "f_user_resumeurl": { "id": "f_user_resumeurl", "name": "resumeUrl", "type": "string", "nn": false },
+          "f_user_phonenumber": { "id": "f_user_phonenumber", "name": "phoneNumber", "type": "string", "nn": false },
+          "f_user_authprovider": { "id": "f_user_authprovider", "name": "authProvider", "type": "string", "nn": true, "comment": "EMAIL | TELEGRAM | GOOGLE" },
+          "f_user_telegramid": { "id": "f_user_telegramid", "name": "telegramId", "type": "string", "nn": false },
+          "f_user_googleid": { "id": "f_user_googleid", "name": "googleId", "type": "string", "nn": false },
+          "f_user_needsonboarding": { "id": "f_user_needsonboarding", "name": "needsOnboarding", "type": "boolean", "nn": false },
+          "f_user_spamreason": { "id": "f_user_spamreason", "name": "spamReason", "type": "string", "nn": false },
+          "f_user_createdat": { "id": "f_user_createdat", "name": "createdAt", "type": "date", "nn": false },
+          "f_user_updatedat": { "id": "f_user_updatedat", "name": "updatedAt", "type": "date", "nn": false }
+        }
+      },
+      "col_job": {
+        "id": "col_job",
+        "name": "jobs",
+        "desc": "Agent tomonidan e'lon qilingan ish topshiriqlari",
+        "cols": {
+          "f_job_id": { "id": "f_job_id", "name": "_id", "type": "ObjectId", "pk": true, "nn": true },
+          "f_job_title": { "id": "f_job_title", "name": "title", "type": "string", "nn": true },
+          "f_job_description": { "id": "f_job_description", "name": "description", "type": "string", "nn": true },
+          "f_job_propertyaddress": { "id": "f_job_propertyaddress", "name": "propertyAddress", "type": "string", "nn": false },
+          "f_job_propertytype": { "id": "f_job_propertytype", "name": "propertyType", "type": "string", "nn": true, "comment": "APARTMENT | HOUSE | OFFICE | LAND | ..." },
+          "f_job_category": { "id": "f_job_category", "name": "category", "type": "string", "nn": true, "comment": "JobCategory enum" },
+          "f_job_budget": { "id": "f_job_budget", "name": "budget", "type": "number", "nn": true },
+          "f_job_status": { "id": "f_job_status", "name": "status", "type": "string", "nn": true, "comment": "OPEN | ACTIVE | COMPLETED | CANCELLED" },
+          "f_job_agentid": { "id": "f_job_agentid", "name": "agentId", "type": "ObjectId", "nn": true, "comment": "ref: users._id" },
+          "f_job_agentname": { "id": "f_job_agentname", "name": "agentName", "type": "string", "nn": false },
+          "f_job_agentavatar": { "id": "f_job_agentavatar", "name": "agentAvatar", "type": "string", "nn": false },
+          "f_job_bidcount": { "id": "f_job_bidcount", "name": "bidCount", "type": "number", "nn": true },
+          "f_job_experiencelevel": { "id": "f_job_experiencelevel", "name": "experienceLevel", "type": "string", "nn": false, "comment": "NONE | JUNIOR | MIDDLE | SENIOR" },
+          "f_job_jobtype": { "id": "f_job_jobtype", "name": "jobType", "type": "string", "nn": false, "comment": "PERMANENT | TEMPORARY" },
+          "f_job_workformat": { "id": "f_job_workformat", "name": "workFormat", "type": "array<string>", "nn": false, "comment": "ONSITE | REMOTE | HYBRID | TRAVELING" },
+          "f_job_workschedule": { "id": "f_job_workschedule", "name": "workSchedule", "type": "string", "nn": false },
+          "f_job_location": { "id": "f_job_location", "name": "location", "type": "string", "nn": false },
+          "f_job_salaryfrom": { "id": "f_job_salaryfrom", "name": "salaryFrom", "type": "number", "nn": false },
+          "f_job_salaryto": { "id": "f_job_salaryto", "name": "salaryTo", "type": "number", "nn": false },
+          "f_job_requiredskills": { "id": "f_job_requiredskills", "name": "requiredSkills", "type": "array<string>", "nn": false },
+          "f_job_contactphone": { "id": "f_job_contactphone", "name": "contactPhone", "type": "string", "nn": false },
+          "f_job_viewcount": { "id": "f_job_viewcount", "name": "viewCount", "type": "number", "nn": true },
+          "f_job_viewedby": { "id": "f_job_viewedby", "name": "viewedBy", "type": "array<ObjectId>", "nn": false },
+          "f_job_hiredfreelancerid": { "id": "f_job_hiredfreelancerid", "name": "hiredFreelancerId", "type": "ObjectId", "nn": false, "comment": "ref: users._id" },
+          "f_job_bumpedat": { "id": "f_job_bumpedat", "name": "bumpedAt", "type": "date", "nn": false },
+          "f_job_boostexpiresat": { "id": "f_job_boostexpiresat", "name": "boostExpiresAt", "type": "date", "nn": false },
+          "f_job_boostplan": { "id": "f_job_boostplan", "name": "boostPlan", "type": "string", "nn": false, "comment": "BASIC | PRO | VIP" },
+          "f_job_createdat": { "id": "f_job_createdat", "name": "createdAt", "type": "date", "nn": false },
+          "f_job_updatedat": { "id": "f_job_updatedat", "name": "updatedAt", "type": "date", "nn": false }
+        }
+      },
+      "col_bid": {
+        "id": "col_bid",
+        "name": "bids",
+        "desc": "Frilanser tomonidan yuborilgan taklif (bid)",
+        "cols": {
+          "f_bid_id": { "id": "f_bid_id", "name": "_id", "type": "ObjectId", "pk": true, "nn": true },
+          "f_bid_jobid": { "id": "f_bid_jobid", "name": "jobId", "type": "ObjectId", "nn": true, "comment": "ref: jobs._id" },
+          "f_bid_freelancerid": { "id": "f_bid_freelancerid", "name": "freelancerId", "type": "ObjectId", "nn": true, "comment": "ref: users._id" },
+          "f_bid_freelancername": { "id": "f_bid_freelancername", "name": "freelancerName", "type": "string", "nn": false },
+          "f_bid_freelancertitle": { "id": "f_bid_freelancertitle", "name": "freelancerTitle", "type": "string", "nn": false },
+          "f_bid_bidamount": { "id": "f_bid_bidamount", "name": "bidAmount", "type": "number", "nn": true },
+          "f_bid_coverletter": { "id": "f_bid_coverletter", "name": "coverLetter", "type": "string", "nn": true },
+          "f_bid_status": { "id": "f_bid_status", "name": "status", "type": "string", "nn": true, "comment": "PENDING | ACCEPTED | DECLINED" },
+          "f_bid_createdat": { "id": "f_bid_createdat", "name": "createdAt", "type": "date", "nn": false }
+        }
+      },
+      "col_post": {
+        "id": "col_post",
+        "name": "posts",
+        "desc": "Frilanserlar tomonidan yoziladigan maqolalar",
+        "cols": {
+          "f_post_id": { "id": "f_post_id", "name": "_id", "type": "ObjectId", "pk": true, "nn": true },
+          "f_post_authorid": { "id": "f_post_authorid", "name": "authorId", "type": "ObjectId", "nn": true, "comment": "ref: users._id" },
+          "f_post_authorname": { "id": "f_post_authorname", "name": "authorName", "type": "string", "nn": true },
+          "f_post_authoravatar": { "id": "f_post_authoravatar", "name": "authorAvatar", "type": "string", "nn": false },
+          "f_post_title": { "id": "f_post_title", "name": "title", "type": "string", "nn": true },
+          "f_post_body": { "id": "f_post_body", "name": "body", "type": "string", "nn": true },
+          "f_post_imageurl": { "id": "f_post_imageurl", "name": "imageUrl", "type": "string", "nn": false },
+          "f_post_likedbyuserids": { "id": "f_post_likedbyuserids", "name": "likedByUserIds", "type": "array<ObjectId>", "nn": false },
+          "f_post_likecount": { "id": "f_post_likecount", "name": "likeCount", "type": "number", "nn": true },
+          "f_post_viewcount": { "id": "f_post_viewcount", "name": "viewCount", "type": "number", "nn": true },
+          "f_post_comments": { "id": "f_post_comments", "name": "comments", "type": "array<PostComment>", "nn": false, "comment": "{ _id, authorId, authorName, authorAvatar, text, createdAt }" },
+          "f_post_createdat": { "id": "f_post_createdat", "name": "createdAt", "type": "date", "nn": false }
+        }
+      },
+      "col_message": {
+        "id": "col_message",
+        "name": "messages",
+        "desc": "Foydalanuvchilar o'rtasidagi to'g'ridan-to'g'ri xabarlar",
+        "cols": {
+          "f_msg_id": { "id": "f_msg_id", "name": "_id", "type": "ObjectId", "pk": true, "nn": true },
+          "f_msg_senderid": { "id": "f_msg_senderid", "name": "senderId", "type": "ObjectId", "nn": true, "comment": "ref: users._id" },
+          "f_msg_sendername": { "id": "f_msg_sendername", "name": "senderName", "type": "string", "nn": true },
+          "f_msg_senderusername": { "id": "f_msg_senderusername", "name": "senderUsername", "type": "string", "nn": false },
+          "f_msg_senderavatar": { "id": "f_msg_senderavatar", "name": "senderAvatar", "type": "string", "nn": false },
+          "f_msg_receiverid": { "id": "f_msg_receiverid", "name": "receiverId", "type": "ObjectId", "nn": true, "comment": "ref: users._id" },
+          "f_msg_receivername": { "id": "f_msg_receivername", "name": "receiverName", "type": "string", "nn": true },
+          "f_msg_receiverusername": { "id": "f_msg_receiverusername", "name": "receiverUsername", "type": "string", "nn": false },
+          "f_msg_receiveravatar": { "id": "f_msg_receiveravatar", "name": "receiverAvatar", "type": "string", "nn": false },
+          "f_msg_text": { "id": "f_msg_text", "name": "text", "type": "string", "nn": true },
+          "f_msg_isread": { "id": "f_msg_isread", "name": "isRead", "type": "boolean", "nn": true },
+          "f_msg_createdat": { "id": "f_msg_createdat", "name": "createdAt", "type": "date", "nn": false }
+        }
+      },
+      "col_notification": {
+        "id": "col_notification",
+        "name": "notifications",
+        "desc": "Tizim bildirishnomalari (7 kundan keyin avtomatik o'chadi)",
+        "cols": {
+          "f_notif_id": { "id": "f_notif_id", "name": "_id", "type": "ObjectId", "pk": true, "nn": true },
+          "f_notif_recipientid": { "id": "f_notif_recipientid", "name": "recipientId", "type": "ObjectId", "nn": true, "comment": "ref: users._id" },
+          "f_notif_type": { "id": "f_notif_type", "name": "notificationType", "type": "string", "nn": true, "comment": "NotificationType enum" },
+          "f_notif_title": { "id": "f_notif_title", "name": "title", "type": "string", "nn": true },
+          "f_notif_description": { "id": "f_notif_description", "name": "description", "type": "string", "nn": true },
+          "f_notif_isread": { "id": "f_notif_isread", "name": "isRead", "type": "boolean", "nn": true },
+          "f_notif_relateditemid": { "id": "f_notif_relateditemid", "name": "relatedItemId", "type": "string", "nn": false },
+          "f_notif_createdat": { "id": "f_notif_createdat", "name": "createdAt", "type": "date", "nn": false }
+        }
+      },
+      "col_follow": {
+        "id": "col_follow",
+        "name": "follows",
+        "desc": "Foydalanuvchilar o'rtasidagi follow munosabati",
+        "cols": {
+          "f_follow_id": { "id": "f_follow_id", "name": "_id", "type": "ObjectId", "pk": true, "nn": true },
+          "f_follow_followerid": { "id": "f_follow_followerid", "name": "followerId", "type": "ObjectId", "nn": true, "comment": "ref: users._id — kim follow qildi" },
+          "f_follow_followedid": { "id": "f_follow_followedid", "name": "followedId", "type": "ObjectId", "nn": true, "comment": "ref: users._id — kim follow qilindi" },
+          "f_follow_createdat": { "id": "f_follow_createdat", "name": "createdAt", "type": "date", "nn": false }
+        }
+      },
+      "col_profileview": {
+        "id": "col_profileview",
+        "name": "profileviews",
+        "desc": "Profil ko'rishlarini kuzatish (har bir ko'ruvchi bir marta)",
+        "cols": {
+          "f_pv_id": { "id": "f_pv_id", "name": "_id", "type": "ObjectId", "pk": true, "nn": true },
+          "f_pv_viewerid": { "id": "f_pv_viewerid", "name": "viewerId", "type": "ObjectId", "nn": true, "comment": "ref: users._id — kim ko'rdi" },
+          "f_pv_profileid": { "id": "f_pv_profileid", "name": "profileId", "type": "ObjectId", "nn": true, "comment": "ref: users._id — kimning profili ko'rildi" },
+          "f_pv_createdat": { "id": "f_pv_createdat", "name": "createdAt", "type": "date", "nn": false }
+        }
+      }
+    },
+    "relations": {
+      "rel_job_agent": {
+        "id": "rel_job_agent",
+        "name": "job_posted_by_agent",
+        "desc": "Har bir ish bitta agent tomonidan e'lon qilinadi",
+        "parent_col": "col_user",
+        "child_col": "col_job",
+        "parent_field": "f_user_id",
+        "child_field": "f_job_agentid",
+        "type": "one_to_many"
+      },
+      "rel_job_hired": {
+        "id": "rel_job_hired",
+        "name": "job_hired_freelancer",
+        "desc": "Qabul qilingan frilanser (ish ACTIVE bo'lganda to'ldiriladi)",
+        "parent_col": "col_user",
+        "child_col": "col_job",
+        "parent_field": "f_user_id",
+        "child_field": "f_job_hiredfreelancerid",
+        "type": "one_to_many"
+      },
+      "rel_bid_job": {
+        "id": "rel_bid_job",
+        "name": "bid_belongs_to_job",
+        "desc": "Har bir bid bitta ishga tegishli",
+        "parent_col": "col_job",
+        "child_col": "col_bid",
+        "parent_field": "f_job_id",
+        "child_field": "f_bid_jobid",
+        "type": "one_to_many"
+      },
+      "rel_bid_freelancer": {
+        "id": "rel_bid_freelancer",
+        "name": "bid_submitted_by_freelancer",
+        "desc": "Har bir bid bitta frilanser tomonidan yuboriladi",
+        "parent_col": "col_user",
+        "child_col": "col_bid",
+        "parent_field": "f_user_id",
+        "child_field": "f_bid_freelancerid",
+        "type": "one_to_many"
+      },
+      "rel_post_author": {
+        "id": "rel_post_author",
+        "name": "post_written_by_user",
+        "desc": "Har bir maqola bitta foydalanuvchi tomonidan yoziladi",
+        "parent_col": "col_user",
+        "child_col": "col_post",
+        "parent_field": "f_user_id",
+        "child_field": "f_post_authorid",
+        "type": "one_to_many"
+      },
+      "rel_message_sender": {
+        "id": "rel_message_sender",
+        "name": "message_sent_by",
+        "desc": "Xabar jo'natuvchisi",
+        "parent_col": "col_user",
+        "child_col": "col_message",
+        "parent_field": "f_user_id",
+        "child_field": "f_msg_senderid",
+        "type": "one_to_many"
+      },
+      "rel_message_receiver": {
+        "id": "rel_message_receiver",
+        "name": "message_received_by",
+        "desc": "Xabar qabul qiluvchisi",
+        "parent_col": "col_user",
+        "child_col": "col_message",
+        "parent_field": "f_user_id",
+        "child_field": "f_msg_receiverid",
+        "type": "one_to_many"
+      },
+      "rel_notification_recipient": {
+        "id": "rel_notification_recipient",
+        "name": "notification_for_user",
+        "desc": "Bildirishnoma qabul qiluvchi foydalanuvchi",
+        "parent_col": "col_user",
+        "child_col": "col_notification",
+        "parent_field": "f_user_id",
+        "child_field": "f_notif_recipientid",
+        "type": "one_to_many"
+      },
+      "rel_follow_follower": {
+        "id": "rel_follow_follower",
+        "name": "follow_by_follower",
+        "desc": "Kim follow qildi",
+        "parent_col": "col_user",
+        "child_col": "col_follow",
+        "parent_field": "f_user_id",
+        "child_field": "f_follow_followerid",
+        "type": "one_to_many"
+      },
+      "rel_follow_followed": {
+        "id": "rel_follow_followed",
+        "name": "follow_target",
+        "desc": "Kim follow qilindi",
+        "parent_col": "col_user",
+        "child_col": "col_follow",
+        "parent_field": "f_user_id",
+        "child_field": "f_follow_followedid",
+        "type": "one_to_many"
+      },
+      "rel_profileview_viewer": {
+        "id": "rel_profileview_viewer",
+        "name": "profileview_by_viewer",
+        "desc": "Kim profil ko'rdi",
+        "parent_col": "col_user",
+        "child_col": "col_profileview",
+        "parent_field": "f_user_id",
+        "child_field": "f_pv_viewerid",
+        "type": "one_to_many"
+      },
+      "rel_profileview_profile": {
+        "id": "rel_profileview_profile",
+        "name": "profileview_whose_profile",
+        "desc": "Kimning profili ko'rildi",
+        "parent_col": "col_user",
+        "child_col": "col_profileview",
+        "parent_field": "f_user_id",
+        "child_field": "f_pv_profileid",
+        "type": "one_to_many"
+      }
+    },
+    "diagrams": {
+      "main_diagram": {
+        "id": "main_diagram",
+        "name": "EstateLance ER Diagram",
+        "desc": "Barcha kolleksiyalar va ularning munosabatlari",
+        "main": true,
+        "zoom": 0.8,
+        "scroll": { "x": 0, "y": 0 }
+      }
+    },
+    "notes": {
+      "note_indexes": {
+        "id": "note_indexes",
+        "name": "Muhim Indekslar",
+        "desc": "users: {username: text, bio: text}\njobs: {category,status}, {agentId}\nbids: {jobId}, {freelancerId}\nnotifications: {recipientId, isRead}, TTL 7 kun\nfollows: {followerId, followedId} UNIQUE\nprofileviews: {viewerId, profileId} UNIQUE\nmessages: {senderId, receiverId}"
+      }
+    }
+  },
+  "type": "MMAPPLICATION",
+  "version": "7.0"
+}

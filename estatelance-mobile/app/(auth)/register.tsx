@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView,
-  ActivityIndicator, Alert, Image,
+  ActivityIndicator, Alert, Image, Modal, FlatList,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useMutation } from '@apollo/client';
@@ -14,6 +14,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { SIGNUP } from '../../apollo/mutations';
+import MapPickerModal, { PickedAddress } from '../../components/MapPickerModal';
 
 type Role = 'AGENT' | 'FREELANCER' | '';
 type Step = 1 | 2 | 3 | 4;
@@ -58,9 +59,20 @@ function getSkillsByProfession(profession: string): string[] {
 
 const INDUSTRIES = ['IT & Texnologiya', 'Marketing', 'Dizayn', 'Moliya', "Ta'lim", 'Boshqa'];
 
-const POPULAR_SKILLS = [
-  'JavaScript', 'React', 'Node.js', 'Python', 'Figma', 'UI/UX',
-  'AutoCAD', '3ds Max', 'SMM', 'Copywriting', 'Video Montaj', 'Flutter',
+// ─── Tayyor mutaxassisliklar ──────────────────────────────────────────────────
+const PROFESSIONS: { icon: string; label: string; key: string }[] = [
+  { icon: 'camera-outline',         label: 'Fotograf / Dronchi',    key: 'foto'      },
+  { icon: 'cube-outline',           label: '3D Vizualizator',       key: '3d'        },
+  { icon: 'color-palette-outline',  label: 'Grafik Dizayner',       key: 'dizayn'    },
+  { icon: 'code-slash-outline',     label: 'Dasturchi',             key: 'dastur'    },
+  { icon: 'megaphone-outline',      label: 'SMM / Marketing',       key: 'smm'       },
+  { icon: 'document-text-outline',  label: 'Yurist / Huquqshunos',  key: 'yuridik'   },
+  { icon: 'construct-outline',      label: "Ta'mirlash / Qurilish",  key: 'tamirlash' },
+  { icon: 'sparkles-outline',       label: 'Tozalash xizmati',      key: 'tozalash'  },
+  { icon: 'bar-chart-outline',      label: "Ko'chmas mulk baholash", key: 'baholash'  },
+  { icon: 'videocam-outline',       label: 'Videograf / Montaj',    key: 'video'     },
+  { icon: 'home-outline',           label: 'Interer dizayner',      key: 'dizayn'    },
+  { icon: 'business-outline',       label: 'Rieltор / Agent',       key: 'baholash'  },
 ];
 
 const PROGRESS = { 1: '25%', 2: '50%', 3: '75%', 4: '100%' };
@@ -82,6 +94,13 @@ export default function RegisterScreen() {
   const [industry, setIndustry]           = useState('');
   const [profileImage, setProfileImage]   = useState('');
   const [imgLoading, setImgLoading]       = useState(false);
+  const [companyLogo, setCompanyLogo]     = useState('');
+  const [logoLoading, setLogoLoading]     = useState(false);
+  const [address, setAddress]             = useState<PickedAddress | null>(null);
+  const [mapModal, setMapModal]           = useState(false);
+  const [companyImage, setCompanyImage]   = useState('');
+  const [companyImgLoading, setCompanyImgLoading] = useState(false);
+  const [showProfModal, setShowProfModal] = useState(false);
   const [showPass, setShowPass]     = useState(false);
 
   // Step 3
@@ -98,28 +117,18 @@ export default function RegisterScreen() {
 
   const [signup, { loading }] = useMutation(SIGNUP);
 
-  // ─── Profil rasm yuklash ────────────────────────────────────────────────────
-  const pickImage = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { Alert.alert('Ruxsat kerak', 'Galereya ruxsatini bering'); return; }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-      base64: true,
-    });
-    if (result.canceled || !result.assets?.[0]) return;
-
-    const asset = result.assets[0];
+  // ─── Rasm upload helper ────────────────────────────────────────────────────
+  const uploadImage = async (uri: string) => {
     setImgLoading(true);
     try {
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: 'base64' as any,
+      });
       const res  = await fetch('https://bufu.uz/api/upload', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
-          base64:   `data:image/jpeg;base64,${asset.base64}`,
+          base64:   `data:image/jpeg;base64,${base64}`,
           fileName: `avatar_${Date.now()}.jpg`,
         }),
       });
@@ -130,6 +139,66 @@ export default function RegisterScreen() {
       Alert.alert('Xato', "Rasm yuklanmadi");
     } finally {
       setImgLoading(false);
+    }
+  };
+
+  // ─── Profil rasm tanlash ───────────────────────────────────────────────────
+  const pickImage = () => {
+    Alert.alert('Rasm tanlash', '', [
+      {
+        text: 'Galereya / Foto',
+        onPress: async () => {
+          const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (!perm.granted) { Alert.alert('Ruxsat kerak', 'Galereya ruxsatini bering'); return; }
+          const res = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true, aspect: [1, 1], quality: 0.8,
+          });
+          if (!res.canceled && res.assets?.[0]) uploadImage(res.assets[0].uri);
+        },
+      },
+      {
+        text: 'Kamera',
+        onPress: async () => {
+          const perm = await ImagePicker.requestCameraPermissionsAsync();
+          if (!perm.granted) { Alert.alert('Ruxsat kerak', 'Kamera ruxsatini bering'); return; }
+          const res = await ImagePicker.launchCameraAsync({
+            allowsEditing: true, aspect: [1, 1], quality: 0.8,
+          });
+          if (!res.canceled && res.assets?.[0]) uploadImage(res.assets[0].uri);
+        },
+      },
+      { text: 'Bekor qilish', style: 'cancel' },
+    ]);
+  };
+
+  // ─── Kompaniya rasmi yuklash ──────────────────────────────────────────────
+  const pickCompanyImage = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { Alert.alert('Ruxsat kerak', 'Galereya ruxsatini bering'); return; }
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true, aspect: [16, 9], quality: 0.8, base64: true,
+    });
+    if (!res.canceled && res.assets?.[0]?.base64) {
+      setCompanyImgLoading(true);
+      try {
+        const uploadRes = await fetch('https://bufu.uz/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            base64: `data:image/jpeg;base64,${res.assets[0].base64}`,
+            fileName: `company_${Date.now()}.jpg`,
+          }),
+        });
+        const json = await uploadRes.json();
+        if (json.url) setCompanyImage(`https://bufu.uz${json.url}`);
+        else setCompanyImage(`data:image/jpeg;base64,${res.assets[0].base64}`);
+      } catch {
+        setCompanyImage(`data:image/jpeg;base64,${res.assets[0].base64}`);
+      } finally {
+        setCompanyImgLoading(false);
+      }
     }
   };
 
@@ -220,11 +289,13 @@ export default function RegisterScreen() {
           fullName: fullName.trim(),
           password,
           userType: role,
-          ...(bio.trim()      ? { bio: bio.trim() }       : {}),
-          ...(skills.length   ? { skills }              : {}),
-          ...(resumeUrl       ? { resumeUrl }           : {}),
-          ...(phone.trim()    ? { phoneNumber: phone.trim() } : {}),
-          ...(profileImage    ? { profileImage }        : {}),
+          ...(bio.trim()      ? { bio: bio.trim() }              : {}),
+          ...(skills.length   ? { skills }                       : {}),
+          ...(resumeUrl       ? { resumeUrl }                    : {}),
+          ...(phone.trim()    ? { phoneNumber: phone.trim() }    : {}),
+          ...(profileImage    ? { profileImage }                 : {}),
+          ...(address         ? { address: { latitude: address.latitude, longitude: address.longitude, name: address.name } } : {}),
+          ...(companyImage && role === 'AGENT' ? { companyImage } : {}),
         }},
       });
       await login(data.signup);
@@ -356,9 +427,30 @@ export default function RegisterScreen() {
               </Field>
 
               {role === 'FREELANCER' && (
-                <Field label="Mutaxassislik" icon="briefcase-outline">
-                  <TextInput style={styles.input} placeholder="Masalan: Grafik dizayner" placeholderTextColor={Colors.textMuted} value={profession} onChangeText={setProfession} />
-                </Field>
+                <View style={styles.fieldWrap}>
+                  <View style={styles.fieldLabelRow}>
+                    <Ionicons name="briefcase-outline" size={13} color={Colors.textSub} />
+                    <Text style={styles.fieldLabel}>Mutaxassislik</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.profSelector}
+                    onPress={() => setShowProfModal(true)}
+                    activeOpacity={0.8}
+                  >
+                    {profession ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Ionicons
+                          name={(PROFESSIONS.find(p => p.label === profession)?.icon ?? 'briefcase-outline') as any}
+                          size={16} color={Colors.primary}
+                        />
+                        <Text style={styles.profSelectorText}>{profession}</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.profSelectorPlaceholder}>Mutaxassislikni tanlang...</Text>
+                    )}
+                    <Ionicons name="chevron-down" size={16} color={Colors.textMuted} />
+                  </TouchableOpacity>
+                </View>
               )}
 
               {role === 'FREELANCER' && (
@@ -416,10 +508,64 @@ export default function RegisterScreen() {
                 </Text>
               </View>
 
+              {/* ── Manzil ── */}
+              <View style={styles.fieldWrap}>
+                <View style={styles.fieldLabelRow}>
+                  <Ionicons name="location-outline" size={13} color={Colors.textSub} />
+                  <Text style={styles.fieldLabel}>Manzil (ixtiyoriy)</Text>
+                </View>
+                <TouchableOpacity style={styles.mapPickerBtn} onPress={() => setMapModal(true)}>
+                  <Ionicons name="map-outline" size={18} color={Colors.primary} />
+                  <Text style={[styles.mapPickerText, address && { color: Colors.text }]}>
+                    {address?.name
+                      ? address.name
+                      : address
+                        ? `${address.latitude.toFixed(5)}, ${address.longitude.toFixed(5)}`
+                        : 'Xaritadan manzil tanlash'}
+                  </Text>
+                  {address && (
+                    <TouchableOpacity onPress={() => setAddress(null)}>
+                      <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+              </View>
+
               {role === 'AGENT' && (
                 <Field label="Kompaniya nomi (ixtiyoriy)" icon="business-outline">
                   <TextInput style={styles.input} placeholder="Kompaniya nomi bo'lsa" placeholderTextColor={Colors.textMuted} value={company} onChangeText={setCompany} />
                 </Field>
+              )}
+
+              {role === 'AGENT' && (
+                <View style={styles.fieldWrap}>
+                  <View style={styles.fieldLabelRow}>
+                    <Ionicons name="image-outline" size={13} color={Colors.textSub} />
+                    <Text style={styles.fieldLabel}>Kompaniya rasmi (ixtiyoriy)</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.companyImgBtn}
+                    onPress={pickCompanyImage}
+                    disabled={companyImgLoading}
+                  >
+                    {companyImgLoading ? (
+                      <ActivityIndicator color={Colors.primary} />
+                    ) : companyImage ? (
+                      <Image source={{ uri: companyImage }} style={styles.companyImgPreview} resizeMode="cover" />
+                    ) : (
+                      <View style={styles.companyImgPlaceholder}>
+                        <Ionicons name="image-outline" size={26} color={Colors.textMuted} />
+                        <Text style={styles.companyImgHint}>Rasm tanlash (16:9)</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  {companyImage ? (
+                    <TouchableOpacity onPress={() => setCompanyImage('')} style={styles.removeImgBtn}>
+                      <Ionicons name="trash-outline" size={14} color={Colors.red} />
+                      <Text style={{ color: Colors.red, fontSize: 12, fontWeight: '600' }}>Rasmni o'chirish</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
               )}
 
               {role === 'AGENT' && (
@@ -630,6 +776,7 @@ export default function RegisterScreen() {
               {/* ── Ma'lumotlar ro'yxati ── */}
               <View style={styles.previewDetails}>
                 <PreviewRow icon="call-outline"     label="Telefon"       value={phone} />
+                {address  ? <PreviewRow icon="location-outline" label="Manzil" value={address.name ?? `${address.latitude.toFixed(4)}, ${address.longitude.toFixed(4)}`} /> : null}
                 {bio      ? <PreviewRow icon="document-text-outline" label="Bio"      value={bio} lines={3} /> : null}
                 {company  ? <PreviewRow icon="business-outline"      label="Kompaniya" value={company} /> : null}
                 {industry ? <PreviewRow icon="grid-outline"           label="Soha"     value={industry} /> : null}
@@ -681,6 +828,64 @@ export default function RegisterScreen() {
           <View style={{ height: 32 }} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* ── Map Picker ── */}
+      <MapPickerModal
+        visible={mapModal}
+        initial={address}
+        onConfirm={(addr) => { setAddress(addr); setMapModal(false); }}
+        onClose={() => setMapModal(false)}
+      />
+
+      {/* ── Mutaxassislik Modal ── */}
+      <Modal visible={showProfModal} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.bg }}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Mutaxassislikni tanlang</Text>
+            <TouchableOpacity onPress={() => setShowProfModal(false)}>
+              <Ionicons name="close" size={24} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={PROFESSIONS}
+            keyExtractor={p => p.label}
+            contentContainerStyle={{ padding: 16, gap: 8 }}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.profItem,
+                  profession === item.label && styles.profItemActive,
+                ]}
+                onPress={() => {
+                  setProfession(item.label);
+                  setShowProfModal(false);
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={[
+                  styles.profItemIcon,
+                  profession === item.label && { backgroundColor: Colors.primary },
+                ]}>
+                  <Ionicons
+                    name={item.icon as any}
+                    size={20}
+                    color={profession === item.label ? 'white' : Colors.textSub}
+                  />
+                </View>
+                <Text style={[
+                  styles.profItemText,
+                  profession === item.label && { color: Colors.primary, fontWeight: '700' },
+                ]}>
+                  {item.label}
+                </Text>
+                {profession === item.label && (
+                  <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
+                )}
+              </TouchableOpacity>
+            )}
+          />
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -805,6 +1010,17 @@ const styles = StyleSheet.create({
   previewSection:      { backgroundColor: Colors.white, borderRadius: 14, borderWidth: 1, borderColor: Colors.border, padding: 14, marginBottom: 14 },
   previewSectionTitle: { fontSize: 13, fontWeight: '700', color: Colors.text, marginBottom: 10 },
 
+  // Profession selector
+  profSelector:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 13, backgroundColor: Colors.white },
+  profSelectorText:    { fontSize: 15, color: Colors.text, fontWeight: '500' },
+  profSelectorPlaceholder: { fontSize: 15, color: Colors.textMuted },
+  profItem:            { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.white, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: Colors.border },
+  profItemActive:      { borderColor: Colors.primary, backgroundColor: '#eef2ff' },
+  profItemIcon:        { width: 40, height: 40, borderRadius: 12, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
+  profItemText:        { flex: 1, fontSize: 15, color: Colors.text },
+  modalHeader:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: Colors.border, backgroundColor: Colors.white },
+  modalTitle:          { fontSize: 17, fontWeight: '800', color: Colors.text },
+
   // Avatar
   avatarSection:       { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 20 },
   avatarPicker:        { width: 80, height: 80, borderRadius: 40, position: 'relative' },
@@ -822,6 +1038,17 @@ const styles = StyleSheet.create({
   resumeUploadBtn:     { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.5, borderColor: Colors.primary, borderStyle: 'dashed', borderRadius: 12, padding: 14, backgroundColor: '#f5f3ff' },
   resumeUploadTitle:   { fontSize: 14, fontWeight: '700', color: Colors.primary },
   resumeUploadSub:     { fontSize: 11, color: Colors.textMuted, marginTop: 2 },
+
+  // Map picker
+  mapPickerBtn:        { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: Colors.white },
+  mapPickerText:       { flex: 1, fontSize: 15, color: Colors.textMuted },
+
+  // Company image
+  companyImgBtn:       { borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, overflow: 'hidden', height: 130 },
+  companyImgPreview:   { width: '100%', height: '100%' },
+  companyImgPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: Colors.bg },
+  companyImgHint:      { fontSize: 13, color: Colors.textMuted },
+  removeImgBtn:        { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
 
   // Error
   errorBox:         { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fef2f2', borderRadius: 10, borderWidth: 1, borderColor: '#fecaca', padding: 10, marginBottom: 14 },

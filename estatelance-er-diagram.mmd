@@ -1,0 +1,156 @@
+erDiagram
+
+    %% ═══════════════════════════════════════════════════
+    %%  EstateLance — MongoDB ER Diagram
+    %%  8 ta kolleksiya, 12 ta munosabat
+    %% ═══════════════════════════════════════════════════
+
+    users {
+        ObjectId    _id                 PK
+        string      username            UK "required"
+        string      password            "optional (Telegram users)"
+        string      userType            "AGENT | FREELANCER | ADMIN"
+        string      userStatus          "ACTIVE | BLOCKED"
+        string      fullName
+        string      profileImage
+        string      bio
+        string      location
+        string      email
+        number      followerCount
+        number      followingCount
+        number      profileViewCount
+        number      likeCount
+        string      authProvider        "EMAIL | TELEGRAM | GOOGLE"
+        string      telegramId
+        string      googleId
+        boolean     needsOnboarding
+        string      spamReason
+        string      freelancerCategory  "PHOTOGRAPHER | VISUALIZER | ..."
+        number      hourlyRate
+        number      averageRating
+        number      completedJobCount
+        array       skills
+        array       reviews             "embedded: FreelancerReview[]"
+        array       portfolio           "embedded: PortfolioItem[]"
+        string      availability        "AVAILABLE | BUSY | VACATION"
+        string      resumeUrl
+        string      phoneNumber
+        date        createdAt
+        date        updatedAt
+    }
+
+    jobs {
+        ObjectId    _id                 PK
+        string      title               "required"
+        string      description         "required"
+        string      propertyAddress
+        string      propertyType        "APARTMENT | HOUSE | OFFICE | LAND"
+        string      category            "JobCategory enum"
+        number      budget              "required"
+        string      status              "OPEN | ACTIVE | COMPLETED | CANCELLED"
+        ObjectId    agentId             FK "ref: users"
+        string      agentName           "denormalized"
+        string      agentAvatar         "denormalized"
+        number      bidCount
+        string      experienceLevel     "NONE | JUNIOR | MIDDLE | SENIOR"
+        string      jobType             "PERMANENT | TEMPORARY"
+        array       workFormat          "ONSITE | REMOTE | HYBRID | TRAVELING"
+        string      workSchedule
+        string      location
+        number      salaryFrom
+        number      salaryTo
+        array       requiredSkills
+        string      contactPhone
+        number      viewCount
+        array       viewedBy            "ObjectId[] — deduplication"
+        ObjectId    hiredFreelancerId   FK "ref: users — set when ACTIVE"
+        date        bumpedAt
+        date        boostExpiresAt
+        string      boostPlan           "BASIC | PRO | VIP"
+        date        createdAt
+        date        updatedAt
+    }
+
+    bids {
+        ObjectId    _id             PK
+        ObjectId    jobId           FK "ref: jobs"
+        ObjectId    freelancerId    FK "ref: users"
+        string      freelancerName  "denormalized"
+        string      freelancerTitle "denormalized"
+        number      bidAmount       "required"
+        string      coverLetter     "required"
+        string      status          "PENDING | ACCEPTED | DECLINED"
+        date        createdAt
+    }
+
+    posts {
+        ObjectId    _id             PK
+        ObjectId    authorId        FK "ref: users"
+        string      authorName      "denormalized"
+        string      authorAvatar    "denormalized"
+        string      title           "required"
+        string      body            "required"
+        string      imageUrl
+        array       likedByUserIds  "ObjectId[]"
+        number      likeCount
+        number      viewCount
+        array       comments        "embedded: PostComment[]"
+        date        createdAt
+    }
+
+    messages {
+        ObjectId    _id             PK
+        ObjectId    senderId        FK "ref: users"
+        string      senderName      "denormalized"
+        string      senderUsername  "denormalized"
+        string      senderAvatar    "denormalized"
+        ObjectId    receiverId      FK "ref: users"
+        string      receiverName    "denormalized"
+        string      receiverUsername "denormalized"
+        string      receiverAvatar  "denormalized"
+        string      text            "required"
+        boolean     isRead
+        date        createdAt
+    }
+
+    notifications {
+        ObjectId    _id             PK
+        ObjectId    recipientId     FK "ref: users"
+        string      notificationType "NotificationType enum"
+        string      title           "required"
+        string      description     "required"
+        boolean     isRead
+        string      relatedItemId   "optional — job/post id"
+        date        createdAt       "TTL: 7 kun"
+    }
+
+    follows {
+        ObjectId    _id             PK
+        ObjectId    followerId      FK "ref: users — kim follow qildi"
+        ObjectId    followedId      FK "ref: users — kim follow qilindi"
+        date        createdAt
+    }
+
+    profileviews {
+        ObjectId    _id             PK
+        ObjectId    viewerId        FK "ref: users — kim ko'rdi"
+        ObjectId    profileId       FK "ref: users — kimning profili"
+        date        createdAt
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%  MUNOSABATLAR (Relations)
+    %% ═══════════════════════════════════════════════════
+
+    users ||--o{ jobs             : "posts (agentId)"
+    users ||--o{ jobs             : "hired for (hiredFreelancerId)"
+    jobs  ||--o{ bids             : "receives"
+    users ||--o{ bids             : "submits (freelancerId)"
+    users ||--o{ posts            : "writes (authorId)"
+    users ||--o{ messages         : "sends (senderId)"
+    users ||--o{ messages         : "receives (receiverId)"
+    users ||--o{ notifications    : "gets (recipientId)"
+    users ||--o{ follows          : "follows (followerId)"
+    users ||--o{ follows          : "followed by (followedId)"
+    users ||--o{ profileviews     : "views (viewerId)"
+    users ||--o{ profileviews     : "viewed (profileId)"

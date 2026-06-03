@@ -24,7 +24,22 @@
       "package": "uz.bufu.app",
       "versionCode": 1
     },
-    "plugins": ["expo-router", "expo-font"],
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Manzil tanlash uchun joylashuv ruxsati kerak."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Kompaniya rasmi yuklash uchun galereya ruxsati kerak."
+        }
+      ]
+    ],
     "scheme": "bufu",
     "experiments": {
       "typedRoutes": true

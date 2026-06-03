@@ -6,11 +6,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery } from '@apollo/client';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { UPDATE_PROFILE } from '../../apollo/mutations';
 import { GET_ME } from '../../apollo/queries';
+import MapPickerModal, { PickedAddress } from '../../components/MapPickerModal';
 
 const AVAIL_OPTIONS = [
   { value: 'AVAILABLE',    label: 'Band emas',      icon: 'checkmark-circle-outline',  color: '#16a34a' },
@@ -21,31 +23,75 @@ const AVAIL_OPTIONS = [
 export default function ProfileScreen() {
   const { user, login, logout } = useAuth();
   const [editModal, setEditModal] = useState(false);
+  const [mapModal, setMapModal] = useState(false);
 
-  // Serverdan yangi ma'lumot olish
   const { data: meData, loading: meLoading } = useQuery(GET_ME, { fetchPolicy: 'cache-and-network' });
-  const profile = meData?.getMe ?? user;
+  const profile = meData?.getMyProfile ?? user;
 
-  const [eName, setEName]       = useState('');
-  const [eBio, setEBio]         = useState('');
-  const [eCategory, setECategory] = useState('');
-  const [eRate, setERate]       = useState('');
-  const [eAvail, setEAvail]     = useState('AVAILABLE');
-  const [eSkills, setESkills]   = useState('');
+  const [eName, setEName]           = useState('');
+  const [eBio, setEBio]             = useState('');
+  const [eCategory, setECategory]   = useState('');
+  const [eRate, setERate]           = useState('');
+  const [eAvail, setEAvail]         = useState('AVAILABLE');
+  const [eSkills, setESkills]       = useState('');
+  const [eAddress, setEAddress]     = useState<PickedAddress | null>(null);
+  const [eCompanyImg, setECompanyImg] = useState('');
 
   const [updateProfile, { loading: saving }] = useMutation(UPDATE_PROFILE);
+
+  const isAgent = (user?.userType ?? profile?.userType) === 'AGENT';
+
+  const openEdit = () => {
+    setEName(profile?.fullName ?? '');
+    setEBio(profile?.bio ?? '');
+    setECategory(profile?.freelancerCategory ?? '');
+    setERate(String(profile?.hourlyRate ?? ''));
+    setEAvail(profile?.availability ?? 'AVAILABLE');
+    setESkills((profile?.skills ?? []).join(', '));
+    setEAddress(profile?.address ?? null);
+    setECompanyImg(profile?.companyImage ?? '');
+    setEditModal(true);
+  };
+
+  const pickCompanyImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Ruxsat kerak', 'Galereya ruxsati berilmadi.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+      base64: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      const base64 = `data:image/jpeg;base64,${asset.base64}`;
+      setECompanyImg(base64);
+    }
+  };
 
   const handleSave = async () => {
     try {
       const { data } = await updateProfile({
-        variables: { input: {
-          fullName: eName.trim() || undefined,
-          bio: eBio.trim() || undefined,
-          freelancerCategory: eCategory.trim() || undefined,
-          hourlyRate: eRate ? parseFloat(eRate) : undefined,
-          availability: eAvail,
-          skills: eSkills.split(',').map(s => s.trim()).filter(Boolean),
-        }},
+        variables: {
+          input: {
+            fullName: eName.trim() || undefined,
+            bio: eBio.trim() || undefined,
+            freelancerCategory: eCategory.trim() || undefined,
+            hourlyRate: eRate ? parseFloat(eRate) : undefined,
+            availability: eAvail,
+            skills: eSkills.split(',').map(s => s.trim()).filter(Boolean),
+            address: eAddress ? {
+              latitude: eAddress.latitude,
+              longitude: eAddress.longitude,
+              name: eAddress.name,
+            } : undefined,
+            companyImage: isAgent ? (eCompanyImg || undefined) : undefined,
+          },
+        },
       });
       await login({ ...user!, ...data.updateProfile });
       setEditModal(false);
@@ -79,18 +125,25 @@ export default function ProfileScreen() {
           <Text style={styles.username}>@{profile?.username}</Text>
           {profile?.freelancerCategory && <Text style={styles.userTitle}>{profile.freelancerCategory}</Text>}
 
-          {/* Type badge */}
-          <View style={[styles.typeBadge, user?.userType === 'AGENT' ? styles.agentBadge : styles.freelancerBadge]}>
+          <View style={[styles.typeBadge, isAgent ? styles.agentBadge : styles.freelancerBadge]}>
             <Ionicons
-              name={user?.userType === 'AGENT' ? 'business-outline' : 'briefcase-outline'}
+              name={isAgent ? 'business-outline' : 'briefcase-outline'}
               size={13}
-              color={user?.userType === 'AGENT' ? '#0891b2' : '#7c3aed'}
+              color={isAgent ? '#0891b2' : '#7c3aed'}
             />
-            <Text style={[styles.typeText, user?.userType === 'AGENT' ? { color: '#0891b2' } : { color: '#7c3aed' }]}>
-              {user?.userType === 'AGENT' ? 'Mijoz' : 'Frilanser'}
+            <Text style={[styles.typeText, isAgent ? { color: '#0891b2' } : { color: '#7c3aed' }]}>
+              {isAgent ? 'Mijoz' : 'Frilanser'}
             </Text>
           </View>
         </View>
+
+        {/* Company image (agent only) */}
+        {isAgent && profile?.companyImage && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Kompaniya rasmi</Text>
+            <Image source={{ uri: profile.companyImage }} style={styles.companyImg} resizeMode="cover" />
+          </View>
+        )}
 
         {/* Stats */}
         <View style={styles.statsRow}>
@@ -104,6 +157,21 @@ export default function ProfileScreen() {
             </View>
           ))}
         </View>
+
+        {/* Address */}
+        {profile?.address && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Manzil</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="location-outline" size={16} color={Colors.primary} />
+              <Text style={styles.bioText}>
+                {profile.address.name
+                  ? profile.address.name
+                  : `${profile.address.latitude.toFixed(5)}, ${profile.address.longitude.toFixed(5)}`}
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Bio */}
         {profile?.bio && (
@@ -150,15 +218,7 @@ export default function ProfileScreen() {
             <Text style={styles.myWorksBtnText}>Mening Ishlarim</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.editBtn} onPress={() => {
-            setEName(profile?.fullName ?? '');
-            setEBio(profile?.bio ?? '');
-            setECategory(profile?.freelancerCategory ?? '');
-            setERate(String(profile?.hourlyRate ?? ''));
-            setEAvail(profile?.availability ?? 'AVAILABLE');
-            setESkills((profile?.skills ?? []).join(', '));
-            setEditModal(true);
-          }}>
+          <TouchableOpacity style={styles.editBtn} onPress={openEdit}>
             <Ionicons name="pencil" size={16} color="white" />
             <Text style={styles.editBtnText}>Profilni tahrirlash</Text>
           </TouchableOpacity>
@@ -183,17 +243,95 @@ export default function ProfileScreen() {
             <Text style={styles.fieldLabel}>To'liq ism</Text>
             <TextInput style={styles.fieldInput} value={eName} onChangeText={setEName} />
 
-            <Text style={styles.fieldLabel}>Kategoriya</Text>
-            <TextInput style={styles.fieldInput} value={eCategory} onChangeText={setECategory} placeholder="Masalan: PHOTOGRAPHY" placeholderTextColor={Colors.textMuted} />
+            {!isAgent && (
+              <>
+                <Text style={styles.fieldLabel}>Kategoriya</Text>
+                <TextInput
+                  style={styles.fieldInput}
+                  value={eCategory}
+                  onChangeText={setECategory}
+                  placeholder="Masalan: PHOTOGRAPHY"
+                  placeholderTextColor={Colors.textMuted}
+                />
+              </>
+            )}
 
             <Text style={styles.fieldLabel}>Bio</Text>
-            <TextInput style={[styles.fieldInput, { height: 100, textAlignVertical: 'top' }]} value={eBio} onChangeText={setEBio} multiline placeholder="O'zingiz haqingizda..." placeholderTextColor={Colors.textMuted} />
+            <TextInput
+              style={[styles.fieldInput, { height: 100, textAlignVertical: 'top' }]}
+              value={eBio}
+              onChangeText={setEBio}
+              multiline
+              placeholder="O'zingiz haqingizda..."
+              placeholderTextColor={Colors.textMuted}
+            />
 
-            <Text style={styles.fieldLabel}>Soatlik narx ($)</Text>
-            <TextInput style={styles.fieldInput} value={eRate} onChangeText={setERate} keyboardType="numeric" placeholder="15" placeholderTextColor={Colors.textMuted} />
+            {/* Manzil */}
+            <Text style={styles.fieldLabel}>Manzil</Text>
+            <TouchableOpacity
+              style={styles.mapPickerBtn}
+              onPress={() => setMapModal(true)}
+            >
+              <Ionicons name="map-outline" size={18} color={Colors.primary} />
+              <Text style={[styles.mapPickerText, eAddress && { color: Colors.text }]}>
+                {eAddress?.name
+                  ? eAddress.name
+                  : eAddress
+                    ? `${eAddress.latitude.toFixed(5)}, ${eAddress.longitude.toFixed(5)}`
+                    : 'Xaritadan manzil tanlash'}
+              </Text>
+              {eAddress && (
+                <TouchableOpacity onPress={() => setEAddress(null)}>
+                  <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </TouchableOpacity>
 
-            <Text style={styles.fieldLabel}>Ko'nikmalar (vergul bilan)</Text>
-            <TextInput style={styles.fieldInput} value={eSkills} onChangeText={setESkills} placeholder="AutoCAD, 3ds Max, Photoshop" placeholderTextColor={Colors.textMuted} />
+            {/* Kompaniya rasmi — faqat agent uchun */}
+            {isAgent && (
+              <>
+                <Text style={styles.fieldLabel}>Kompaniya rasmi (ixtiyoriy)</Text>
+                <TouchableOpacity style={styles.imgPickerBtn} onPress={pickCompanyImage}>
+                  {eCompanyImg ? (
+                    <Image source={{ uri: eCompanyImg }} style={styles.companyImgPreview} resizeMode="cover" />
+                  ) : (
+                    <View style={styles.imgPickerPlaceholder}>
+                      <Ionicons name="image-outline" size={28} color={Colors.textMuted} />
+                      <Text style={styles.imgPickerHint}>Rasm tanlash</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+                {eCompanyImg ? (
+                  <TouchableOpacity onPress={() => setECompanyImg('')} style={styles.removeImgBtn}>
+                    <Ionicons name="trash-outline" size={15} color={Colors.red} />
+                    <Text style={{ color: Colors.red, fontSize: 13, fontWeight: '600' }}>Rasmni o'chirish</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </>
+            )}
+
+            {!isAgent && (
+              <>
+                <Text style={styles.fieldLabel}>Soatlik narx ($)</Text>
+                <TextInput
+                  style={styles.fieldInput}
+                  value={eRate}
+                  onChangeText={setERate}
+                  keyboardType="numeric"
+                  placeholder="15"
+                  placeholderTextColor={Colors.textMuted}
+                />
+
+                <Text style={styles.fieldLabel}>Ko'nikmalar (vergul bilan)</Text>
+                <TextInput
+                  style={styles.fieldInput}
+                  value={eSkills}
+                  onChangeText={setESkills}
+                  placeholder="AutoCAD, 3ds Max, Photoshop"
+                  placeholderTextColor={Colors.textMuted}
+                />
+              </>
+            )}
 
             <Text style={styles.fieldLabel}>Bandlik holati</Text>
             <View style={{ gap: 8, marginBottom: 20 }}>
@@ -218,51 +356,67 @@ export default function ProfileScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* Map Picker */}
+      <MapPickerModal
+        visible={mapModal}
+        initial={eAddress}
+        onConfirm={(addr) => { setEAddress(addr); setMapModal(false); }}
+        onClose={() => setMapModal(false)}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe:            { flex: 1, backgroundColor: Colors.bg },
-  profileTop:      { alignItems: 'center', paddingTop: 24, paddingBottom: 20, backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  avatar:          { width: 90, height: 90, borderRadius: 45, marginBottom: 12 },
-  avatarFallback:  { width: 90, height: 90, borderRadius: 45, backgroundColor: '#eef2ff', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  avatarText:      { fontSize: 34, fontWeight: '900', color: Colors.primary },
-  name:            { fontSize: 22, fontWeight: '900', color: Colors.text },
-  username:        { fontSize: 14, color: Colors.textSub, marginTop: 2 },
-  userTitle:       { fontSize: 14, color: Colors.textSub, marginTop: 4 },
-  typeBadge:       { marginTop: 10, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 5 },
-  agentBadge:      { backgroundColor: '#e0f2fe' },
-  freelancerBadge: { backgroundColor: '#f5f3ff' },
-  typeText:        { fontSize: 13, fontWeight: '700' },
-  statsRow:        { flexDirection: 'row', gap: 12, padding: 16 },
-  statCard:        { flex: 1, backgroundColor: Colors.white, borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: Colors.border },
-  statValue:       { fontSize: 22, fontWeight: '900', color: Colors.primary },
-  statLabel:       { fontSize: 12, color: Colors.textSub, marginTop: 4, textAlign: 'center' },
-  section:         { backgroundColor: Colors.white, marginHorizontal: 16, marginBottom: 12, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: Colors.border },
-  sectionTitle:    { fontSize: 14, fontWeight: '700', color: Colors.text, marginBottom: 8 },
-  bioText:         { fontSize: 14, color: Colors.textSub, lineHeight: 20 },
-  skillsWrap:      { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  skillChip:       { backgroundColor: Colors.bg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1, borderColor: Colors.border },
-  skillText:       { fontSize: 13, color: Colors.textSub },
-  availChip:       { backgroundColor: Colors.bg, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, alignSelf: 'flex-start' },
-  availText:       { fontSize: 14, fontWeight: '600', color: Colors.text },
-  btnsSection:     { padding: 16, gap: 10 },
-  myWorksBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#0891b2', borderRadius: 14, paddingVertical: 14 },
-  myWorksBtnText:  { color: 'white', fontWeight: '800', fontSize: 16 },
-  editBtn:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 14 },
-  editBtnText:     { color: 'white', fontWeight: '800', fontSize: 16 },
-  logoutBtn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: Colors.white, borderRadius: 14, paddingVertical: 14, borderWidth: 1, borderColor: '#fecaca' },
-  logoutText:      { color: Colors.red, fontWeight: '700', fontSize: 15 },
-  modalSafe:       { flex: 1, backgroundColor: Colors.white },
-  modalHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  modalTitle:      { fontSize: 18, fontWeight: '800', color: Colors.text },
-  modalBody:       { padding: 20 },
-  fieldLabel:      { fontSize: 13, fontWeight: '600', color: Colors.textSub, marginBottom: 6 },
-  fieldInput:      { borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: Colors.text, backgroundColor: Colors.bg, marginBottom: 14 },
-  radioBtn:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.border },
-  radioBtnActive:  { borderColor: Colors.primary, backgroundColor: '#eef2ff' },
-  radioText:       { fontSize: 14, fontWeight: '600', color: Colors.textSub },
-  btn:             { backgroundColor: Colors.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  btnText:         { color: 'white', fontWeight: '800', fontSize: 16 },
+  safe:               { flex: 1, backgroundColor: Colors.bg },
+  profileTop:         { alignItems: 'center', paddingTop: 24, paddingBottom: 20, backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  avatar:             { width: 90, height: 90, borderRadius: 45, marginBottom: 12 },
+  avatarFallback:     { width: 90, height: 90, borderRadius: 45, backgroundColor: '#eef2ff', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  avatarText:         { fontSize: 34, fontWeight: '900', color: Colors.primary },
+  name:               { fontSize: 22, fontWeight: '900', color: Colors.text },
+  username:           { fontSize: 14, color: Colors.textSub, marginTop: 2 },
+  userTitle:          { fontSize: 14, color: Colors.textSub, marginTop: 4 },
+  typeBadge:          { marginTop: 10, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 5 },
+  agentBadge:         { backgroundColor: '#e0f2fe' },
+  freelancerBadge:    { backgroundColor: '#f5f3ff' },
+  typeText:           { fontSize: 13, fontWeight: '700' },
+  companyImg:         { width: '100%', height: 160, borderRadius: 10 },
+  statsRow:           { flexDirection: 'row', gap: 12, padding: 16 },
+  statCard:           { flex: 1, backgroundColor: Colors.white, borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: Colors.border },
+  statValue:          { fontSize: 22, fontWeight: '900', color: Colors.primary },
+  statLabel:          { fontSize: 12, color: Colors.textSub, marginTop: 4, textAlign: 'center' },
+  section:            { backgroundColor: Colors.white, marginHorizontal: 16, marginBottom: 12, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: Colors.border },
+  sectionTitle:       { fontSize: 14, fontWeight: '700', color: Colors.text, marginBottom: 8 },
+  bioText:            { fontSize: 14, color: Colors.textSub, lineHeight: 20 },
+  skillsWrap:         { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  skillChip:          { backgroundColor: Colors.bg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1, borderColor: Colors.border },
+  skillText:          { fontSize: 13, color: Colors.textSub },
+  availChip:          { backgroundColor: Colors.bg, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, alignSelf: 'flex-start' },
+  availText:          { fontSize: 14, fontWeight: '600', color: Colors.text },
+  btnsSection:        { padding: 16, gap: 10 },
+  myWorksBtn:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#0891b2', borderRadius: 14, paddingVertical: 14 },
+  myWorksBtnText:     { color: 'white', fontWeight: '800', fontSize: 16 },
+  editBtn:            { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 14 },
+  editBtnText:        { color: 'white', fontWeight: '800', fontSize: 16 },
+  logoutBtn:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: Colors.white, borderRadius: 14, paddingVertical: 14, borderWidth: 1, borderColor: '#fecaca' },
+  logoutText:         { color: Colors.red, fontWeight: '700', fontSize: 15 },
+  modalSafe:          { flex: 1, backgroundColor: Colors.white },
+  modalHeader:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  modalTitle:         { fontSize: 18, fontWeight: '800', color: Colors.text },
+  modalBody:          { padding: 20 },
+  fieldLabel:         { fontSize: 13, fontWeight: '600', color: Colors.textSub, marginBottom: 6 },
+  fieldInput:         { borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: Colors.text, backgroundColor: Colors.bg, marginBottom: 14 },
+  mapPickerBtn:       { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: Colors.bg, marginBottom: 14 },
+  mapPickerText:      { flex: 1, fontSize: 15, color: Colors.textMuted },
+  imgPickerBtn:       { borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12, overflow: 'hidden', marginBottom: 8, height: 140 },
+  companyImgPreview:  { width: '100%', height: '100%' },
+  imgPickerPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: Colors.bg },
+  imgPickerHint:      { fontSize: 14, color: Colors.textMuted },
+  removeImgBtn:       { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 },
+  radioBtn:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.border },
+  radioBtnActive:     { borderColor: Colors.primary, backgroundColor: '#eef2ff' },
+  radioText:          { fontSize: 14, fontWeight: '600', color: Colors.textSub },
+  btn:                { backgroundColor: Colors.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  btnText:            { color: 'white', fontWeight: '800', fontSize: 16 },
 });

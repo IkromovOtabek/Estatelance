@@ -93,9 +93,35 @@ export enum AuthProvider {
 registerEnumType(AuthProvider, { name: 'AuthProvider' });
 
 // ─── Announcement Type ────────────────────────────────────────────────────────
-// Admin can post two kinds of site-wide messages
 export enum AnnouncementType {
-  ANNOUNCEMENT = 'ANNOUNCEMENT', // Platform news, updates, policy changes
-  ADVERTISEMENT = 'ADVERTISEMENT', // Paid promotion or featured content
+  ANNOUNCEMENT = 'ANNOUNCEMENT',
+  ADVERTISEMENT = 'ADVERTISEMENT',
 }
 registerEnumType(AnnouncementType, { name: 'AnnouncementType' });
+
+// ─── Dispute Status ───────────────────────────────────────────────────────────
+export enum DisputeStatus {
+  OPEN = 'OPEN',           // Filed, waiting for admin review
+  UNDER_REVIEW = 'UNDER_REVIEW', // Admin is reviewing
+  RESOLVED = 'RESOLVED',   // Admin made a decision
+  CLOSED = 'CLOSED',       // Closed without resolution
+}
+registerEnumType(DisputeStatus, { name: 'DisputeStatus' });
+
+// ─── Dispute Decision ─────────────────────────────────────────────────────────
+export enum DisputeDecision {
+  FAVOR_AGENT = 'FAVOR_AGENT',           // Escrow returned to agent
+  FAVOR_FREELANCER = 'FAVOR_FREELANCER', // Escrow released to freelancer
+  SPLIT = 'SPLIT',                       // Escrow split between both
+}
+registerEnumType(DisputeDecision, { name: 'DisputeDecision' });
+
+// ─── Escrow Status ────────────────────────────────────────────────────────────
+export enum EscrowStatus {
+  NONE = 'NONE',           // No escrow (direct payment)
+  HELD = 'HELD',           // Funds held in escrow
+  RELEASED = 'RELEASED',   // Funds released to freelancer
+  REFUNDED = 'REFUNDED',   // Funds returned to agent
+  DISPUTED = 'DISPUTED',   // Under dispute
+}
+registerEnumType(EscrowStatus, { name: 'EscrowStatus' });

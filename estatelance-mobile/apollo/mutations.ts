@@ -36,6 +36,8 @@ export const SIGNUP = gql`
     signup(input: $input) {
       _id username fullName userType userStatus
       profileImage accessToken needsOnboarding
+      address { latitude longitude name }
+      companyImage
     }
   }
 `;
@@ -45,7 +47,8 @@ export const UPDATE_PROFILE = gql`
     updateProfile(input: $input) {
       _id username fullName profileImage bio userType
       skills hourlyRate freelancerCategory availability
-      needsOnboarding accessToken
+      needsOnboarding accessToken location companyImage
+      address { latitude longitude name }
     }
   }
 `;

@@ -41,6 +41,8 @@ export class UserService {
       ...(input.bio?.trim()          ? { bio:           input.bio.trim()           } : {}),
       ...(input.skills?.length       ? { skills:        input.skills               } : {}),
       ...(input.resumeUrl?.trim()    ? { resumeUrl:     input.resumeUrl.trim()     } : {}),
+      ...(input.address              ? { address:       input.address               } : {}),
+      ...(input.companyImage?.trim() ? { companyImage:  input.companyImage.trim()   } : {}),
     });
 
     // Attach the JWT token to the response
