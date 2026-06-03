@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
+  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert, Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useMutation } from '@apollo/client';
@@ -47,9 +47,11 @@ export default function RegisterScreen() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.logoBox}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>BF</Text>
-          </View>
+          <Image
+            source={require('../../assets/bufu-logo.png')}
+            style={styles.logoCircle}
+            resizeMode="cover"
+          />
           <Text style={styles.appName}>BuFu</Text>
         </View>
 

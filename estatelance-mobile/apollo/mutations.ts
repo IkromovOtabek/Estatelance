@@ -10,6 +10,21 @@ export const LOGIN = gql`
   }
 `;
 
+export const CREATE_TELEGRAM_AUTH_TOKEN = gql`
+  mutation CreateTelegramAuthToken {
+    createTelegramAuthToken
+  }
+`;
+
+export const TELEGRAM_LOGIN = gql`
+  mutation LoginWithTelegram($input: TelegramLoginInput!) {
+    loginWithTelegram(input: $input) {
+      _id username fullName userType userStatus
+      profileImage accessToken
+    }
+  }
+`;
+
 export const SIGNUP = gql`
   mutation Signup($input: SignupInput!) {
     signup(input: $input) {

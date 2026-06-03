@@ -12,6 +12,7 @@ import { PostModule } from './components/post/post.module';
 import { MessageModule } from './components/message/message.module';
 import { NotificationModule } from './components/notification/notification.module';
 import { AdminModule } from './components/admin/admin.module';
+import { TelegramBotModule } from './components/telegram-bot/telegram-bot.module';
 import { GoogleController } from './components/auth/google.controller';
 
 const isProd = process.env.NODE_ENV === 'production';
@@ -45,6 +46,7 @@ const isProd = process.env.NODE_ENV === 'production';
     MessageModule,
     NotificationModule,
     AdminModule,
+    TelegramBotModule,
   ],
   controllers: [GoogleController],
 })

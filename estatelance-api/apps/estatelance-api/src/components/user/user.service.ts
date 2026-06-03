@@ -113,6 +113,36 @@ export class UserService {
     return user;
   }
 
+  // ─── Telegram Bot Auth (polling token tizimi) ─────────────────────────────
+  // Bot foydalanuvchi ma'lumotlarini tasdiqlagan vaqt chaqiriladi
+  async loginWithTelegramBotUser(tgUser: {
+    id: number; first_name: string; last_name?: string;
+    username?: string; photo_url?: string;
+  }): Promise<User> {
+    let user = await this.userModel.findOne({ telegramId: String(tgUser.id) });
+
+    if (!user) {
+      const baseUsername = tgUser.username
+        ?? `${tgUser.first_name}${tgUser.id}`.toLowerCase().replace(/\s+/g, '');
+      const username = await this.getUniqueUsername(baseUsername);
+
+      user = await this.userModel.create({
+        username,
+        userType:         UserType.AGENT,
+        fullName:         `${tgUser.first_name} ${tgUser.last_name ?? ''}`.trim(),
+        profileImage:     tgUser.photo_url ?? DEFAULT_AVATAR_URL,
+        location:         'Toshkent, UZ',
+        authProvider:     AuthProvider.TELEGRAM,
+        telegramId:       String(tgUser.id),
+        telegramUsername: tgUser.username,
+        needsOnboarding:  true,
+      });
+    }
+
+    user.accessToken = await this.authService.createToken(user);
+    return user;
+  }
+
   // ─── Get Current User ─────────────────────────────────────────────────────
   async checkUsername(username: string): Promise<boolean> {
     const exists = await this.userModel.findOne({ username: username.toLowerCase().trim() });

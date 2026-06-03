@@ -75,6 +75,15 @@ export const GET_USER_BY_ID = gql`
   }
 `;
 
+export const CHECK_TELEGRAM_AUTH_TOKEN = gql`
+  query CheckTelegramAuthToken($token: String!) {
+    checkTelegramAuthToken(token: $token) {
+      _id username fullName userType userStatus
+      profileImage accessToken
+    }
+  }
+`;
+
 export const CHECK_IS_FOLLOWING = gql`
   query CheckIsFollowing($targetUserId: String!) {
     checkIsFollowing(targetUserId: $targetUserId)

@@ -7,6 +7,7 @@ import { Follow, FollowSchema } from '../../schemas/Follow.model';
 import { ProfileView, ProfileViewSchema } from '../../schemas/ProfileView.model';
 import { AuthModule } from '../auth/auth.module';
 import { NotificationModule } from '../notification/notification.module';
+import { TelegramBotModule } from '../telegram-bot/telegram-bot.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { NotificationModule } from '../notification/notification.module';
     ]),
     AuthModule,
     NotificationModule,
+    TelegramBotModule,
   ],
   providers: [UserResolver, UserService],
   exports: [UserService],

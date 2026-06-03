@@ -4,6 +4,7 @@ import { UserService } from './user.service';
 import { User } from '../../schemas/User.model';
 import { ActiveUserGuard, AuthGuard, OptionalAuthGuard } from '../auth/auth.guard';
 import { AuthUser } from '../auth/auth-user.decorator';
+import { TelegramBotService } from '../telegram-bot/telegram-bot.service';
 import {
   SignupInput,
   LoginInput,
@@ -14,7 +15,10 @@ import {
 
 @Resolver()
 export class UserResolver {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly botService: TelegramBotService,
+  ) {}
 
   // ─── Sign Up ───────────────────────────────────────────────────────────────
   @Mutation(() => User)
@@ -28,12 +32,27 @@ export class UserResolver {
     return this.userService.login(input);
   }
 
-  // ─── Log In with Telegram ─────────────────────────────────────────────────
-  // The frontend sends the data from the Telegram Login Widget callback here.
-  // The backend verifies it is genuine before creating a session.
+  // ─── Log In with Telegram (widget) ───────────────────────────────────────
   @Mutation(() => User)
   async loginWithTelegram(@Args('input') input: TelegramLoginInput): Promise<User> {
     return this.userService.loginWithTelegram(input);
+  }
+
+  // ─── Telegram Bot Auth — 1-qadam: token yaratish ─────────────────────────
+  // App shu tokenni botga /start tgauth_TOKEN ko'rinishida yuboradi
+  @Mutation(() => String)
+  createTelegramAuthToken(): string {
+    return this.botService.createAuthToken();
+  }
+
+  // ─── Telegram Bot Auth — 2-qadam: token natijasini tekshirish (polling) ──
+  // Bot /start tgauth_TOKEN olgandan keyin token tasdiqlanadi
+  // App har 2 soniyada so'raydi — tayyor bo'lsa User qaytaradi
+  @Query(() => User, { nullable: true })
+  async checkTelegramAuthToken(@Args('token') token: string): Promise<User | null> {
+    const tgUser = this.botService.consumeToken(token);
+    if (!tgUser) return null;
+    return this.userService.loginWithTelegramBotUser(tgUser);
   }
 
   // ─── Get My Own Profile ────────────────────────────────────────────────────
