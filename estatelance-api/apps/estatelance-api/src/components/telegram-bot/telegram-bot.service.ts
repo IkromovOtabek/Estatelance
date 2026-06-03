@@ -32,8 +32,11 @@ export class TelegramBotService implements OnModuleInit {
   private readonly apiBase = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
   private readonly APP_SCHEME = 'bufu';
 
-  // Token → TelegramUser  (60 soniya ömür)
+  // Telegram tokens
   private readonly pending = new Map<string, PendingToken>();
+
+  // Google tokens → confirmed User data
+  private readonly googlePending = new Map<string, { googleUser: any; createdAt: number }>();
 
   onModuleInit() {
     if (!this.token) {
@@ -122,11 +125,41 @@ export class TelegramBotService implements OnModuleInit {
     return entry.telegramUser;
   }
 
+  // ─── Google Auth token tizimi ────────────────────────────────────────────
+  createGoogleAuthToken(): string {
+    const tok = crypto.randomBytes(14).toString('hex');
+    this.googlePending.set(tok, { googleUser: null, createdAt: Date.now() });
+    return tok;
+  }
+
+  confirmGoogleToken(token: string, googleUser: any): boolean {
+    const entry = this.googlePending.get(token);
+    if (!entry) return false;
+    entry.googleUser = googleUser;
+    this.googlePending.set(token, entry);
+    return true;
+  }
+
+  consumeGoogleToken(token: string): any | null {
+    const entry = this.googlePending.get(token);
+    if (!entry) return null;
+    if (Date.now() - entry.createdAt > 5 * 60 * 1000) {
+      this.googlePending.delete(token);
+      return null;
+    }
+    if (!entry.googleUser) return null;
+    this.googlePending.delete(token);
+    return entry.googleUser;
+  }
+
   // ─── Eskirganlarni tozalash ───────────────────────────────────────────────
   private cleanExpired() {
     const now = Date.now();
     for (const [key, val] of this.pending) {
       if (now - val.createdAt > 5 * 60 * 1000) this.pending.delete(key);
+    }
+    for (const [key, val] of this.googlePending) {
+      if (now - val.createdAt > 5 * 60 * 1000) this.googlePending.delete(key);
     }
   }
 

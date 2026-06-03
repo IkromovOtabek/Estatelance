@@ -10,6 +10,12 @@ export const LOGIN = gql`
   }
 `;
 
+export const CREATE_GOOGLE_AUTH_TOKEN = gql`
+  mutation CreateGoogleAuthToken {
+    createGoogleAuthToken
+  }
+`;
+
 export const CREATE_TELEGRAM_AUTH_TOKEN = gql`
   mutation CreateTelegramAuthToken {
     createTelegramAuthToken
@@ -37,8 +43,9 @@ export const SIGNUP = gql`
 export const UPDATE_PROFILE = gql`
   mutation UpdateProfile($input: UpdateProfileInput!) {
     updateProfile(input: $input) {
-      _id username fullName profileImage bio
-      skills hourlyRate title availability
+      _id username fullName profileImage bio userType
+      skills hourlyRate freelancerCategory availability
+      needsOnboarding accessToken
     }
   }
 `;

@@ -38,6 +38,20 @@ export class UserResolver {
     return this.userService.loginWithTelegram(input);
   }
 
+  // ─── Google Auth — 1-qadam: token yaratish ───────────────────────────────
+  @Mutation(() => String)
+  createGoogleAuthToken(): string {
+    return this.botService.createGoogleAuthToken();
+  }
+
+  // ─── Google Auth — 2-qadam: polling ──────────────────────────────────────
+  @Query(() => User, { nullable: true })
+  async checkGoogleAuthToken(@Args('token') token: string): Promise<User | null> {
+    const googleUser = this.botService.consumeGoogleToken(token);
+    if (!googleUser) return null;
+    return this.userService.findOrCreateGoogleUser(googleUser);
+  }
+
   // ─── Telegram Bot Auth — 1-qadam: token yaratish ─────────────────────────
   // App shu tokenni botga /start tgauth_TOKEN ko'rinishida yuboradi
   @Mutation(() => String)

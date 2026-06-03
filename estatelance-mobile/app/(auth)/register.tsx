@@ -108,7 +108,7 @@ export default function RegisterScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.link} onPress={() => router.back()}>
-            <Text style={styles.linkText}>Allaqachon akkount bor? <Text style={{ color: Colors.primary, fontWeight: '700' }}>Kirish</Text></Text>
+            <Text style={styles.linkText}>Allaqachon xisobim bor? <Text style={{ color: Colors.primary, fontWeight: '700' }}>Kirish</Text></Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

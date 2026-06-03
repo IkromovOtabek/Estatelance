@@ -3,10 +3,11 @@ import { gql } from '@apollo/client';
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 export const GET_ME = gql`
   query GetMe {
-    getMe {
+    getMyProfile {
       _id username fullName userType userStatus
       profileImage bio skills hourlyRate freelancerCategory
       availability completedJobCount followerCount followingCount
+      needsOnboarding
     }
   }
 `;
@@ -75,11 +76,20 @@ export const GET_USER_BY_ID = gql`
   }
 `;
 
+export const CHECK_GOOGLE_AUTH_TOKEN = gql`
+  query CheckGoogleAuthToken($token: String!) {
+    checkGoogleAuthToken(token: $token) {
+      _id username fullName userType userStatus
+      profileImage accessToken needsOnboarding
+    }
+  }
+`;
+
 export const CHECK_TELEGRAM_AUTH_TOKEN = gql`
   query CheckTelegramAuthToken($token: String!) {
     checkTelegramAuthToken(token: $token) {
       _id username fullName userType userStatus
-      profileImage accessToken
+      profileImage accessToken needsOnboarding
     }
   }
 `;

@@ -49,5 +49,7 @@ const isProd = process.env.NODE_ENV === 'production';
     TelegramBotModule,
   ],
   controllers: [GoogleController],
+  // GoogleController ga TelegramBotService inject bo'lishi uchun
+  providers: [],
 })
 export class AppModule {}

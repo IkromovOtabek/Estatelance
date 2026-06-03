@@ -217,12 +217,17 @@ export default function RootLayout() {
   }, []);
 
   const login = useCallback(async (u: User) => {
-    if (u.accessToken) await AsyncStorage.setItem('accessToken', u.accessToken);
+    if (u.accessToken) {
+      await AsyncStorage.setItem('accessToken', u.accessToken);
+      // Telegram orqali kirgan bo'lsa — tokenni eslab qolamiz (logout dan keyin ham)
+      await AsyncStorage.setItem('rememberedToken', u.accessToken);
+    }
     await AsyncStorage.setItem('user', JSON.stringify(u));
     setUser(u);
   }, []);
 
   const logout = useCallback(async () => {
+    // 'rememberedToken' va 'lastTgUser' ni SAQLAB qolamiz — qayta tez kirish uchun
     await AsyncStorage.multiRemove(['accessToken', 'user']);
     setUser(null);
     apolloClient.clearStore();
@@ -239,8 +244,9 @@ export default function RootLayout() {
           <AuthContext.Provider value={{ user, loading, login, logout }}>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)"           options={{ headerShown: false }} />
-              <Stack.Screen name="(auth)/login"     options={{ headerShown: false }} />
-              <Stack.Screen name="(auth)/register"  options={{ headerShown: false }} />
+              <Stack.Screen name="(auth)/login"       options={{ headerShown: false }} />
+              <Stack.Screen name="(auth)/register"   options={{ headerShown: false }} />
+              <Stack.Screen name="(auth)/onboarding" options={{ headerShown: false, gestureEnabled: false }} />
               <Stack.Screen name="jobs/[id]"        options={{ headerShown: false }} />
               <Stack.Screen name="profile/[id]"     options={{ headerShown: false }} />
               <Stack.Screen name="messages"         options={{ headerShown: false, animation: 'slide_from_right' }} />

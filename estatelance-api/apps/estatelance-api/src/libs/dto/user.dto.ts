@@ -145,6 +145,10 @@ export class UpdateProfileInput {
   @IsOptional()
   @Field(() => String, { nullable: true })
   phoneNumber?: string;
+
+  @IsOptional()
+  @Field(() => Boolean, { nullable: true })
+  needsOnboarding?: boolean;
 }
 
 // ─── Input: Get List of Users / Freelancers ───────────────────────────────────

@@ -14,6 +14,7 @@ export interface User {
   followerCount?: number;
   followingCount?: number;
   accessToken?: string;
+  needsOnboarding?: boolean;
 }
 
 export interface Job {
