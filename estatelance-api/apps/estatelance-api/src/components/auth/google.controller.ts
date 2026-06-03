@@ -4,9 +4,8 @@ import { Request, Response } from 'express';
 import { UserService } from '../user/user.service';
 import { TelegramBotService } from '../telegram-bot/telegram-bot.service';
 
-// Mobile token → mob_token mapping (state orqali uzatish murakkab bo'lgani uchun)
-// Google callback da state ni olib, shu map dan mobile token ni topamiz
-const pendingMobileStates = new Map<string, string>(); // state → mobileToken
+// state → mobileToken xaritalash (passport state bilan aralashmasligi uchun alohida prefix)
+const mobileMap = new Map<string, string>(); // state → mob token
 
 @Controller('auth')
 export class GoogleController {
@@ -15,88 +14,107 @@ export class GoogleController {
     private readonly botService:  TelegramBotService,
   ) {}
 
-  // ─── Step 1: Google ga yo'naltirish ────────────────────────────────────────
-  // ?mob=MOBILE_TOKEN — mobile ilovadan keladi
+  // ─── Step 1 (Web): Passport orqali Google login ───────────────────────────
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  googleLogin(@Query('mob') mob: string, @Req() req: any) {
-    // Passport bu method tanasini ishlatmaydi — UseGuards to'g'ridan-to'g'ri redirect qiladi
-    // Lekin req.query.mob ni google.strategy.ts da o'qiymiz
-  }
+  googleLogin() {}
 
-  // ─── Step 2: Google callback ────────────────────────────────────────────────
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleCallback(@Req() req: Request, @Res() res: Response) {
-    const googleUser = req.user as any;
-    if (!googleUser) {
-      return res.redirect(`${process.env.FRONTEND_URL ?? 'https://bufu.uz'}/account?error=google_failed`);
-    }
-
-    // state param dan mobile token ni olamiz
-    const state       = (req.query.state as string) ?? '';
-    const mobileToken = pendingMobileStates.get(state) ?? '';
-    if (mobileToken) pendingMobileStates.delete(state);
-
-    const isMobile = Boolean(mobileToken);
-
-    try {
-      if (isMobile) {
-        this.botService.confirmGoogleToken(mobileToken, googleUser);
-        // bufu:// ga redirect → expo-web-browser oynasi yopiladi
-        return res.redirect('bufu://google-auth-done');
-      } else {
-        const user        = await this.userService.findOrCreateGoogleUser(googleUser);
-        const frontendUrl = process.env.FRONTEND_URL ?? 'https://bufu.uz';
-        return res.redirect(
-          `${frontendUrl}/auth/google/callback?token=${user.accessToken}&needsOnboarding=${user.needsOnboarding ?? false}`,
-        );
-      }
-    } catch {
-      const frontendUrl = process.env.FRONTEND_URL ?? 'https://bufu.uz';
-      return res.redirect(`${frontendUrl}/account?error=google_failed`);
-    }
-  }
-
-  // ─── Mobile: mob token ni state ga bog'lash ───────────────────────────────
-  // App bu endpoint ga mob=TOKEN yuboradi, Google URL ni oladi
-  @Get('google/mobile-init')
-  mobileInit(@Query('mob') mob: string, @Res() res: Response) {
+  // ─── Step 1 (Mobile): Manual Google URL ───────────────────────────────────
+  // App shu endpoint ga mob token yuboradi, Google OAuth URL qaytaradi
+  @Get('google/mobile-url')
+  mobileUrl(@Query('mob') mob: string, @Res() res: Response) {
     if (!mob) return res.status(400).json({ error: 'mob required' });
 
-    // Random state yaratamiz
-    const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    pendingMobileStates.set(state, mob);
+    const state = `m_${mob}`; // "m_" prefiksi bilan — callbackda mobile ekanini bilamiz
+    mobileMap.set(state, mob);
 
-    const clientId    = process.env.GOOGLE_CLIENT_ID;
-    const callbackUrl = encodeURIComponent(process.env.GOOGLE_CALLBACK_URL ?? 'https://api.bufu.uz/auth/google/callback');
-    const googleUrl   = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${callbackUrl}&response_type=code&scope=email%20profile&state=${state}&access_type=offline`;
+    // 5 daqiqadan keyin tozalash
+    setTimeout(() => mobileMap.delete(state), 5 * 60 * 1000);
 
-    return res.json({ url: googleUrl });
+    const clientId    = process.env.GOOGLE_CLIENT_ID ?? '';
+    const callbackUrl = encodeURIComponent(
+      process.env.GOOGLE_CALLBACK_URL ?? 'https://api.bufu.uz/auth/google/callback'
+    );
+    const scope       = encodeURIComponent('email profile');
+    const url = `https://accounts.google.com/o/oauth2/v2/auth`
+      + `?client_id=${clientId}`
+      + `&redirect_uri=${callbackUrl}`
+      + `&response_type=code`
+      + `&scope=${scope}`
+      + `&state=${state}`
+      + `&access_type=online`
+      + `&prompt=select_account`;
+
+    return res.json({ url });
   }
 
-  // ─── Mobile: Google access_token → JWT (fallback) ────────────────────────
-  @Post('google/mobile')
-  async googleMobileLogin(@Body() body: { accessToken: string }): Promise<any> {
-    if (!body?.accessToken) return { error: 'accessToken required' };
-    try {
-      const r    = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${body.accessToken}`);
-      const info = await r.json() as any;
-      if (!info?.id) return { error: 'Invalid Google token' };
+  // ─── Step 2: Google callback ───────────────────────────────────────────────
+  @Get('google/callback')
+  async googleCallback(@Req() req: Request, @Res() res: Response) {
+    const state = (req.query.state as string) ?? '';
+    const code  = (req.query.code  as string) ?? '';
+    const error = (req.query.error as string) ?? '';
 
-      const user = await this.userService.findOrCreateGoogleUser({
-        googleId: info.id, email: info.email ?? '',
-        firstName: info.given_name ?? '', lastName: info.family_name ?? '',
-        displayName: info.name ?? '', profileImage: info.picture ?? '',
+    const frontendUrl = process.env.FRONTEND_URL ?? 'https://bufu.uz';
+    const isMobile    = state.startsWith('m_');
+
+    if (error || !code) {
+      if (isMobile) return res.redirect('bufu://google-auth-done?error=cancelled');
+      return res.redirect(`${frontendUrl}/account?error=google_failed`);
+    }
+
+    try {
+      // Code → token exchange
+      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id:     process.env.GOOGLE_CLIENT_ID     ?? '',
+          client_secret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+          redirect_uri:  process.env.GOOGLE_CALLBACK_URL  ?? 'https://api.bufu.uz/auth/google/callback',
+          grant_type:    'authorization_code',
+        }),
       });
-      return {
-        _id: String(user._id), username: user.username,
-        fullName: user.fullName ?? '', userType: user.userType,
-        userStatus: user.userStatus, profileImage: user.profileImage ?? '',
-        accessToken: user.accessToken, needsOnboarding: user.needsOnboarding ?? false,
+      const tokenData = await tokenRes.json() as any;
+
+      if (!tokenData.access_token) {
+        throw new Error('No access token from Google');
+      }
+
+      // User info
+      const userRes  = await fetch(
+        `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${tokenData.access_token}`
+      );
+      const userInfo = await userRes.json() as any;
+
+      const googleUser = {
+        googleId:     userInfo.id            ?? '',
+        email:        userInfo.email         ?? '',
+        firstName:    userInfo.given_name    ?? '',
+        lastName:     userInfo.family_name   ?? '',
+        displayName:  userInfo.name          ?? '',
+        profileImage: userInfo.picture       ?? '',
       };
+
+      if (isMobile) {
+        // Mobile: token ni tasdiqlash — polling orqali JWT qaytaradi
+        const mobToken = mobileMap.get(state) ?? state.replace('m_', '');
+        mobileMap.delete(state);
+        this.botService.confirmGoogleToken(mobToken, googleUser);
+        // expo-web-browser ni yopish uchun bufu:// scheme
+        return res.redirect('bufu://google-auth-done');
+      } else {
+        // Web: JWT yaratib frontend ga yuborish
+        const user = await this.userService.findOrCreateGoogleUser(googleUser);
+        return res.redirect(
+          `${frontendUrl}/auth/google/callback?token=${user.accessToken}&needsOnboarding=${user.needsOnboarding ?? false}`
+        );
+      }
     } catch (e: any) {
-      return { error: e?.message ?? 'Google login failed' };
+      console.error('[Google OAuth error]', e.message);
+      if (isMobile) return res.redirect('bufu://google-auth-done?error=failed');
+      return res.redirect(`${frontendUrl}/account?error=google_failed`);
     }
   }
 }

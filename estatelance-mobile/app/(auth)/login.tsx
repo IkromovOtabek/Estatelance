@@ -98,7 +98,7 @@ export default function LoginScreen() {
 
       // 2. Mobile-init: state bilan Google URL olamiz
       const initRes = await fetch(
-        `https://api.bufu.uz/auth/google/mobile-init?mob=${token}`
+        `https://api.bufu.uz/auth/google/mobile-url?mob=${token}`
       );
       const { url } = await initRes.json();
 
