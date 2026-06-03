@@ -1,6 +1,6 @@
-import { Controller, Get, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Get, Query, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
+import * as passport from 'passport';
 import { UserService } from '../user/user.service';
 import { TelegramBotService } from '../telegram-bot/telegram-bot.service';
 
@@ -11,46 +11,58 @@ export class GoogleController {
     private readonly botService:  TelegramBotService,
   ) {}
 
-  // Step 1: redirect to Google — mobile_token bilan
+  // ─── Step 1: Google ga yo'naltirish ────────────────────────────────────────
   @Get('google')
-  @UseGuards(AuthGuard('google'))
-  googleLogin() {}
+  googleLogin(
+    @Query('mob') mob: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    // mob parametri bo'lsa — mobile, bo'lmasa — web
+    const state = mob ? `mob_${mob}` : 'web';
 
-  // Step 2: Google callback
+    (passport.authenticate('google', {
+      scope: ['email', 'profile'],
+      state,
+      session: false,
+    }) as any)(req, res);
+  }
+
+  // ─── Step 2: Google callback ────────────────────────────────────────────────
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleCallback(@Req() req: Request, @Res() res: Response) {
-    const googleUser = req.user as any;
-
-    // state param orqali mobile_token ni olamiz
-    const mobileToken = (req.query.state as string) || '';
-    const isMobile    = mobileToken.startsWith('mob_');
-
-    try {
-      if (isMobile) {
-        // Mobile: token ni tasdiqlaymiz — app polling orqali oladi
-        const tok = mobileToken.replace('mob_', '');
-        this.botService.confirmGoogleToken(tok, googleUser);
-        res.send(`
-          <html><body style="font-family:sans-serif;text-align:center;padding:40px;background:#1e1356;color:white">
-            <h2>✅ Muvaffaqiyatli!</h2>
-            <p>BuFu ilovaga qaytib kiring</p>
-            <script>window.close();</script>
-          </body></html>
-        `);
-      } else {
-        // Web: eski oqim
-        const user = await this.userService.findOrCreateGoogleUser(googleUser);
-        const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3001';
-        res.redirect(`${frontendUrl}/auth/google/callback?token=${user.accessToken}&needsOnboarding=${user.needsOnboarding ?? false}`);
+  googleCallback(@Req() req: Request, @Res() res: Response) {
+    (passport.authenticate('google', {
+      session: false,
+      failureRedirect: `${process.env.FRONTEND_URL ?? 'https://bufu.uz'}/account?error=google_failed`,
+    }, async (err: any, googleUser: any) => {
+      if (err || !googleUser) {
+        return res.redirect(`${process.env.FRONTEND_URL ?? 'https://bufu.uz'}/account?error=google_failed`);
       }
-    } catch {
-      if (isMobile) {
-        res.send('<html><body style="text-align:center;padding:40px"><h2>❌ Xatolik</h2><p>Ilovadan qayta urinib ko\'ring</p></body></html>');
-      } else {
-        const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3001';
-        res.redirect(`${frontendUrl}/auth/google/callback?error=auth_failed`);
+
+      // state parametridan mobile tokenni olamiz
+      const state       = (req.query.state as string) ?? '';
+      const isMobile    = state.startsWith('mob_');
+      const mobileToken = isMobile ? state.replace('mob_', '') : '';
+
+      try {
+        if (isMobile && mobileToken) {
+          // Mobile: tokenni tasdiqlaymiz, app polling orqali oladi
+          this.botService.confirmGoogleToken(mobileToken, googleUser);
+
+          // expo-web-browser avtomatik yopilishi uchun bufu:// ga redirect
+          return res.redirect('bufu://google-auth-done');
+        } else {
+          // Web: JWT bilan frontend ga yo'naltirish
+          const user        = await this.userService.findOrCreateGoogleUser(googleUser);
+          const frontendUrl = process.env.FRONTEND_URL ?? 'https://bufu.uz';
+          return res.redirect(
+            `${frontendUrl}/auth/google/callback?token=${user.accessToken}&needsOnboarding=${user.needsOnboarding ?? false}`,
+          );
+        }
+      } catch {
+        const frontendUrl = process.env.FRONTEND_URL ?? 'https://bufu.uz';
+        return res.redirect(`${frontendUrl}/account?error=google_failed`);
       }
-    }
+    }) as any)(req, res);
   }
 }

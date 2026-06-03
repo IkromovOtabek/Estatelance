@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { useMutation, useApolloClient } from '@apollo/client';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as WebBrowser from 'expo-web-browser';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { LOGIN, CREATE_TELEGRAM_AUTH_TOKEN, CREATE_GOOGLE_AUTH_TOKEN } from '../../apollo/mutations';
@@ -28,9 +29,9 @@ export default function LoginScreen() {
 
   const [username, setUsername]       = useState('');
   const [password, setPassword]       = useState('');
-  const [tgLoading, setTgLoading]     = useState(false);
+  const [tgLoading, setTgLoading]         = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [tgStep, setTgStep]           = useState<'idle' | 'waiting'>('idle');
+  const [waitingFor, setWaitingFor]       = useState<'idle' | 'telegram' | 'google'>('idle');
   const [savedTg, setSavedTg]         = useState<SavedTgUser | null>(null);
 
   const pollRef    = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -94,12 +95,20 @@ export default function LoginScreen() {
     try {
       const { data } = await createGoogleToken();
       const token: string = data.createGoogleAuthToken;
-      await Linking.openURL(`https://api.bufu.uz/auth/google?state=mob_${token}`);
-      setTgStep('waiting');
+
+      // Ilova ichida Google OAuth oynasi — tashqi brauzerga chiqmaydi
       setGoogleLoading(false);
+      setWaitingFor('google');
       startGooglePolling(token);
+
+      await WebBrowser.openAuthSessionAsync(
+        `https://api.bufu.uz/auth/google?mob=${token}`,
+        'bufu://',
+      );
+      // Oyna yopildi — polling natijasini kutamiz
     } catch (e: any) {
       setGoogleLoading(false);
+      setWaitingFor('idle');
       Alert.alert('Xato', e?.message ?? 'Google kirish xatosi');
     }
   };
@@ -118,7 +127,7 @@ export default function LoginScreen() {
         const user = data?.checkGoogleAuthToken;
         if (user?.accessToken) {
           stopPolling();
-          setTgStep('idle');
+          setWaitingFor('idle');
           await AsyncStorage.setItem(TG_USER_KEY, JSON.stringify({
             name:  user.fullName ?? user.username,
             photo: user.profileImage ?? null,
@@ -135,7 +144,7 @@ export default function LoginScreen() {
 
     timeoutRef.current = setTimeout(() => {
       stopPolling();
-      setTgStep('idle');
+      setWaitingFor('idle');
       Alert.alert('Vaqt tugadi', 'Google orqali kirish amalga oshmadi.');
     }, POLL_TIMEOUT_MS);
   };
@@ -147,7 +156,7 @@ export default function LoginScreen() {
       const { data } = await createToken();
       const token: string = data.createTelegramAuthToken;
       await Linking.openURL(`https://t.me/buildfuture_bot?start=tgauth_${token}`);
-      setTgStep('waiting');
+      setWaitingFor('telegram');
       setTgLoading(false);
       startPolling(token);
     } catch (e: any) {
@@ -170,7 +179,7 @@ export default function LoginScreen() {
         const user = data?.checkTelegramAuthToken;
         if (user?.accessToken) {
           stopPolling();
-          setTgStep('idle');
+          setWaitingFor('idle');
 
           // Keyingi kirish uchun ismni saqlash
           await AsyncStorage.setItem(TG_USER_KEY, JSON.stringify({
@@ -190,14 +199,14 @@ export default function LoginScreen() {
 
     timeoutRef.current = setTimeout(() => {
       stopPolling();
-      setTgStep('idle');
+      setWaitingFor('idle');
       Alert.alert('Vaqt tugadi', 'Telegram orqali kirish amalga oshmadi. Qayta urinib ko\'ring.');
     }, POLL_TIMEOUT_MS);
   };
 
   const cancelTelegram = () => {
     stopPolling();
-    setTgStep('idle');
+    setWaitingFor('idle');
   };
 
   // ─── Username/password login ───────────────────────────────────────────────
@@ -286,14 +295,29 @@ export default function LoginScreen() {
         <View style={styles.card}>
           <Text style={styles.title}>Kirish</Text>
 
-          {/* ── Bot kutish holati ── */}
-          {tgStep === 'waiting' ? (
+          {/* ── Kutish holati ── */}
+          {waitingFor !== 'idle' ? (
             <View style={styles.waitBox}>
-              <ActivityIndicator color="#0088cc" size="large" style={{ marginBottom: 16 }} />
-              <Text style={styles.waitTitle}>Telegramni kutmoqda...</Text>
-              <Text style={styles.waitDesc}>
-                @buildfuture_bot da "📱 BuFu ga kirish" tugmasini bosing
-              </Text>
+              <ActivityIndicator
+                color={waitingFor === 'google' ? '#4285F4' : '#0088cc'}
+                size="large"
+                style={{ marginBottom: 16 }}
+              />
+              {waitingFor === 'google' ? (
+                <>
+                  <Text style={styles.waitTitle}>Google ni kutmoqda...</Text>
+                  <Text style={styles.waitDesc}>
+                    Brauzerda Google hisobingizga kirgandan so'ng ilova avtomatik ochiladi
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.waitTitle}>Telegramni kutmoqda...</Text>
+                  <Text style={styles.waitDesc}>
+                    @buildfuture_bot da "📱 BuFu ga kirish" tugmasini bosing
+                  </Text>
+                </>
+              )}
               <TouchableOpacity style={styles.cancelBtn} onPress={cancelTelegram}>
                 <Text style={styles.cancelText}>Bekor qilish</Text>
               </TouchableOpacity>
