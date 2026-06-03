@@ -92,18 +92,22 @@ export default function LoginScreen() {
   const handleGoogleAuth = async () => {
     setGoogleLoading(true);
     try {
+      // 1. Token yaratamiz
       const { data } = await createGoogleToken();
       const token: string = data.createGoogleAuthToken;
+
+      // 2. Mobile-init: state bilan Google URL olamiz
+      const initRes = await fetch(
+        `https://api.bufu.uz/auth/google/mobile-init?mob=${token}`
+      );
+      const { url } = await initRes.json();
 
       setGoogleLoading(false);
       setWaitingFor('google');
       startPoll(token, 'google');
 
-      // Ilova ichida Google oynasi ochiladi, tugagach yopiladi
-      await WebBrowser.openAuthSessionAsync(
-        `https://api.bufu.uz/auth/google?mob=${token}`,
-        'bufu://',
-      );
+      // 3. Ilova ichida Google oynasi
+      await WebBrowser.openAuthSessionAsync(url, 'bufu://');
     } catch (e: any) {
       setGoogleLoading(false);
       setWaitingFor('idle');
