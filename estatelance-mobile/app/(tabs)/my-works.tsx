@@ -153,9 +153,14 @@ export default function MyWorksScreen() {
             <Text style={[styles.badgeText, { color: st.color }]}>{st.label}</Text>
           </View>
           {isBoosted && (
-            <View style={[styles.badge, { backgroundColor: '#f5f3ff', marginLeft: 6 }]}>
+            <View style={[styles.badge, { backgroundColor: '#f5f3ff', marginLeft: 6, flexDirection: 'row', alignItems: 'center', gap: 3 }]}>
+              <Ionicons
+                name={job.boostPlan === 'VIP' ? 'star' : job.boostPlan === 'PRO' ? 'flash' : 'trending-up'}
+                size={11}
+                color="#7c3aed"
+              />
               <Text style={[styles.badgeText, { color: '#7c3aed' }]}>
-                {job.boostPlan === 'VIP' ? '⭐ VIP' : job.boostPlan === 'PRO' ? '⚡ Pro' : '🔵 Top'}
+                {job.boostPlan === 'VIP' ? 'VIP' : job.boostPlan === 'PRO' ? 'Pro' : 'Top'}
               </Text>
             </View>
           )}
@@ -312,7 +317,10 @@ export default function MyWorksScreen() {
       <Modal visible={!!boostJob2} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={styles.modalSafe}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>🚀 Top ga chiqazish</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="rocket-outline" size={20} color={Colors.text} />
+              <Text style={styles.modalTitle}>Top ga chiqazish</Text>
+            </View>
             <TouchableOpacity onPress={() => setBoostJob2(null)}>
               <Ionicons name="close" size={24} color={Colors.text} />
             </TouchableOpacity>

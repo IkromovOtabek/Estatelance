@@ -162,7 +162,7 @@ export default function MessagesScreen() {
                       style={[styles.chatMsg, item.isUnread && styles.chatMsgBold]}
                       numberOfLines={1}
                     >
-                      {item.iMine ? '✓ ' : ''}{item.lastMessageText}
+                      {item.lastMessageText}
                     </Text>
                     {item.isUnread && (
                       <View style={styles.badge}>

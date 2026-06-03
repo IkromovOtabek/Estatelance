@@ -13,15 +13,15 @@ import { Colors } from '../../constants/colors';
 import { Job } from '../../types';
 
 const CATEGORIES = [
-  { value: '',             label: 'Hammasi' },
-  { value: 'PHOTOGRAPHY',  label: '📸 Foto' },
-  { value: 'RENDERING',    label: '🏠 3D' },
-  { value: 'LEGAL',        label: '⚖️ Yuridik' },
-  { value: 'REPAIR',       label: '🔧 Ta\'mirlash' },
-  { value: 'CLEANING',     label: '🧹 Tozalash' },
-  { value: 'DESIGN',       label: '🎨 Dizayn' },
-  { value: 'VALUATION',    label: '📊 Baholash' },
-];
+  { value: '',             label: 'Hammasi',     icon: 'apps-outline' },
+  { value: 'PHOTOGRAPHY',  label: 'Foto',        icon: 'camera-outline' },
+  { value: 'RENDERING',    label: '3D',          icon: 'cube-outline' },
+  { value: 'LEGAL',        label: 'Yuridik',     icon: 'document-text-outline' },
+  { value: 'REPAIR',       label: "Ta'mirlash",  icon: 'construct-outline' },
+  { value: 'CLEANING',     label: 'Tozalash',    icon: 'sparkles-outline' },
+  { value: 'DESIGN',       label: 'Dizayn',      icon: 'color-palette-outline' },
+  { value: 'VALUATION',    label: 'Baholash',    icon: 'bar-chart-outline' },
+] as const;
 
 export default function JobsScreen() {
   const [search, setSearch]     = useState('');
@@ -88,9 +88,16 @@ export default function JobsScreen() {
             style={[styles.catBtn, category === item.value && styles.catBtnActive]}
             onPress={() => setCategory(item.value)}
           >
-            <Text style={[styles.catText, category === item.value && styles.catTextActive]}>
-              {item.label}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Ionicons
+                name={item.icon as any}
+                size={13}
+                color={category === item.value ? 'white' : Colors.textSub}
+              />
+              <Text style={[styles.catText, category === item.value && styles.catTextActive]}>
+                {item.label}
+              </Text>
+            </View>
           </TouchableOpacity>
         )}
       />

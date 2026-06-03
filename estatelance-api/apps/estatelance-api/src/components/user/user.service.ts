@@ -30,13 +30,17 @@ export class UserService {
     const hashedPassword = await this.authService.hashPassword(input.password);
 
     const newUser = await this.userModel.create({
-      username: input.username.toLowerCase(),
-      password: hashedPassword,
-      userType: input.userType,
-      fullName: input.fullName ?? input.username,
-      location: input.location ?? 'Toshkent, UZ',
-      ...(input.profileImage?.trim() ? { profileImage: input.profileImage.trim() } : {}),
+      username:    input.username.toLowerCase(),
+      password:    hashedPassword,
+      userType:    input.userType,
+      fullName:    input.fullName ?? input.username,
+      location:    input.location ?? 'Toshkent, UZ',
       authProvider: AuthProvider.EMAIL,
+      ...(input.profileImage?.trim() ? { profileImage:  input.profileImage.trim()  } : {}),
+      ...(input.phoneNumber?.trim()  ? { phoneNumber:   input.phoneNumber.trim()   } : {}),
+      ...(input.bio?.trim()          ? { bio:           input.bio.trim()           } : {}),
+      ...(input.skills?.length       ? { skills:        input.skills               } : {}),
+      ...(input.resumeUrl?.trim()    ? { resumeUrl:     input.resumeUrl.trim()     } : {}),
     });
 
     // Attach the JWT token to the response

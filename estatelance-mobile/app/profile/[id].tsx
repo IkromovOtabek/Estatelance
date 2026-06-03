@@ -13,10 +13,10 @@ import { Colors } from '../../constants/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { User } from '../../types';
 
-const AVAIL_LABEL: Record<string, string> = {
-  AVAILABLE:    '✅ Band emas',
-  BUSY:         '🔴 Band',
-  OPEN_TO_WORK: '👀 Ish izlayapman',
+const AVAIL_OPTS: Record<string, { label: string; icon: string; color: string }> = {
+  AVAILABLE:    { label: 'Band emas',      icon: 'checkmark-circle-outline', color: '#16a34a' },
+  BUSY:         { label: 'Band',           icon: 'close-circle-outline',     color: '#dc2626' },
+  OPEN_TO_WORK: { label: 'Ish izlayapman', icon: 'eye-outline',              color: '#0891b2' },
 };
 
 export default function UserProfileScreen() {
@@ -122,8 +122,13 @@ export default function UserProfileScreen() {
           {user.freelancerCategory && <Text style={styles.userTitle}>{user.freelancerCategory}</Text>}
 
           <View style={[styles.typeBadge, user.userType === 'AGENT' ? styles.agentBadge : styles.freelancerBadge]}>
+            <Ionicons
+              name={user.userType === 'AGENT' ? 'business-outline' : 'briefcase-outline'}
+              size={13}
+              color={user.userType === 'AGENT' ? '#0891b2' : '#7c3aed'}
+            />
             <Text style={[styles.typeText, { color: user.userType === 'AGENT' ? '#0891b2' : '#7c3aed' }]}>
-              {user.userType === 'AGENT' ? '🏢 Mijoz' : '💼 Frilanser'}
+              {user.userType === 'AGENT' ? 'Mijoz' : 'Frilanser'}
             </Text>
           </View>
 
@@ -200,9 +205,15 @@ export default function UserProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Band holati</Text>
           <View style={styles.availChip}>
-            <Text style={styles.availText}>
-              {AVAIL_LABEL[user.availability ?? ''] ?? '—'}
-            </Text>
+            {(() => {
+              const opt = AVAIL_OPTS[user.availability ?? ''];
+              return opt ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name={opt.icon as any} size={14} color={opt.color} />
+                  <Text style={[styles.availText, { color: opt.color }]}>{opt.label}</Text>
+                </View>
+              ) : <Text style={styles.availText}>—</Text>;
+            })()}
           </View>
         </View>
 
@@ -227,7 +238,7 @@ const styles = StyleSheet.create({
   name:             { fontSize: 21, fontWeight: '900', color: Colors.text },
   username:         { fontSize: 13, color: Colors.textSub, marginTop: 2 },
   userTitle:        { fontSize: 13, color: Colors.textSub, marginTop: 4 },
-  typeBadge:        { marginTop: 10, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20 },
+  typeBadge:        { marginTop: 10, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 5 },
   agentBadge:       { backgroundColor: '#e0f2fe' },
   freelancerBadge:  { backgroundColor: '#f5f3ff' },
   typeText:         { fontSize: 13, fontWeight: '700' },

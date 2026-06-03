@@ -35,7 +35,7 @@ export const SIGNUP = gql`
   mutation Signup($input: SignupInput!) {
     signup(input: $input) {
       _id username fullName userType userStatus
-      profileImage accessToken
+      profileImage accessToken needsOnboarding
     }
   }
 `;

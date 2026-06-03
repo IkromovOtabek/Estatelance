@@ -99,7 +99,10 @@ export default function JobDetailScreen() {
           </View>
 
           <Text style={styles.title}>{job.title}</Text>
-          <Text style={styles.agentName}>👤 {job.agentName}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 }}>
+            <Ionicons name="person-outline" size={14} color={Colors.textSub} />
+            <Text style={styles.agentName}>{job.agentName}</Text>
+          </View>
 
           {/* Description */}
           <View style={styles.section}>
@@ -111,14 +114,17 @@ export default function JobDetailScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Tafsilotlar</Text>
             {[
-              job.location       && { label: '📍 Joylashuv',    value: job.location },
-              job.experienceLevel && { label: '⚡ Tajriba',       value: job.experienceLevel },
-              job.jobType        && { label: '💼 Ish turi',       value: job.jobType },
-              job.workSchedule   && { label: '🕐 Jadval',         value: job.workSchedule },
-              job.salaryFrom     && { label: '💰 Maosh',          value: `$${job.salaryFrom}–$${job.salaryTo ?? '?'}` },
+              job.location        && { icon: 'location-outline',   label: 'Joylashuv',  value: job.location },
+              job.experienceLevel && { icon: 'flash-outline',       label: 'Tajriba',    value: job.experienceLevel },
+              job.jobType         && { icon: 'briefcase-outline',   label: 'Ish turi',   value: job.jobType },
+              job.workSchedule    && { icon: 'time-outline',        label: 'Jadval',     value: job.workSchedule },
+              job.salaryFrom      && { icon: 'cash-outline',        label: 'Maosh',      value: `$${job.salaryFrom}–$${job.salaryTo ?? '?'}` },
             ].filter(Boolean).map((d: any) => (
               <View key={d.label} style={styles.detailRow}>
-                <Text style={styles.detailLabel}>{d.label}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  <Ionicons name={d.icon} size={13} color={Colors.textSub} />
+                  <Text style={styles.detailLabel}>{d.label}</Text>
+                </View>
                 <Text style={styles.detailValue}>{d.value}</Text>
               </View>
             ))}
@@ -154,12 +160,14 @@ export default function JobDetailScreen() {
                       style={styles.acceptBtn}
                       onPress={() => handleAccept(bid._id, bid.freelancerName)}
                     >
-                      <Text style={styles.acceptBtnText}>✅ Yollash</Text>
+                      <Ionicons name="checkmark-circle-outline" size={15} color="white" />
+                      <Text style={styles.acceptBtnText}>Yollash</Text>
                     </TouchableOpacity>
                   )}
                   {bid.status === 'ACCEPTED' && (
                     <View style={styles.acceptedBadge}>
-                      <Text style={styles.acceptedText}>✅ Yollangan</Text>
+                      <Ionicons name="checkmark-circle" size={15} color="#16a34a" />
+                      <Text style={styles.acceptedText}>Yollangan</Text>
                     </View>
                   )}
                 </View>
@@ -248,9 +256,9 @@ const styles = StyleSheet.create({
   bidName:       { fontSize: 14, fontWeight: '700', color: Colors.text },
   bidAmount:     { fontSize: 16, fontWeight: '900', color: Colors.green },
   bidCover:      { fontSize: 13, color: Colors.textSub, lineHeight: 18 },
-  acceptBtn:     { marginTop: 10, backgroundColor: Colors.primary, borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
+  acceptBtn:     { marginTop: 10, backgroundColor: Colors.primary, borderRadius: 8, paddingVertical: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
   acceptBtnText: { color: 'white', fontWeight: '700', fontSize: 14 },
-  acceptedBadge: { marginTop: 8, backgroundColor: '#dcfce7', borderRadius: 8, paddingVertical: 6, alignItems: 'center' },
+  acceptedBadge: { marginTop: 8, backgroundColor: '#dcfce7', borderRadius: 8, paddingVertical: 6, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 5 },
   acceptedText:  { color: Colors.green, fontWeight: '700', fontSize: 13 },
   footer:        { padding: 16, backgroundColor: Colors.white, borderTopWidth: 1, borderTopColor: Colors.border },
   bidBtn:        { backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },

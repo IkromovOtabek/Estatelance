@@ -7,6 +7,7 @@ import {
 import { router } from 'expo-router';
 import { useMutation, useApolloClient } from '@apollo/client';
 import { Ionicons } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import { Colors } from '../../constants/colors';
@@ -14,215 +15,201 @@ import { useAuth } from '../../hooks/useAuth';
 import { LOGIN, CREATE_TELEGRAM_AUTH_TOKEN, CREATE_GOOGLE_AUTH_TOKEN } from '../../apollo/mutations';
 import { CHECK_TELEGRAM_AUTH_TOKEN, CHECK_GOOGLE_AUTH_TOKEN, GET_ME } from '../../apollo/queries';
 
-const POLL_INTERVAL_MS = 2000;
-const POLL_TIMEOUT_MS  = 120000;
-const TG_USER_KEY      = 'lastTgUser';
+const POLL_MS    = 2000;
+const TIMEOUT_MS = 120000;
+const TG_KEY     = 'lastTgUser';
+const G_KEY      = 'lastGoogleUser';
+const REM_KEY    = 'rememberedToken';
 
-interface SavedTgUser { name: string; photo?: string; }
+interface SavedUser { name: string; photo?: string; provider: 'telegram' | 'google'; }
 
 export default function LoginScreen() {
   const { login } = useAuth();
   const client    = useApolloClient();
 
-  const [username, setUsername]           = useState('');
-  const [password, setPassword]           = useState('');
-  const [tgLoading, setTgLoading]         = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [waitingFor, setWaitingFor]       = useState<'idle' | 'telegram' | 'google'>('idle');
-  const [savedTg, setSavedTg]             = useState<SavedTgUser | null>(null);
+  const [username, setUsername]       = useState('');
+  const [password, setPassword]       = useState('');
+  const [showPass, setShowPass]       = useState(false);
+  const [tgLoading, setTgLoading]     = useState(false);
+  const [gLoading, setGLoading]       = useState(false);
+  const [waitFor, setWaitFor]         = useState<'idle'|'telegram'|'google'>('idle');
+  const [savedTg, setSavedTg]         = useState<SavedUser | null>(null);
+  const [savedG, setSavedG]           = useState<SavedUser | null>(null);
 
-  const pollRef    = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollRef  = useRef<ReturnType<typeof setInterval>|null>(null);
+  const toutRef  = useRef<ReturnType<typeof setTimeout>|null>(null);
 
-  const [loginMutation, { loading }] = useMutation(LOGIN);
-  const [createToken]                = useMutation(CREATE_TELEGRAM_AUTH_TOKEN);
-  const [createGoogleToken]          = useMutation(CREATE_GOOGLE_AUTH_TOKEN);
+  const [loginMut, { loading }]  = useMutation(LOGIN);
+  const [createTgToken]          = useMutation(CREATE_TELEGRAM_AUTH_TOKEN);
+  const [createGToken]           = useMutation(CREATE_GOOGLE_AUTH_TOKEN);
 
   useEffect(() => {
-    AsyncStorage.getItem(TG_USER_KEY).then(val => {
-      if (val) setSavedTg(JSON.parse(val));
-    });
-    return () => stopPolling();
+    AsyncStorage.getItem(TG_KEY).then(v => { if (v) setSavedTg(JSON.parse(v)); });
+    AsyncStorage.getItem(G_KEY).then(v  => { if (v) setSavedG(JSON.parse(v));  });
+    return stopPoll;
   }, []);
 
-  const stopPolling = () => {
-    if (pollRef.current)    clearInterval(pollRef.current);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    pollRef.current = null; timeoutRef.current = null;
+  const stopPoll = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    if (toutRef.current) clearTimeout(toutRef.current);
+    pollRef.current = null; toutRef.current = null;
   };
 
-  const saveAndLogin = async (user: any, waitType: 'telegram' | 'google') => {
-    stopPolling();
-    setWaitingFor('idle');
-    await AsyncStorage.setItem(TG_USER_KEY, JSON.stringify({
-      name:  user.fullName ?? user.username,
-      photo: user.profileImage ?? null,
-    }));
+  const finishLogin = async (user: any) => {
+    stopPoll();
+    setWaitFor('idle');
+    setTgLoading(false);
+    setGLoading(false);
     await login(user);
     if (user.needsOnboarding) router.replace('/(auth)/onboarding');
     else router.replace('/(tabs)');
   };
 
-  // ─── Tez kirish (saqlangan token) ────────────────────────────────────────
-  const handleQuickLogin = async () => {
-    setTgLoading(true);
+  // ─── Tez kirish (saqlangan token) ─────────────────────────────────────────
+  const quickLogin = async (provider: 'telegram'|'google') => {
+    provider === 'telegram' ? setTgLoading(true) : setGLoading(true);
     try {
-      const token = await AsyncStorage.getItem('rememberedToken');
-      if (!token) { setTgLoading(false); handleTelegramAuth(); return; }
+      const token = await AsyncStorage.getItem(REM_KEY);
+      if (!token) {
+        provider === 'telegram' ? setTgLoading(false) : setGLoading(false);
+        provider === 'telegram' ? handleTg() : handleGoogle();
+        return;
+      }
       const { data } = await client.query({
         query: GET_ME, fetchPolicy: 'network-only',
         context: { headers: { authorization: `Bearer ${token}` } },
       });
       if (data?.getMyProfile) {
         await AsyncStorage.setItem('accessToken', token);
-        await login({ ...data.getMyProfile, accessToken: token });
-        setTgLoading(false);
-        router.replace('/(tabs)');
+        await finishLogin({ ...data.getMyProfile, accessToken: token });
       } else {
-        setTgLoading(false);
-        handleTelegramAuth();
+        provider === 'telegram' ? setTgLoading(false) : setGLoading(false);
+        provider === 'telegram' ? handleTg() : handleGoogle();
       }
     } catch {
-      setTgLoading(false);
-      handleTelegramAuth();
+      provider === 'telegram' ? setTgLoading(false) : setGLoading(false);
+      provider === 'telegram' ? handleTg() : handleGoogle();
     }
   };
 
-  // ─── Google Auth ──────────────────────────────────────────────────────────
-  const handleGoogleAuth = async () => {
-    setGoogleLoading(true);
-    try {
-      // 1. Token yaratamiz
-      const { data } = await createGoogleToken();
-      const token: string = data.createGoogleAuthToken;
-
-      // 2. Mobile-init: state bilan Google URL olamiz
-      const initRes = await fetch(
-        `https://api.bufu.uz/auth/google/mobile-url?mob=${token}`
-      );
-      const { url } = await initRes.json();
-
-      setGoogleLoading(false);
-      setWaitingFor('google');
-      startPoll(token, 'google');
-
-      // 3. Ilova ichida Google oynasi
-      await WebBrowser.openAuthSessionAsync(url, 'bufu://');
-    } catch (e: any) {
-      setGoogleLoading(false);
-      setWaitingFor('idle');
-      stopPolling();
-      Alert.alert('Xato', e?.message ?? 'Google kirish xatosi');
-    }
-  };
-
-  // ─── Telegram Auth ────────────────────────────────────────────────────────
-  const handleTelegramAuth = async () => {
+  // ─── Telegram ─────────────────────────────────────────────────────────────
+  const handleTg = async () => {
     setTgLoading(true);
     try {
-      const { data } = await createToken();
+      const { data } = await createTgToken();
       const token: string = data.createTelegramAuthToken;
       await Linking.openURL(`https://t.me/buildfuture_bot?start=tgauth_${token}`);
-      setWaitingFor('telegram');
       setTgLoading(false);
-      startPoll(token, 'telegram');
+      setWaitFor('telegram');
+      poll(token, 'telegram');
     } catch (e: any) {
       setTgLoading(false);
-      Alert.alert('Xato', e?.message ?? 'Token yaratishda xato');
+      Alert.alert('Xato', e?.message ?? 'Telegram xato');
     }
   };
 
-  // ─── Polling (Telegram va Google uchun umumiy) ────────────────────────────
-  const startPoll = (token: string, type: 'telegram' | 'google') => {
-    stopPolling();
+  // ─── Google ───────────────────────────────────────────────────────────────
+  const handleGoogle = async () => {
+    setGLoading(true);
+    try {
+      const { data } = await createGToken();
+      const token: string = data.createGoogleAuthToken;
+      const res  = await fetch(`https://api.bufu.uz/auth/google/mobile-url?mob=${token}`);
+      const json = await res.json();
+      setGLoading(false);
+      setWaitFor('google');
+      poll(token, 'google');
+      await WebBrowser.openAuthSessionAsync(json.url, 'bufu://');
+    } catch (e: any) {
+      setGLoading(false);
+      setWaitFor('idle');
+      stopPoll();
+      Alert.alert('Xato', e?.message ?? 'Google xato');
+    }
+  };
 
-    const query     = type === 'google' ? CHECK_GOOGLE_AUTH_TOKEN : CHECK_TELEGRAM_AUTH_TOKEN;
-    const dataKey   = type === 'google' ? 'checkGoogleAuthToken' : 'checkTelegramAuthToken';
+  // ─── Polling ──────────────────────────────────────────────────────────────
+  const poll = (token: string, type: 'telegram'|'google') => {
+    stopPoll();
+    const query   = type === 'google' ? CHECK_GOOGLE_AUTH_TOKEN : CHECK_TELEGRAM_AUTH_TOKEN;
+    const dataKey = type === 'google' ? 'checkGoogleAuthToken'  : 'checkTelegramAuthToken';
 
     pollRef.current = setInterval(async () => {
       try {
-        const { data } = await client.query({
-          query, variables: { token }, fetchPolicy: 'network-only',
-        });
+        const { data } = await client.query({ query, variables: { token }, fetchPolicy: 'network-only' });
         const user = data?.[dataKey];
-        if (user?.accessToken) await saveAndLogin(user, type);
-      } catch { /* davom etadi */ }
-    }, POLL_INTERVAL_MS);
+        if (user?.accessToken) {
+          // Keyingi tez kirish uchun saqlash
+          const saved: SavedUser = {
+            name:     user.fullName ?? user.username,
+            photo:    user.profileImage ?? null,
+            provider: type,
+          };
+          if (type === 'telegram') {
+            await AsyncStorage.setItem(TG_KEY, JSON.stringify(saved));
+            setSavedTg(saved);
+          } else {
+            await AsyncStorage.setItem(G_KEY, JSON.stringify(saved));
+            setSavedG(saved);
+          }
+          await finishLogin(user);
+        }
+      } catch {}
+    }, POLL_MS);
 
-    timeoutRef.current = setTimeout(() => {
-      stopPolling();
-      setWaitingFor('idle');
+    toutRef.current = setTimeout(() => {
+      stopPoll(); setWaitFor('idle');
       Alert.alert('Vaqt tugadi', `${type === 'google' ? 'Google' : 'Telegram'} orqali kirish amalga oshmadi.`);
-    }, POLL_TIMEOUT_MS);
+    }, TIMEOUT_MS);
   };
 
-  const cancelWaiting = () => { stopPolling(); setWaitingFor('idle'); };
-
-  // ─── Login ────────────────────────────────────────────────────────────────
+  // ─── Username/password ────────────────────────────────────────────────────
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
       Alert.alert('Xato', 'Username va parolni kiriting'); return;
     }
     try {
-      const { data } = await loginMutation({
-        variables: { input: { username: username.trim(), password } },
-      });
+      const { data } = await loginMut({ variables: { input: { username: username.trim(), password } } });
       await login(data.login);
       router.replace('/(tabs)');
     } catch (err: any) {
-      Alert.alert('Kirish xatosi', err?.graphQLErrors?.[0]?.message ?? 'Xato yuz berdi');
+      Alert.alert('Xato', err?.graphQLErrors?.[0]?.message ?? 'Xato yuz berdi');
     }
-  };
-
-  // ─── Telegram tugmasi ─────────────────────────────────────────────────────
-  const renderTelegramButton = () => {
-    if (tgLoading) return (
-      <TouchableOpacity style={styles.tgBtn} disabled>
-        <ActivityIndicator color="white" size="small" />
-        <Text style={styles.tgBtnText}>Yuklanmoqda...</Text>
-      </TouchableOpacity>
-    );
-
-    if (savedTg) {
-      const initials = savedTg.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
-      return (
-        <>
-          <TouchableOpacity style={styles.tgBtnPersonal} onPress={handleQuickLogin} activeOpacity={0.85}>
-            <View style={styles.tgAvatar}>
-              {savedTg.photo
-                ? <Image source={{ uri: savedTg.photo }} style={styles.tgAvatarImg} />
-                : <View style={styles.tgAvatarFallback}><Text style={styles.tgAvatarText}>{initials}</Text></View>
-              }
-            </View>
-            <Text style={styles.tgBtnPersonalText}>
-              Kirish: <Text style={{ fontWeight: '900' }}>{savedTg.name.split(' ')[0]}</Text>
-            </Text>
-            <Ionicons name="paper-plane" size={18} color="white" style={{ marginLeft: 'auto' }} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.tgOtherBtn} onPress={() => {
-            setSavedTg(null);
-            AsyncStorage.removeItem(TG_USER_KEY);
-            handleTelegramAuth();
-          }}>
-            <Text style={styles.tgOtherText}>Boshqa Telegram akkaunt</Text>
-          </TouchableOpacity>
-        </>
-      );
-    }
-
-    return (
-      <TouchableOpacity style={styles.tgBtn} onPress={handleTelegramAuth} activeOpacity={0.85}>
-        <Ionicons name="paper-plane" size={20} color="white" />
-        <Text style={styles.tgBtnText}>Telegram orqali kirish</Text>
-      </TouchableOpacity>
-    );
   };
 
   // ─── UI ───────────────────────────────────────────────────────────────────
+  const isAnyLoading = tgLoading || gLoading || loading;
+
+  if (waitFor !== 'idle') {
+    return (
+      <View style={styles.waitScreen}>
+        <ActivityIndicator color={waitFor === 'google' ? '#4285F4' : '#0088cc'} size="large" />
+        <View style={styles.waitIconRow}>
+          {waitFor === 'google'
+            ? <AntDesign name="google" size={36} color="#4285F4" />
+            : <Ionicons name="paper-plane" size={28} color="#0088cc" />
+          }
+        </View>
+        <Text style={styles.waitTitle}>
+          {waitFor === 'google' ? 'Google kutilmoqda...' : 'Telegram kutilmoqda...'}
+        </Text>
+        <Text style={styles.waitDesc}>
+          {waitFor === 'google'
+            ? 'Google hisobingizga kirish yakunlangach ilova avtomatik davom etadi'
+            : '@buildfuture_bot da "BuFu ga kirish" tugmasini bosing'}
+        </Text>
+        <TouchableOpacity style={styles.cancelBtn} onPress={() => { stopPoll(); setWaitFor('idle'); }}>
+          <Text style={styles.cancelText}>Bekor qilish</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
 
+        {/* Logo */}
         <View style={styles.logoBox}>
           <Image source={require('../../assets/bufu-logo.png')} style={styles.logo} resizeMode="cover" />
           <Text style={styles.appName}>BuFu</Text>
@@ -230,122 +217,206 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.title}>Kirish</Text>
+          <Text style={styles.cardTitle}>Kirish</Text>
 
-          {waitingFor !== 'idle' ? (
-            <View style={styles.waitBox}>
-              <ActivityIndicator
-                color={waitingFor === 'google' ? '#4285F4' : '#0088cc'}
-                size="large" style={{ marginBottom: 16 }}
-              />
-              <Text style={styles.waitTitle}>
-                {waitingFor === 'google' ? 'Google ni kutmoqda...' : 'Telegramni kutmoqda...'}
-              </Text>
-              <Text style={styles.waitDesc}>
-                {waitingFor === 'google'
-                  ? 'Google hisobingizga kirgandan so\'ng ilova avtomatik davom etadi'
-                  : '@buildfuture_bot da "📱 BuFu ga kirish" tugmasini bosing'}
-              </Text>
-              <TouchableOpacity style={styles.cancelBtn} onPress={cancelWaiting}>
-                <Text style={styles.cancelText}>Bekor qilish</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <>
-              {renderTelegramButton()}
+          {/* ── Username / Parol ── */}
+          <Text style={styles.label}>Username</Text>
+          <TextInput
+            style={styles.input} placeholder="username"
+            placeholderTextColor={Colors.textMuted}
+            value={username} onChangeText={setUsername}
+            autoCapitalize="none" autoCorrect={false}
+          />
+          <Text style={styles.label}>Parol</Text>
+          <View style={styles.passWrap}>
+            <TextInput
+              style={styles.passInput} placeholder="••••••••"
+              placeholderTextColor={Colors.textMuted}
+              value={password} onChangeText={setPassword}
+              secureTextEntry={!showPass}
+            />
+            <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPass(v => !v)}>
+              <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={20} color={Colors.textMuted} />
+            </TouchableOpacity>
+          </View>
 
-              <TouchableOpacity
-                style={[styles.googleBtn, googleLoading && { opacity: 0.7 }]}
-                onPress={handleGoogleAuth}
-                disabled={googleLoading || tgLoading || loading}
-                activeOpacity={0.85}
-              >
-                {googleLoading
-                  ? <ActivityIndicator size="small" color="#4285F4" />
-                  : <View style={styles.googleIcon}><Text style={styles.googleIconText}>G</Text></View>
-                }
-                <Text style={styles.googleBtnText}>
-                  {googleLoading ? 'Yuklanmoqda...' : 'Google orqali kirish'}
-                </Text>
-              </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.loginBtn, loading && { opacity: 0.7 }]}
+            onPress={handleLogin} disabled={loading}
+          >
+            {loading ? <ActivityIndicator color="white" /> : <Text style={styles.loginBtnText}>Kirish</Text>}
+          </TouchableOpacity>
 
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>yoki</Text>
-                <View style={styles.dividerLine} />
-              </View>
+          <TouchableOpacity style={styles.regLink} onPress={() => router.push('/(auth)/register')}>
+            <Text style={styles.regLinkText}>
+              Akkount yo'qmi? <Text style={{ color: Colors.primary, fontWeight: '700' }}>Ro'yxatdan o'tish</Text>
+            </Text>
+          </TouchableOpacity>
 
-              <Text style={styles.label}>Username</Text>
-              <TextInput
-                style={styles.input} placeholder="username"
-                placeholderTextColor={Colors.textMuted}
-                value={username} onChangeText={setUsername}
-                autoCapitalize="none" autoCorrect={false}
-              />
+          {/* ── Divider ── */}
+          <View style={styles.divider}>
+            <View style={styles.divLine} />
+            <Text style={styles.divText}>yoki</Text>
+            <View style={styles.divLine} />
+          </View>
 
-              <Text style={styles.label}>Parol</Text>
-              <TextInput
-                style={styles.input} placeholder="••••••••"
-                placeholderTextColor={Colors.textMuted}
-                value={password} onChangeText={setPassword}
-                secureTextEntry
-              />
-
-              <TouchableOpacity
-                style={[styles.btn, loading && { opacity: 0.7 }]}
-                onPress={handleLogin} disabled={loading}
-              >
-                {loading ? <ActivityIndicator color="white" /> : <Text style={styles.btnText}>Kirish</Text>}
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.link} onPress={() => router.push('/(auth)/register')}>
-                <Text style={styles.linkText}>
-                  Akkount yo'qmi?{' '}
-                  <Text style={{ color: Colors.primary, fontWeight: '700' }}>Ro'yxatdan o'tish</Text>
-                </Text>
-              </TouchableOpacity>
-            </>
+          {/* ── Saqlangan akkauntlar ── */}
+          {savedTg && (
+            <SavedAccountBtn
+              user={savedTg} loading={tgLoading}
+              onPress={() => quickLogin('telegram')}
+              onRemove={() => { setSavedTg(null); AsyncStorage.removeItem(TG_KEY); }}
+            />
           )}
+          {savedG && (
+            <SavedAccountBtn
+              user={savedG} loading={gLoading}
+              onPress={() => quickLogin('google')}
+              onRemove={() => { setSavedG(null); AsyncStorage.removeItem(G_KEY); }}
+            />
+          )}
+
+          {/* ── Telegram + Google tugmalari ── */}
+          <View style={styles.socialRow}>
+            {!savedTg && (
+              <TouchableOpacity
+                style={[styles.socialBtn, styles.tgSocialBtn, isAnyLoading && { opacity: 0.6 }]}
+                onPress={handleTg} disabled={isAnyLoading} activeOpacity={0.8}
+              >
+                {tgLoading
+                  ? <ActivityIndicator color="white" size="small" />
+                  : <Ionicons name="paper-plane" size={17} color="white" />
+                }
+                <Text style={styles.tgSocialText}>Telegram</Text>
+              </TouchableOpacity>
+            )}
+            {!savedG && (
+              <TouchableOpacity
+                style={[styles.socialBtn, styles.gSocialBtn, isAnyLoading && { opacity: 0.6 }]}
+                onPress={handleGoogle} disabled={isAnyLoading} activeOpacity={0.8}
+              >
+                {gLoading
+                  ? <ActivityIndicator color="#4285F4" size="small" />
+                  : <AntDesign name="google" size={17} color="#4285F4" />
+                }
+                <Text style={styles.gSocialText}>Google</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
+// ─── Saqlangan akkaunt tugmasi ─────────────────────────────────────────────
+function SavedAccountBtn({ user, loading, onPress, onRemove }: {
+  user: SavedUser; loading: boolean;
+  onPress: () => void; onRemove: () => void;
+}) {
+  const initials = user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const isTg  = user.provider === 'telegram';
+  const color = isTg ? '#0088cc' : '#4285F4';
+
+  return (
+    <TouchableOpacity style={[styles.savedBtn, { borderColor: color + '33' }]} onPress={onPress} activeOpacity={0.85}>
+      {/* Avatar */}
+      <View style={styles.savedAvatar}>
+        {user.photo
+          ? <Image source={{ uri: user.photo }} style={styles.savedAvatarImg} />
+          : <View style={[styles.savedAvatarFallback, { backgroundColor: color + '22' }]}>
+              <Text style={[styles.savedAvatarText, { color }]}>{initials}</Text>
+            </View>
+        }
+      </View>
+
+      {/* Info */}
+      <View style={{ flex: 1 }}>
+        <Text style={styles.savedName} numberOfLines={1}>{user.name}</Text>
+        <View style={styles.savedProviderRow}>
+          {isTg
+            ? <Ionicons name="paper-plane" size={12} color={color} />
+            : <AntDesign name="google" size={12} color={color} />
+          }
+          <Text style={[styles.savedProvider, { color }]}>
+            {isTg ? 'Telegram' : 'Google'} orqali kirish
+          </Text>
+        </View>
+      </View>
+
+      {/* Loading / Arrow */}
+      {loading
+        ? <ActivityIndicator size="small" color={color} />
+        : <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+      }
+
+      {/* Remove */}
+      <TouchableOpacity
+        style={styles.savedRemove}
+        onPress={(e) => { e.stopPropagation?.(); onRemove(); }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Ionicons name="close" size={14} color={Colors.textMuted} />
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
-  container:         { flexGrow: 1, backgroundColor: Colors.bg, padding: 20, justifyContent: 'center' },
-  logoBox:           { alignItems: 'center', marginBottom: 32 },
-  logo:              { width: 80, height: 80, borderRadius: 22, marginBottom: 12 },
-  appName:           { fontSize: 26, fontWeight: '900', color: Colors.text },
-  tagline:           { fontSize: 13, color: Colors.textSub, marginTop: 4 },
-  card:              { backgroundColor: Colors.white, borderRadius: 20, padding: 24, borderWidth: 1, borderColor: Colors.border },
-  title:             { fontSize: 22, fontWeight: '800', color: Colors.text, marginBottom: 16 },
-  tgBtn:             { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#0088cc', borderRadius: 12, paddingVertical: 14, marginBottom: 4 },
-  tgBtnText:         { color: 'white', fontWeight: '800', fontSize: 15 },
-  tgBtnPersonal:     { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#0088cc', borderRadius: 12, paddingVertical: 11, paddingHorizontal: 14, marginBottom: 8 },
-  tgBtnPersonalText: { color: 'white', fontSize: 15, flex: 1 },
-  tgAvatar:          { width: 36, height: 36 },
-  tgAvatarImg:       { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)' },
-  tgAvatarFallback:  { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' },
-  tgAvatarText:      { fontSize: 13, fontWeight: '800', color: 'white' },
-  tgOtherBtn:        { alignItems: 'center', paddingVertical: 6, marginBottom: 4 },
-  tgOtherText:       { fontSize: 12, color: '#0088cc', fontWeight: '600' },
-  googleBtn:         { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: Colors.white, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, marginTop: 8, borderWidth: 1.5, borderColor: Colors.border },
-  googleIcon:        { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#e2e8f0' },
-  googleIconText:    { fontSize: 16, fontWeight: '900', color: '#4285F4' },
-  googleBtnText:     { fontSize: 15, fontWeight: '700', color: Colors.text, flex: 1, textAlign: 'center' },
-  divider:           { flexDirection: 'row', alignItems: 'center', marginVertical: 14, gap: 10 },
-  dividerLine:       { flex: 1, height: 1, backgroundColor: Colors.border },
-  dividerText:       { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
-  label:             { fontSize: 13, fontWeight: '600', color: Colors.textSub, marginBottom: 6 },
-  input:             { borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: Colors.text, backgroundColor: Colors.bg, marginBottom: 14 },
-  btn:               { backgroundColor: Colors.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
-  btnText:           { color: 'white', fontWeight: '800', fontSize: 16 },
-  link:              { marginTop: 16, alignItems: 'center' },
-  linkText:          { fontSize: 14, color: Colors.textSub },
-  waitBox:           { alignItems: 'center', paddingVertical: 24 },
-  waitTitle:         { fontSize: 17, fontWeight: '800', color: Colors.text, marginBottom: 10 },
-  waitDesc:          { fontSize: 14, color: Colors.textSub, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
-  cancelBtn:         { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: Colors.border },
-  cancelText:        { fontSize: 14, color: Colors.textSub, fontWeight: '600' },
+  container:          { flexGrow: 1, backgroundColor: Colors.bg, padding: 20, justifyContent: 'center' },
+  logoBox:            { alignItems: 'center', marginBottom: 28 },
+  logo:               { width: 72, height: 72, borderRadius: 20, marginBottom: 10 },
+  appName:            { fontSize: 24, fontWeight: '900', color: Colors.text },
+  tagline:            { fontSize: 12, color: Colors.textSub, marginTop: 3 },
+  card:               { backgroundColor: Colors.white, borderRadius: 20, padding: 22, borderWidth: 1, borderColor: Colors.border },
+  cardTitle:          { fontSize: 20, fontWeight: '800', color: Colors.text, marginBottom: 16 },
+
+  // Saqlangan akkaunt
+  savedBtn:           { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, borderWidth: 1.5, padding: 12, marginBottom: 10, backgroundColor: Colors.bg, position: 'relative' },
+  savedAvatar:        { width: 44, height: 44 },
+  savedAvatarImg:     { width: 44, height: 44, borderRadius: 22 },
+  savedAvatarFallback:{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  savedAvatarText:    { fontSize: 16, fontWeight: '900' },
+  savedName:          { fontSize: 15, fontWeight: '700', color: Colors.text },
+  savedProviderRow:   { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  savedProvider:      { fontSize: 12, fontWeight: '600' },
+  gIconXs:            { fontSize: 12, fontWeight: '900' },
+  savedRemove:        { padding: 4, marginLeft: 4 },
+
+  // Yangi akkaunt tugmalari
+  socialRow:          { flexDirection: 'row', gap: 10, marginBottom: 4 },
+  socialBtn:          { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 12 },
+  tgSocialBtn:        { backgroundColor: '#0088cc' },
+  tgSocialText:       { color: 'white', fontWeight: '700', fontSize: 14 },
+  gSocialBtn:         { backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.border },
+  gSocialText:        { color: Colors.text, fontWeight: '700', fontSize: 14 },
+  gIcon:              { fontSize: 16, fontWeight: '900', color: '#4285F4' },
+
+  // Boshqa provider
+  otherRow:           { marginTop: 4, marginBottom: 4 },
+  otherBtn:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: Colors.border },
+  gIconSm:            { fontSize: 14, fontWeight: '900', color: '#4285F4' },
+  otherText:          { fontSize: 13, color: Colors.textSub, fontWeight: '600' },
+
+  divider:            { flexDirection: 'row', alignItems: 'center', marginVertical: 14, gap: 10 },
+  divLine:            { flex: 1, height: 1, backgroundColor: Colors.border },
+  divText:            { fontSize: 12, color: Colors.textMuted },
+  label:              { fontSize: 13, fontWeight: '600', color: Colors.textSub, marginBottom: 6 },
+  input:              { borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: Colors.text, backgroundColor: Colors.bg, marginBottom: 14 },
+  passWrap:           { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: Colors.border, borderRadius: 10, backgroundColor: Colors.white, marginBottom: 14, height: 48 },
+  passInput:          { flex: 1, paddingHorizontal: 14, fontSize: 15, color: Colors.text, height: 48 },
+  eyeBtn:             { paddingHorizontal: 12, height: 48, alignItems: 'center', justifyContent: 'center' },
+  loginBtn:           { backgroundColor: Colors.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
+  loginBtnText:       { color: 'white', fontWeight: '800', fontSize: 16 },
+  regLink:            { marginTop: 16, alignItems: 'center' },
+  regLinkText:        { fontSize: 14, color: Colors.textSub },
+
+  // Waiting ekrani
+  waitScreen:         { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg, padding: 40 },
+  waitIconRow:        { marginBottom: 16 },
+  waitGIcon:          { fontSize: 40, fontWeight: '900' },
+  waitTitle:          { fontSize: 20, fontWeight: '800', color: Colors.text, marginBottom: 12, textAlign: 'center' },
+  waitDesc:           { fontSize: 14, color: Colors.textSub, textAlign: 'center', lineHeight: 22, marginBottom: 28 },
+  cancelBtn:          { paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: Colors.border },
+  cancelText:         { fontSize: 14, color: Colors.textSub, fontWeight: '600' },
 });

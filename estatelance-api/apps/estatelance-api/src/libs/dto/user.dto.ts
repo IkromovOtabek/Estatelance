@@ -31,6 +31,22 @@ export class SignupInput {
   @IsOptional()
   @Field(() => String, { nullable: true })
   profileImage?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  phoneNumber?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  bio?: string;
+
+  @IsOptional()
+  @Field(() => [String], { nullable: true })
+  skills?: string[];
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  resumeUrl?: string;
 }
 
 // ─── Input: Log In with email/password ───────────────────────────────────────

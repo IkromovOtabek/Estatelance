@@ -15,7 +15,6 @@ const ROLES = [
   {
     type:  'AGENT',
     icon:  'business-outline' as const,
-    emoji: '🏢',
     title: 'Ish beruvchi',
     desc:  'Frilanserlarni topib, loyihalarim uchun mutaxassislar yollayman',
     color: '#0891b2',
@@ -25,7 +24,6 @@ const ROLES = [
   {
     type:  'FREELANCER',
     icon:  'briefcase-outline' as const,
-    emoji: '💼',
     title: 'Frilanser',
     desc:  'Ko\'nikmalarimni taklif qilib, turli loyihalarda ishlayman',
     color: '#7c3aed',
@@ -65,7 +63,7 @@ export default function OnboardingScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Image source={require('../../assets/bufu-logo.png')} style={styles.logo} resizeMode="cover" />
-          <Text style={styles.title}>Xush kelibsiz! 👋</Text>
+          <Text style={styles.title}>Xush kelibsiz!</Text>
           <Text style={styles.subtitle}>
             Siz kimlikda foydalanmoqchisiz?
           </Text>
@@ -95,7 +93,7 @@ export default function OnboardingScreen() {
 
                 {/* Icon */}
                 <View style={[styles.iconWrap, { backgroundColor: isSelected ? role.color : Colors.bg, borderColor: isSelected ? role.color : Colors.border }]}>
-                  <Text style={styles.emoji}>{role.emoji}</Text>
+                  <Ionicons name={role.icon} size={26} color={isSelected ? role.color : Colors.textSub} />
                 </View>
 
                 <Text style={[styles.roleTitle, isSelected && { color: role.color }]}>

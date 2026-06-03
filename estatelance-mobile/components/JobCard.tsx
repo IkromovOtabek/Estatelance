@@ -53,8 +53,12 @@ export default function JobCard({ job, onPress }: Props) {
         </View>
         {isBoosted && (
           <View style={[styles.badge, styles.boostBadge]}>
+            <Ionicons
+              name={job.boostPlan === 'VIP' ? 'star' : job.boostPlan === 'PRO' ? 'flash' : 'trending-up'}
+              size={11} color="#7c3aed"
+            />
             <Text style={[styles.badgeText, { color: '#7c3aed' }]}>
-              {job.boostPlan === 'VIP' ? '⭐ VIP' : job.boostPlan === 'PRO' ? '⚡ Pro' : '🔵 Top'}
+              {job.boostPlan === 'VIP' ? 'VIP' : job.boostPlan === 'PRO' ? 'Pro' : 'Top'}
             </Text>
           </View>
         )}
@@ -102,7 +106,7 @@ const styles = StyleSheet.create({
   topRow:      { flexDirection: 'row', alignItems: 'center', marginBottom: 6, gap: 5, flexWrap: 'wrap' },
   badge:       { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
   badgeText:   { fontSize: 10, fontWeight: '700' },
-  boostBadge:  { backgroundColor: '#f5f3ff' },
+  boostBadge:  { backgroundColor: '#f5f3ff', flexDirection: 'row', alignItems: 'center', gap: 3 },
   catBadge:    { backgroundColor: Colors.bg, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5, borderWidth: 1, borderColor: Colors.border },
   catText:     { fontSize: 10, color: Colors.textSub, fontWeight: '600' },
   time:        { fontSize: 10, color: Colors.textMuted, marginLeft: 'auto' },

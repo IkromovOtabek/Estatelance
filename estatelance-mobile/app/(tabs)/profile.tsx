@@ -13,9 +13,9 @@ import { UPDATE_PROFILE } from '../../apollo/mutations';
 import { GET_ME } from '../../apollo/queries';
 
 const AVAIL_OPTIONS = [
-  { value: 'AVAILABLE',    label: '✅ Band emas' },
-  { value: 'BUSY',         label: '🔴 Band' },
-  { value: 'OPEN_TO_WORK', label: '👀 Ish izlayapman' },
+  { value: 'AVAILABLE',    label: 'Band emas',      icon: 'checkmark-circle-outline',  color: '#16a34a' },
+  { value: 'BUSY',         label: 'Band',           icon: 'close-circle-outline',      color: '#dc2626' },
+  { value: 'OPEN_TO_WORK', label: 'Ish izlayapman', icon: 'eye-outline',               color: '#0891b2' },
 ];
 
 export default function ProfileScreen() {
@@ -81,8 +81,13 @@ export default function ProfileScreen() {
 
           {/* Type badge */}
           <View style={[styles.typeBadge, user?.userType === 'AGENT' ? styles.agentBadge : styles.freelancerBadge]}>
+            <Ionicons
+              name={user?.userType === 'AGENT' ? 'business-outline' : 'briefcase-outline'}
+              size={13}
+              color={user?.userType === 'AGENT' ? '#0891b2' : '#7c3aed'}
+            />
             <Text style={[styles.typeText, user?.userType === 'AGENT' ? { color: '#0891b2' } : { color: '#7c3aed' }]}>
-              {user?.userType === 'AGENT' ? '🏢 Mijoz' : '💼 Frilanser'}
+              {user?.userType === 'AGENT' ? 'Mijoz' : 'Frilanser'}
             </Text>
           </View>
         </View>
@@ -126,9 +131,15 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Holat</Text>
           <View style={styles.availChip}>
-            <Text style={styles.availText}>
-              {AVAIL_OPTIONS.find(o => o.value === profile?.availability)?.label ?? '—'}
-            </Text>
+            {(() => {
+              const opt = AVAIL_OPTIONS.find(o => o.value === profile?.availability);
+              return opt ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name={opt.icon as any} size={14} color={opt.color} />
+                  <Text style={[styles.availText, { color: opt.color }]}>{opt.label}</Text>
+                </View>
+              ) : <Text style={styles.availText}>—</Text>;
+            })()}
           </View>
         </View>
 
@@ -192,8 +203,11 @@ export default function ProfileScreen() {
                   style={[styles.radioBtn, eAvail === o.value && styles.radioBtnActive]}
                   onPress={() => setEAvail(o.value)}
                 >
-                  <Text style={[styles.radioText, eAvail === o.value && { color: Colors.primary }]}>{o.label}</Text>
-                  {eAvail === o.value && <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name={o.icon as any} size={15} color={eAvail === o.value ? o.color : Colors.textSub} />
+                    <Text style={[styles.radioText, eAvail === o.value && { color: o.color }]}>{o.label}</Text>
+                  </View>
+                  {eAvail === o.value && <Ionicons name="checkmark-circle" size={18} color={o.color} />}
                 </TouchableOpacity>
               ))}
             </View>
@@ -217,7 +231,7 @@ const styles = StyleSheet.create({
   name:            { fontSize: 22, fontWeight: '900', color: Colors.text },
   username:        { fontSize: 14, color: Colors.textSub, marginTop: 2 },
   userTitle:       { fontSize: 14, color: Colors.textSub, marginTop: 4 },
-  typeBadge:       { marginTop: 10, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20 },
+  typeBadge:       { marginTop: 10, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 5 },
   agentBadge:      { backgroundColor: '#e0f2fe' },
   freelancerBadge: { backgroundColor: '#f5f3ff' },
   typeText:        { fontSize: 13, fontWeight: '700' },
