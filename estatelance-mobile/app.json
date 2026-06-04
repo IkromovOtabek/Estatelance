@@ -14,7 +14,11 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "uz.bufu.app"
+      "bundleIdentifier": "uz.bufu.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Manzil tanlash uchun joylashuv ruxsati kerak.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Manzil tanlash uchun joylashuv ruxsati kerak."
+      }
     },
     "android": {
       "adaptiveIcon": {

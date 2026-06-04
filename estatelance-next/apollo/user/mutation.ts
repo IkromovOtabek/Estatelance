@@ -262,3 +262,73 @@ export const MARK_ALL_NOTIFICATIONS_READ = gql`
     markAllNotificationsRead
   }
 `;
+
+// ─── Job Review Mutations ─────────────────────────────────────────────────────
+
+export const LEAVE_REVIEW = gql`
+  mutation LeaveReview($input: LeaveReviewInput!) {
+    leaveReview(input: $input) {
+      _id
+      agentRating
+      agentReviewText
+      freelancerRating
+      freelancerReviewText
+      status
+    }
+  }
+`;
+
+export const REPEAT_HIRE = gql`
+  mutation RepeatHire($jobId: String!) {
+    repeatHire(jobId: $jobId) {
+      _id
+      title
+      status
+      createdAt
+    }
+  }
+`;
+
+export const DEPOSIT_ESCROW = gql`
+  mutation DepositEscrow($jobId: String!, $amount: Float!) {
+    depositEscrow(jobId: $jobId, amount: $amount) {
+      _id
+      escrowStatus
+      escrowAmount
+    }
+  }
+`;
+
+export const RELEASE_ESCROW = gql`
+  mutation ReleaseEscrow($jobId: String!) {
+    releaseEscrow(jobId: $jobId) {
+      _id
+      escrowStatus
+    }
+  }
+`;
+
+// ─── Dispute Mutations ────────────────────────────────────────────────────────
+
+export const CREATE_DISPUTE = gql`
+  mutation CreateDispute($input: CreateDisputeInput!) {
+    createDispute(input: $input) {
+      _id
+      jobId
+      jobTitle
+      status
+      createdAt
+    }
+  }
+`;
+
+export const RESOLVE_DISPUTE = gql`
+  mutation ResolveDispute($input: ResolveDisputeInput!) {
+    resolveDispute(input: $input) {
+      _id
+      status
+      decision
+      adminNote
+    }
+  }
+`;

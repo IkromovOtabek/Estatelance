@@ -1,5 +1,5 @@
 import { Field, Float, InputType, ObjectType } from '@nestjs/graphql';
-import { IsEnum, IsNotEmpty, IsOptional, Min } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, Min, Max } from 'class-validator';
 import { JobCategory, JobStatus, PropertyType } from '../enums/common.enums';
 import { PaginationInput, PaginationInfo } from '../types/common.types';
 import { Job } from '../../schemas/Job.model';
@@ -155,6 +155,44 @@ export class GetJobsInput extends PaginationInput {
   @IsOptional()
   @Field(() => String, { nullable: true })
   searchText?: string;
+
+  @IsOptional()
+  @Field(() => Float, { nullable: true })
+  budgetMin?: number;
+
+  @IsOptional()
+  @Field(() => Float, { nullable: true })
+  budgetMax?: number;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  experienceLevel?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  jobType?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  location?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  workFormat?: string;
+}
+
+@InputType()
+export class LeaveReviewInput {
+  @IsNotEmpty()
+  @Field(() => String)
+  jobId: string;
+
+  @Field(() => Float)
+  rating: number;
+
+  @IsNotEmpty()
+  @Field(() => String)
+  reviewText: string;
 }
 
 // ─── Response: Paginated job list ────────────────────────────────────────────

@@ -152,6 +152,26 @@ export class User extends Document {
 
   @Prop()
   @Field(() => String, { nullable: true })
+  githubUrl?: string;
+
+  @Prop()
+  @Field(() => String, { nullable: true })
+  behanceUrl?: string;
+
+  @Prop()
+  @Field(() => String, { nullable: true })
+  linkedinUrl?: string;
+
+  @Prop()
+  @Field(() => String, { nullable: true })
+  videoPortfolioUrl?: string;
+
+  @Prop({ type: [String], default: [] })
+  @Field(() => [String], { nullable: true })
+  verifiedSkills?: string[];
+
+  @Prop()
+  @Field(() => String, { nullable: true })
   phoneNumber?: string;
 
   // Spam / block reason (filled by admin when blocking a user)
@@ -197,3 +217,11 @@ export const UserSchema = SchemaFactory.createForClass(User);
 
 // Create a text index on username and bio for search
 UserSchema.index({ username: 'text', bio: 'text' });
+
+// Tez-tez ishlatiladigan filtr/sort/auth-lookup uchun indekslar
+UserSchema.index({ userType: 1, averageRating: -1 }); // getFreelancers (saralash)
+UserSchema.index({ userType: 1, freelancerCategory: 1 });
+UserSchema.index({ userStatus: 1 });
+UserSchema.index({ email: 1 });
+UserSchema.index({ googleId: 1 });
+UserSchema.index({ telegramId: 1 });

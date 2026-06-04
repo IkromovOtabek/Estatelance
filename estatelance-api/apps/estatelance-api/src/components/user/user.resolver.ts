@@ -1,5 +1,6 @@
 import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { UserService } from './user.service';
 import { User } from '../../schemas/User.model';
 import { ActiveUserGuard, AuthGuard, OptionalAuthGuard } from '../auth/auth.guard';
@@ -11,6 +12,7 @@ import {
   TelegramLoginInput,
   UpdateProfileInput,
   GetFreelancersInput,
+  FreelancerAnalytics,
 } from '../../libs/dto/user.dto';
 
 @Resolver()
@@ -21,12 +23,16 @@ export class UserResolver {
   ) {}
 
   // ─── Sign Up ───────────────────────────────────────────────────────────────
+  // Brute-force / spam himoyasi: daqiqasiga 10 ta
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Mutation(() => User)
   async signup(@Args('input') input: SignupInput): Promise<User> {
     return this.userService.signup(input);
   }
 
   // ─── Log In with username + password ──────────────────────────────────────
+  // Brute-force himoyasi: daqiqasiga 5 ta urinish
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Mutation(() => User)
   async login(@Args('input') input: LoginInput): Promise<User> {
     return this.userService.login(input);
@@ -137,5 +143,12 @@ export class UserResolver {
     @Args('targetUserId') targetUserId: string,
   ): Promise<boolean> {
     return this.userService.toggleFollow(currentUserId, targetUserId);
+  }
+
+  // ─── Freelancer Analytics ─────────────────────────────────────────────────
+  @UseGuards(AuthGuard)
+  @Query(() => FreelancerAnalytics)
+  async getMyAnalytics(@AuthUser('_id') userId: string): Promise<FreelancerAnalytics> {
+    return this.userService.getFreelancerAnalytics(userId);
   }
 }

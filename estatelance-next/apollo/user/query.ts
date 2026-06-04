@@ -35,6 +35,12 @@ export const GET_MY_PROFILE = gql`
         createdAt
       }
       availability
+      githubUrl
+      behanceUrl
+      linkedinUrl
+      videoPortfolioUrl
+      verifiedSkills
+      phoneNumber
     }
   }
 `;
@@ -97,6 +103,63 @@ export const GET_FREELANCERS = gql`
       completedJobCount
       skills
       availability
+      githubUrl
+      behanceUrl
+      linkedinUrl
+      videoPortfolioUrl
+      verifiedSkills
+    }
+  }
+`;
+
+export const GET_MY_ANALYTICS = gql`
+  query GetMyAnalytics {
+    getMyAnalytics {
+      totalBids
+      acceptedBids
+      completedJobs
+      totalEarned
+      averageRating
+      profileViews
+      followerCount
+    }
+  }
+`;
+
+export const GET_MY_DISPUTES = gql`
+  query GetMyDisputes {
+    getMyDisputes {
+      _id
+      jobId
+      jobTitle
+      filedById
+      filedByName
+      againstId
+      againstName
+      reason
+      status
+      decision
+      adminNote
+      createdAt
+    }
+  }
+`;
+
+export const GET_ALL_DISPUTES = gql`
+  query GetAllDisputes($status: String) {
+    getAllDisputes(status: $status) {
+      _id
+      jobId
+      jobTitle
+      filedById
+      filedByName
+      againstId
+      againstName
+      reason
+      status
+      decision
+      adminNote
+      createdAt
     }
   }
 `;

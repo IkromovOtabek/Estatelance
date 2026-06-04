@@ -1,12 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ObjectId } from 'mongoose';
+import { Model } from 'mongoose';
 import { User } from '../../schemas/User.model';
 import { Follow } from '../../schemas/Follow.model';
 import { ProfileView } from '../../schemas/ProfileView.model';
+import { Bid } from '../../schemas/Bid.model';
+import { Job } from '../../schemas/Job.model';
 import { AuthService, TelegramAuthData } from '../auth/auth.service';
-import { SignupInput, LoginInput, TelegramLoginInput, UpdateProfileInput, GetFreelancersInput } from '../../libs/dto/user.dto';
-import { AuthProvider, NotificationType, UserStatus, UserType } from '../../libs/enums/common.enums';
+import { SignupInput, LoginInput, TelegramLoginInput, UpdateProfileInput, GetFreelancersInput, FreelancerAnalytics } from '../../libs/dto/user.dto';
+import { AuthProvider, BidStatus, NotificationType, UserStatus, UserType } from '../../libs/enums/common.enums';
 import { DEFAULT_AVATAR_URL } from '../../libs/config';
 import { NotificationService } from '../notification/notification.service';
 
@@ -16,6 +18,8 @@ export class UserService {
     @InjectModel('User') private readonly userModel: Model<User>,
     @InjectModel('Follow') private readonly followModel: Model<Follow>,
     @InjectModel('ProfileView') private readonly profileViewModel: Model<ProfileView>,
+    @InjectModel('Bid') private readonly bidModel: Model<Bid>,
+    @InjectModel('Job') private readonly jobModel: Model<Job>,
     private readonly authService: AuthService,
     private readonly notificationService: NotificationService,
   ) {}
@@ -205,8 +209,15 @@ export class UserService {
   async getFreelancers(input: GetFreelancersInput): Promise<User[]> {
     const filter: any = { userType: UserType.FREELANCER, userStatus: UserStatus.ACTIVE };
 
-    if (input.category) {
-      filter.freelancerCategory = input.category;
+    if (input.category) filter.freelancerCategory = input.category;
+    if (input.availability) filter.availability = input.availability;
+    if (input.location) filter.location = { $regex: input.location, $options: 'i' };
+    if (input.minRating) filter.averageRating = { $gte: input.minRating };
+
+    if (input.hourlyRateMin !== undefined || input.hourlyRateMax !== undefined) {
+      filter.hourlyRate = {};
+      if (input.hourlyRateMin !== undefined) filter.hourlyRate.$gte = input.hourlyRateMin;
+      if (input.hourlyRateMax !== undefined) filter.hourlyRate.$lte = input.hourlyRateMax;
     }
 
     if (input.searchText) {
@@ -315,6 +326,31 @@ export class UserService {
 
     user.accessToken = await this.authService.createToken(user);
     return user;
+  }
+
+  // ─── Freelancer Analytics ─────────────────────────────────────────────────
+  async getFreelancerAnalytics(userId: string): Promise<FreelancerAnalytics> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
+
+    const [totalBids, acceptedBids, profileViews, completedJobs] = await Promise.all([
+      this.bidModel.countDocuments({ freelancerId: userId }),
+      this.bidModel.countDocuments({ freelancerId: userId, status: BidStatus.ACCEPTED }),
+      this.profileViewModel.countDocuments({ profileId: userId }),
+      this.jobModel.find({ hiredFreelancerId: userId, status: 'COMPLETED' }).select('agentRating escrowAmount'),
+    ]);
+
+    const totalEarned = completedJobs.reduce((sum, j) => sum + (j.escrowAmount ?? 0), 0);
+
+    return {
+      totalBids,
+      acceptedBids,
+      completedJobs: user.completedJobCount ?? 0,
+      totalEarned,
+      averageRating: user.averageRating ?? 5.0,
+      profileViews,
+      followerCount: user.followerCount ?? 0,
+    };
   }
 
   // ─── Private Helpers ──────────────────────────────────────────────────────

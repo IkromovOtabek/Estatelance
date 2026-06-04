@@ -137,29 +137,28 @@ const BrowsePage = () => {
   const [minRate, setMinRate] = useState('');
   const [maxRate, setMaxRate] = useState('');
   const [availableOnly, setAvailableOnly] = useState(false);
+  const [minRating, setMinRating] = useState(0);
+  const [locationFilter, setLocationFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
   const { data, loading } = useQuery(GET_FREELANCERS, {
     variables: {
       input: {
         page: 1,
-        limit: 30,
+        limit: 50,
         category: selectedCategory || undefined,
         searchText: searchText || undefined,
+        hourlyRateMin: minRate ? Number(minRate) : undefined,
+        hourlyRateMax: maxRate ? Number(maxRate) : undefined,
+        availability: availableOnly ? 'AVAILABLE' : undefined,
+        minRating: minRating > 0 ? minRating : undefined,
+        location: locationFilter || undefined,
       },
     },
     fetchPolicy: 'cache-and-network',
   });
 
-  const allFreelancers: User[] = data?.getFreelancers ?? [];
-
-  // Client-side filter by rate & availability
-  const freelancers = allFreelancers.filter(f => {
-    if (availableOnly && f.availability !== 'AVAILABLE') return false;
-    if (minRate && (f.hourlyRate ?? 0) < Number(minRate)) return false;
-    if (maxRate && (f.hourlyRate ?? 0) > Number(maxRate)) return false;
-    return true;
-  });
+  const freelancers: User[] = data?.getFreelancers ?? [];
 
   return (
     <>
@@ -268,20 +267,44 @@ const BrowsePage = () => {
             </label>
           </div>
 
-          {/* Rating filter placeholder */}
+          {/* Rating filter */}
           <div className="bg-white border border-slate-200 rounded-2xl p-4">
-            <p className="text-xs font-bold text-slate-700 mb-3">Reyting</p>
-            {[5, 4, 3].map(r => (
+            <p className="text-xs font-bold text-slate-700 mb-3">Minimal reyting</p>
+            {[5, 4, 3, 0].map(r => (
               <label key={r} className="flex items-center gap-2 cursor-pointer py-1 group">
-                <input type="checkbox" className="w-4 h-4 rounded accent-indigo-600" />
+                <input
+                  type="radio"
+                  name="minRating"
+                  checked={minRating === r}
+                  onChange={() => setMinRating(r)}
+                  className="w-4 h-4 accent-indigo-600"
+                />
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <StarIcon key={i} size={12} color={i < r ? '#f59e0b' : '#e2e8f0'} weight={i < r ? 'fill' : 'regular'} />
-                  ))}
-                  <span className="text-xs text-slate-500 ml-1 group-hover:text-slate-800 transition-colors">{r}+ yulduz</span>
+                  {r === 0 ? (
+                    <span className="text-xs text-slate-500">Hammasi</span>
+                  ) : (
+                    <>
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <StarIcon key={i} size={12} color={i < r ? '#f59e0b' : '#e2e8f0'} weight={i < r ? 'fill' : 'regular'} />
+                      ))}
+                      <span className="text-xs text-slate-500 ml-1">{r}+ yulduz</span>
+                    </>
+                  )}
                 </div>
               </label>
             ))}
+          </div>
+
+          {/* Location filter */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4">
+            <p className="text-xs font-bold text-slate-700 mb-3">Joylashuv</p>
+            <input
+              type="text"
+              placeholder="Toshkent, Samarqand..."
+              value={locationFilter}
+              onChange={e => setLocationFilter(e.target.value)}
+              className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            />
           </div>
         </aside>
 

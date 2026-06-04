@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuFu — Dizayn Variantlari</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f0f0; padding: 24px; }
+  h1 { text-align:center; margin-bottom: 8px; font-size: 22px; color: #111; }
+  .subtitle { text-align:center; color: #666; margin-bottom: 32px; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 1200px; margin: 0 auto; }
+  .card { border-radius: 16px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.12); }
+  .label { padding: 12px 16px; font-weight: 700; font-size: 13px; background: white; border-top: 3px solid; display: flex; justify-content: space-between; align-items: center; }
+  .label span { font-weight: 400; font-size: 12px; color: #888; }
+
+  /* ─── VARIANT 1: Minimal Clean ─── */
+  .v1 { background: #FAFAFA; padding: 40px 48px; }
+  .v1 .nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 80px; }
+  .v1 .logo { font-size: 18px; font-weight: 800; color: #18181B; letter-spacing: -0.5px; }
+  .v1 .logo span { color: #6366F1; }
+  .v1 .nav-links { display: flex; gap: 24px; font-size: 13px; color: #71717A; }
+  .v1 .nav-btn { background: #18181B; color: white; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+  .v1 .badge { display: inline-flex; align-items: center; gap: 6px; background: #EEF2FF; color: #4F46E5; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 600; margin-bottom: 20px; }
+  .v1 h2 { font-size: 42px; font-weight: 800; color: #18181B; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 16px; }
+  .v1 h2 em { color: #6366F1; font-style: normal; }
+  .v1 p { font-size: 15px; color: #71717A; line-height: 1.6; max-width: 420px; margin-bottom: 32px; }
+  .v1 .btns { display: flex; gap: 12px; }
+  .v1 .btn-p { background: #18181B; color: white; padding: 11px 22px; border-radius: 10px; font-size: 13px; font-weight: 700; }
+  .v1 .btn-s { background: white; color: #18181B; padding: 11px 22px; border-radius: 10px; font-size: 13px; font-weight: 600; border: 1.5px solid #E4E4E7; }
+  .v1 .stats { display: flex; gap: 32px; margin-top: 40px; padding-top: 32px; border-top: 1px solid #E4E4E7; }
+  .v1 .stat-n { font-size: 24px; font-weight: 800; color: #18181B; }
+  .v1 .stat-l { font-size: 12px; color: #A1A1AA; margin-top: 2px; }
+
+  /* ─── VARIANT 2: Dark Premium ─── */
+  .v2 { background: #09090B; padding: 40px 48px; }
+  .v2 .nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 80px; }
+  .v2 .logo { font-size: 18px; font-weight: 800; color: white; letter-spacing: -0.5px; }
+  .v2 .logo span { color: #A855F7; }
+  .v2 .nav-links { display: flex; gap: 24px; font-size: 13px; color: #71717A; }
+  .v2 .nav-btn { background: rgba(168,85,247,0.15); color: #A855F7; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; border: 1px solid rgba(168,85,247,0.3); }
+  .v2 .badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(168,85,247,0.1); color: #C084FC; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 600; margin-bottom: 20px; border: 1px solid rgba(168,85,247,0.2); }
+  .v2 h2 { font-size: 42px; font-weight: 800; color: white; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 16px; }
+  .v2 h2 em { background: linear-gradient(135deg, #A855F7, #6366F1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-style: normal; }
+  .v2 p { font-size: 15px; color: #71717A; line-height: 1.6; max-width: 420px; margin-bottom: 32px; }
+  .v2 .btns { display: flex; gap: 12px; }
+  .v2 .btn-p { background: linear-gradient(135deg, #A855F7, #6366F1); color: white; padding: 11px 22px; border-radius: 10px; font-size: 13px; font-weight: 700; }
+  .v2 .btn-s { background: rgba(255,255,255,0.05); color: #A1A1AA; padding: 11px 22px; border-radius: 10px; font-size: 13px; font-weight: 600; border: 1px solid #27272A; }
+  .v2 .stats { display: flex; gap: 32px; margin-top: 40px; padding-top: 32px; border-top: 1px solid #1C1C1E; }
+  .v2 .stat-n { font-size: 24px; font-weight: 800; color: white; }
+  .v2 .stat-l { font-size: 12px; color: #52525B; margin-top: 2px; }
+  .v2 .glow { position: absolute; width: 300px; height: 300px; background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%); top: 40px; right: 40px; pointer-events: none; }
+
+  /* ─── VARIANT 3: Modern SaaS ─── */
+  .v3 { background: #F8FAFC; padding: 40px 48px; }
+  .v3 .nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 72px; }
+  .v3 .logo { font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; }
+  .v3 .logo span { color: #4F46E5; }
+  .v3 .nav-links { display: flex; gap: 24px; font-size: 13px; color: #64748B; }
+  .v3 .nav-btn { background: #4F46E5; color: white; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+  .v3 .badge { display: inline-flex; align-items: center; gap: 6px; background: #EFF6FF; color: #2563EB; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-bottom: 20px; border: 1px solid #BFDBFE; }
+  .v3 h2 { font-size: 40px; font-weight: 800; color: #0F172A; line-height: 1.15; letter-spacing: -1.2px; margin-bottom: 16px; }
+  .v3 h2 em { color: #4F46E5; font-style: normal; }
+  .v3 p { font-size: 15px; color: #64748B; line-height: 1.6; max-width: 420px; margin-bottom: 32px; }
+  .v3 .btns { display: flex; gap: 12px; }
+  .v3 .btn-p { background: #4F46E5; color: white; padding: 11px 22px; border-radius: 10px; font-size: 13px; font-weight: 700; box-shadow: 0 4px 14px rgba(79,70,229,0.4); }
+  .v3 .btn-s { background: white; color: #0F172A; padding: 11px 22px; border-radius: 10px; font-size: 13px; font-weight: 600; border: 1.5px solid #E2E8F0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .v3 .stats { display: flex; gap: 32px; margin-top: 40px; padding-top: 28px; border-top: 1px solid #E2E8F0; }
+  .v3 .stat-n { font-size: 24px; font-weight: 800; color: #0F172A; }
+  .v3 .stat-l { font-size: 12px; color: #94A3B8; margin-top: 2px; }
+
+  /* ─── VARIANT 4: Earthy Trust ─── */
+  .v4 { background: #FFFBF5; padding: 40px 48px; }
+  .v4 .nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 72px; }
+  .v4 .logo { font-size: 18px; font-weight: 800; color: #1C1917; letter-spacing: -0.5px; }
+  .v4 .logo span { color: #D97706; }
+  .v4 .nav-links { display: flex; gap: 24px; font-size: 13px; color: #78716C; }
+  .v4 .nav-btn { background: #D97706; color: white; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+  .v4 .badge { display: inline-flex; align-items: center; gap: 6px; background: #FEF3C7; color: #92400E; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-bottom: 20px; }
+  .v4 h2 { font-size: 40px; font-weight: 800; color: #1C1917; line-height: 1.15; letter-spacing: -1px; margin-bottom: 16px; }
+  .v4 h2 em { color: #D97706; font-style: normal; }
+  .v4 p { font-size: 15px; color: #78716C; line-height: 1.6; max-width: 420px; margin-bottom: 32px; }
+  .v4 .btns { display: flex; gap: 12px; }
+  .v4 .btn-p { background: #D97706; color: white; padding: 11px 22px; border-radius: 10px; font-size: 13px; font-weight: 700; }
+  .v4 .btn-s { background: white; color: #1C1917; padding: 11px 22px; border-radius: 10px; font-size: 13px; font-weight: 600; border: 1.5px solid #E7E5E4; }
+  .v4 .stats { display: flex; gap: 32px; margin-top: 40px; padding-top: 28px; border-top: 1px solid #E7E5E4; }
+  .v4 .stat-n { font-size: 24px; font-weight: 800; color: #1C1917; }
+  .v4 .stat-l { font-size: 12px; color: #A8A29E; margin-top: 2px; }
+</style>
+</head>
+<body>
+<h1>BuFu — Bosh sahifa dizayn variantlari</h1>
+<p class="subtitle">Eng yoqqanini ayting — shuni to'liq implement qilamiz</p>
+
+<div class="grid">
+
+  <!-- V1: Minimal Clean -->
+  <div class="card">
+    <div class="v1">
+      <div class="nav">
+        <div class="logo">Bu<span>Fu</span></div>
+        <div class="nav-links"><span>Ishlar</span><span>Frilanserlar</span><span>Narxlar</span></div>
+        <div class="nav-btn">Kirish</div>
+      </div>
+      <div class="badge">✦ O'zbekiston №1 frilanser platformasi</div>
+      <h2>Ko'chmas mulk<br>mutaxassislarni<br><em>bir joyda toping</em></h2>
+      <p>Fotograf, 3D vizualizator, dizayner, yurist — 500+ professional bir platformada.</p>
+      <div class="btns">
+        <div class="btn-p">Mutaxassis topish →</div>
+        <div class="btn-s">Ish e'lon qilish</div>
+      </div>
+      <div class="stats">
+        <div><div class="stat-n">500+</div><div class="stat-l">Frilanser</div></div>
+        <div><div class="stat-n">1200+</div><div class="stat-l">Yakunlangan ish</div></div>
+        <div><div class="stat-n">98%</div><div class="stat-l">Muvaffaqiyat</div></div>
+      </div>
+    </div>
+    <div class="label" style="border-color:#6366F1">
+      <span>① Minimal & Clean</span>
+      <span>Notion / Linear uslubi</span>
+    </div>
+  </div>
+
+  <!-- V2: Dark Premium -->
+  <div class="card">
+    <div class="v2" style="position:relative; overflow:hidden;">
+      <div class="glow"></div>
+      <div class="nav">
+        <div class="logo">Bu<span>Fu</span></div>
+        <div class="nav-links"><span>Ishlar</span><span>Frilanserlar</span><span>Narxlar</span></div>
+        <div class="nav-btn">Kirish</div>
+      </div>
+      <div class="badge">✦ O'zbekiston №1 frilanser platformasi</div>
+      <h2>Ko'chmas mulk<br>mutaxassislarni<br><em>bir joyda toping</em></h2>
+      <p>Fotograf, 3D vizualizator, dizayner, yurist — 500+ professional bir platformada.</p>
+      <div class="btns">
+        <div class="btn-p">Mutaxassis topish →</div>
+        <div class="btn-s">Ish e'lon qilish</div>
+      </div>
+      <div class="stats">
+        <div><div class="stat-n">500+</div><div class="stat-l">Frilanser</div></div>
+        <div><div class="stat-n">1200+</div><div class="stat-l">Yakunlangan ish</div></div>
+        <div><div class="stat-n">98%</div><div class="stat-l">Muvaffaqiyat</div></div>
+      </div>
+    </div>
+    <div class="label" style="border-color:#A855F7; background:#09090B; color:white;">
+      <span>② Dark Premium</span>
+      <span style="color:#52525B">Stripe / Resend uslubi</span>
+    </div>
+  </div>
+
+  <!-- V3: Modern SaaS -->
+  <div class="card">
+    <div class="v3">
+      <div class="nav">
+        <div class="logo">Bu<span>Fu</span></div>
+        <div class="nav-links"><span>Ishlar</span><span>Frilanserlar</span><span>Narxlar</span></div>
+        <div class="nav-btn">Kirish</div>
+      </div>
+      <div class="badge">🚀 O'zbekiston №1 frilanser platformasi</div>
+      <h2>Ko'chmas mulk<br>mutaxassislarni<br><em>bir joyda toping</em></h2>
+      <p>Fotograf, 3D vizualizator, dizayner, yurist — 500+ professional bir platformada.</p>
+      <div class="btns">
+        <div class="btn-p">Mutaxassis topish →</div>
+        <div class="btn-s">Ish e'lon qilish</div>
+      </div>
+      <div class="stats">
+        <div><div class="stat-n">500+</div><div class="stat-l">Frilanser</div></div>
+        <div><div class="stat-n">1200+</div><div class="stat-l">Yakunlangan ish</div></div>
+        <div><div class="stat-n">98%</div><div class="stat-l">Muvaffaqiyat</div></div>
+      </div>
+    </div>
+    <div class="label" style="border-color:#4F46E5">
+      <span>③ Modern SaaS</span>
+      <span>Figma / Linear uslubi</span>
+    </div>
+  </div>
+
+  <!-- V4: Earthy Trust -->
+  <div class="card">
+    <div class="v4">
+      <div class="nav">
+        <div class="logo">Bu<span>Fu</span></div>
+        <div class="nav-links"><span>Ishlar</span><span>Frilanserlar</span><span>Narxlar</span></div>
+        <div class="nav-btn">Kirish</div>
+      </div>
+      <div class="badge">⭐ O'zbekiston №1 frilanser platformasi</div>
+      <h2>Ko'chmas mulk<br>mutaxassislarni<br><em>bir joyda toping</em></h2>
+      <p>Fotograf, 3D vizualizator, dizayner, yurist — 500+ professional bir platformada.</p>
+      <div class="btns">
+        <div class="btn-p">Mutaxassis topish →</div>
+        <div class="btn-s">Ish e'lon qilish</div>
+      </div>
+      <div class="stats">
+        <div><div class="stat-n">500+</div><div class="stat-l">Frilanser</div></div>
+        <div><div class="stat-n">1200+</div><div class="stat-l">Yakunlangan ish</div></div>
+        <div><div class="stat-n">98%</div><div class="stat-l">Muvaffaqiyat</div></div>
+      </div>
+    </div>
+    <div class="label" style="border-color:#D97706">
+      <span>④ Earthy & Trust</span>
+      <span>Airbnb uslubi</span>
+    </div>
+  </div>
+
+</div>
+
+<p style="text-align:center; margin-top:32px; color:#888; font-size:13px;">
+  Bitta tanlang → barcha sahifalarni o'sha uslubda implement qilamiz
+</p>
+</body>
+</html>

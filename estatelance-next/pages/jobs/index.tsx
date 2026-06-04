@@ -80,10 +80,12 @@ const JobsPage = () => {
   const [searchInput, setSearchInput]       = useState('');
   const [search, setSearch]                 = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [budgetMin, setBudgetMin]           = useState(0);
   const [budgetMax, setBudgetMax]           = useState(5000);
   const [expLevels, setExpLevels]           = useState<string[]>([]);
   const [jobTypes, setJobTypes]             = useState<string[]>([]);
   const [formats, setFormats]               = useState<string[]>([]);
+  const [filterLocation, setFilterLocation] = useState('');
   const [sortBy, setSortBy]                 = useState('new');
   const [page, setPage]                     = useState(1);
 
@@ -168,12 +170,15 @@ const JobsPage = () => {
   // Client-side filtering + sorting
   const filteredJobs = useMemo(() => {
     let result = allJobs.filter(j => {
+      if (budgetMin > 0 && (j.budget ?? 0) < budgetMin) return false;
       if (budgetMax < 5000 && (j.budget ?? 0) > budgetMax) return false;
       if (expLevels.length && j.experienceLevel && !expLevels.includes(j.experienceLevel)) return false;
       if (jobTypes.length && j.jobType && !jobTypes.includes(j.jobType)) return false;
       if (formats.length && j.workFormat?.length) {
         if (!j.workFormat.some((f: string) => formats.includes(f))) return false;
       }
+      if (filterLocation && j.location &&
+        !j.location.toLowerCase().includes(filterLocation.toLowerCase())) return false;
       return true;
     });
 
@@ -188,7 +193,7 @@ const JobsPage = () => {
       });
     }
     return result;
-  }, [allJobs, budgetMax, expLevels, jobTypes, formats, sortBy]);
+  }, [allJobs, budgetMin, budgetMax, expLevels, jobTypes, formats, filterLocation, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / ITEMS_PER_PAGE));
   const pagedJobs = filteredJobs.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
@@ -199,13 +204,14 @@ const JobsPage = () => {
 
   const resetFilters = () => {
     setSearch(''); setSearchInput('');
-    setFilterCategory(''); setBudgetMax(5000);
+    setFilterCategory(''); setBudgetMin(0); setBudgetMax(5000);
     setExpLevels([]); setJobTypes([]); setFormats([]);
+    setFilterLocation('');
     setPage(1);
   };
 
-  const hasFilters = !!(search || filterCategory || budgetMax < 5000 ||
-    expLevels.length || jobTypes.length || formats.length);
+  const hasFilters = !!(search || filterCategory || budgetMin > 0 || budgetMax < 5000 ||
+    expLevels.length || jobTypes.length || formats.length || filterLocation);
 
   const handleSearch = () => {
     setSearch(searchInput);
@@ -387,21 +393,51 @@ const JobsPage = () => {
             {/* Budget Range */}
             <div className="mb-6">
               <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
-                Byudjet ($ gacha)
+                Byudjet diapazoni ($)
               </p>
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="number"
+                  min={0} max={budgetMax} step={50}
+                  placeholder="Min"
+                  value={budgetMin || ''}
+                  onChange={e => { setBudgetMin(Number(e.target.value) || 0); setPage(1); }}
+                  className="w-1/2 border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+                <span className="text-slate-400 text-xs">—</span>
+                <input
+                  type="number"
+                  min={budgetMin} max={99999} step={50}
+                  placeholder="Max"
+                  value={budgetMax >= 5000 ? '' : budgetMax}
+                  onChange={e => { setBudgetMax(Number(e.target.value) || 5000); setPage(1); }}
+                  className="w-1/2 border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
               <input
-                type="range"
-                min={0}
-                max={5000}
-                step={100}
+                type="range" min={0} max={5000} step={100}
                 value={budgetMax}
                 onChange={e => { setBudgetMax(Number(e.target.value)); setPage(1); }}
                 className="w-full accent-indigo-600 cursor-pointer"
               />
               <div className="flex justify-between text-xs text-slate-500 mt-1">
-                <span>$0</span>
+                <span>${budgetMin}</span>
                 <span className="font-semibold text-indigo-600">{budgetMax >= 5000 ? '$5000+' : `$${budgetMax}`}</span>
               </div>
+            </div>
+
+            <hr className="border-slate-100 mb-5" />
+
+            {/* Location filter */}
+            <div className="mb-6">
+              <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Joylashuv</p>
+              <input
+                type="text"
+                placeholder="Toshkent, Samarqand..."
+                value={filterLocation}
+                onChange={e => { setFilterLocation(e.target.value); setPage(1); }}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              />
             </div>
 
             <hr className="border-slate-100 mb-5" />

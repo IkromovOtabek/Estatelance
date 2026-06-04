@@ -23,7 +23,8 @@ import {
   Phone,
 } from '@phosphor-icons/react';
 import { GET_JOB_BY_ID, GET_BIDS_FOR_JOB, GET_USER_BY_ID, GET_JOBS } from '../../apollo/user/query';
-import { CREATE_BID, ACCEPT_BID, COMPLETE_JOB, INCREMENT_JOB_VIEW } from '../../apollo/user/mutation';
+import { CREATE_BID, ACCEPT_BID, COMPLETE_JOB, INCREMENT_JOB_VIEW,
+  LEAVE_REVIEW, REPEAT_HIRE, DEPOSIT_ESCROW, RELEASE_ESCROW, CREATE_DISPUTE } from '../../apollo/user/mutation';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { Bid, Job } from '../../libs/types';
@@ -242,7 +243,26 @@ const JobDetailPage = () => {
   const [createBid, { loading: submitting }]    = useMutation(CREATE_BID);
   const [acceptBid, { loading: accepting }]     = useMutation(ACCEPT_BID);
   const [completeJob, { loading: completing }]  = useMutation(COMPLETE_JOB);
+  const [leaveReview, { loading: reviewing }]   = useMutation(LEAVE_REVIEW);
+  const [repeatHire,  { loading: rehiring }]    = useMutation(REPEAT_HIRE);
+  const [depositEscrow]                         = useMutation(DEPOSIT_ESCROW);
+  const [releaseEscrow, { loading: releasing }] = useMutation(RELEASE_ESCROW);
+  const [createDispute, { loading: disputing }] = useMutation(CREATE_DISPUTE);
   const [incrementJobView] = useMutation(INCREMENT_JOB_VIEW);
+
+  // Review modal state
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating]       = useState(5);
+  const [reviewText, setReviewText]           = useState('');
+  const [reviewError, setReviewError]         = useState('');
+
+  // Dispute modal state
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [disputeReason, setDisputeReason]       = useState('');
+
+  // Escrow modal state
+  const [showEscrowModal, setShowEscrowModal] = useState(false);
+  const [escrowAmount, setEscrowAmount]       = useState('');
 
   // Increment view once when page loads and user is logged in
   useEffect(() => {
@@ -301,6 +321,49 @@ const JobDetailPage = () => {
     if (!job) return;
     if (!window.confirm("Ishni yakunlandi deb belgilaysizmi? Bu amalni qaytarib bo'lmaydi.")) return;
     await completeJob({ variables: { jobId: job._id } });
+    router.reload();
+  };
+
+  const handleLeaveReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setReviewError('');
+    if (!reviewText.trim()) { setReviewError('Sharh matni kiriting'); return; }
+    try {
+      await leaveReview({ variables: { input: { jobId: job!._id, rating: reviewRating, reviewText: reviewText.trim() } } });
+      setShowReviewModal(false);
+      setReviewText(''); setReviewRating(5);
+      router.reload();
+    } catch (err: any) { setReviewError(err.message); }
+  };
+
+  const handleRepeatHire = async () => {
+    if (!window.confirm('Xuddi shu frilanser bilan yangi ish ochasizmi?')) return;
+    const result = await repeatHire({ variables: { jobId: job!._id } });
+    const newJobId = result?.data?.repeatHire?._id;
+    if (newJobId) router.push(`/jobs/${newJobId}`);
+  };
+
+  const handleDepositEscrow = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amount = Number(escrowAmount);
+    if (!amount || amount <= 0) return;
+    await depositEscrow({ variables: { jobId: job!._id, amount } });
+    setShowEscrowModal(false);
+    router.reload();
+  };
+
+  const handleReleaseEscrow = async () => {
+    if (!window.confirm("Escrow to'lovini frilanserga chiqarasizmi?")) return;
+    await releaseEscrow({ variables: { jobId: job!._id } });
+    router.reload();
+  };
+
+  const handleCreateDispute = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!disputeReason.trim()) return;
+    await createDispute({ variables: { input: { jobId: job!._id, reason: disputeReason.trim() } } });
+    setShowDisputeModal(false);
+    setDisputeReason('');
     router.reload();
   };
 
@@ -484,16 +547,89 @@ const JobDetailPage = () => {
                 {job.description}
               </p>
 
-              {/* Complete job button */}
+              {/* Agent action buttons for ACTIVE job */}
               {isOwn && job.status === JobStatus.ACTIVE && (
+                <div className="mt-6 pt-5 border-t border-slate-100 space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={handleCompleteJob}
+                      disabled={completing}
+                      className="inline-flex items-center gap-2 border border-green-400 text-green-700 hover:bg-green-50 font-semibold text-sm px-4 py-2 rounded-xl transition-all disabled:opacity-60"
+                    >
+                      <CheckCircleIcon size={17} />
+                      {completing ? 'Saqlanmoqda...' : 'Yakunlandi'}
+                    </button>
+
+                    {/* Escrow */}
+                    {(job as any).escrowStatus === 'HELD' ? (
+                      <button
+                        onClick={handleReleaseEscrow}
+                        disabled={releasing}
+                        className="inline-flex items-center gap-2 border border-indigo-400 text-indigo-700 hover:bg-indigo-50 font-semibold text-sm px-4 py-2 rounded-xl transition-all disabled:opacity-60"
+                      >
+                        💸 {releasing ? '...' : "To'lov chiqarish"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowEscrowModal(true)}
+                        className="inline-flex items-center gap-2 border border-slate-300 text-slate-600 hover:bg-slate-50 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
+                      >
+                        🔒 Escrow to'ldirish
+                      </button>
+                    )}
+
+                    {/* Dispute */}
+                    <button
+                      onClick={() => setShowDisputeModal(true)}
+                      className="inline-flex items-center gap-2 border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
+                    >
+                      ⚠️ Nizo ochish
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Completed job actions: review + repeat hire */}
+              {isOwn && job.status === JobStatus.COMPLETED && (
+                <div className="mt-6 pt-5 border-t border-slate-100 space-y-2">
+                  {!(job as any).agentRating && (
+                    <button
+                      onClick={() => setShowReviewModal(true)}
+                      className="inline-flex items-center gap-2 border border-amber-300 text-amber-700 hover:bg-amber-50 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
+                    >
+                      ⭐ Sharh qoldirish
+                    </button>
+                  )}
+                  <button
+                    onClick={handleRepeatHire}
+                    disabled={rehiring}
+                    className="inline-flex items-center gap-2 border border-indigo-300 text-indigo-700 hover:bg-indigo-50 font-semibold text-sm px-4 py-2 rounded-xl transition-all ml-2 disabled:opacity-60"
+                  >
+                    🔄 {rehiring ? '...' : 'Qayta yollash'}
+                  </button>
+                </div>
+              )}
+
+              {/* Freelancer: leave review + dispute on ACTIVE */}
+              {!isOwn && (job as any).hiredFreelancerId === user._id && job.status === JobStatus.COMPLETED && (
+                <div className="mt-6 pt-5 border-t border-slate-100">
+                  {!(job as any).freelancerRating && (
+                    <button
+                      onClick={() => setShowReviewModal(true)}
+                      className="inline-flex items-center gap-2 border border-amber-300 text-amber-700 hover:bg-amber-50 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
+                    >
+                      ⭐ Agent haqida sharh
+                    </button>
+                  )}
+                </div>
+              )}
+              {!isOwn && (job as any).hiredFreelancerId === user._id && job.status === JobStatus.ACTIVE && (
                 <div className="mt-6 pt-5 border-t border-slate-100">
                   <button
-                    onClick={handleCompleteJob}
-                    disabled={completing}
-                    className="inline-flex items-center gap-2 border border-green-400 text-green-700 hover:bg-green-50 font-semibold text-sm px-4 py-2 rounded-xl transition-all disabled:opacity-60"
+                    onClick={() => setShowDisputeModal(true)}
+                    className="inline-flex items-center gap-2 border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
                   >
-                    <CheckCircleIcon size={17} />
-                    {completing ? 'Saqlanmoqda...' : 'Ishni yakunlandi deb belgilash'}
+                    ⚠️ Nizo ochish
                   </button>
                 </div>
               )}
@@ -844,6 +980,119 @@ const JobDetailPage = () => {
       {/* ── Recommended jobs ── */}
       {similarJobs.length > 0 && (
         <SimilarJobs jobs={similarJobs} isDark={isDark} />
+      )}
+
+      {/* ─── Review Modal ─────────────────────────────────────────────────── */}
+      {showReviewModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h3 className="text-lg font-extrabold text-slate-900 mb-4">⭐ Sharh qoldirish</h3>
+            <form onSubmit={handleLeaveReview} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Reyting</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <button
+                      key={s} type="button"
+                      onClick={() => setReviewRating(s)}
+                      className={`text-2xl transition-transform hover:scale-110 ${s <= reviewRating ? 'opacity-100' : 'opacity-30'}`}
+                    >
+                      ⭐
+                    </button>
+                  ))}
+                  <span className="ml-2 text-sm font-bold text-amber-600 self-center">{reviewRating}/5</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Sharh matni</label>
+                <textarea
+                  value={reviewText}
+                  onChange={e => setReviewText(e.target.value)}
+                  rows={4}
+                  placeholder="Hamkorlik tajribasi, sifat, muloqot haqida yozing..."
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                />
+              </div>
+              {reviewError && <p className="text-sm text-red-600">{reviewError}</p>}
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={() => setShowReviewModal(false)}
+                  className="px-4 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50">
+                  Bekor
+                </button>
+                <button type="submit" disabled={reviewing}
+                  className="px-4 py-2 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-xl disabled:opacity-50">
+                  {reviewing ? 'Saqlanmoqda...' : 'Yuborish'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Escrow Modal ─────────────────────────────────────────────────── */}
+      {showEscrowModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-extrabold text-slate-900 mb-2">🔒 Escrow to'ldirish</h3>
+            <p className="text-sm text-slate-500 mb-4">
+              Pul muzlatiladi va ish yakunlanganda frilanserga chiqariladi.
+            </p>
+            <form onSubmit={handleDepositEscrow} className="space-y-4">
+              <input
+                type="number" min={1} placeholder="Summa ($)"
+                value={escrowAmount}
+                onChange={e => setEscrowAmount(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              />
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={() => setShowEscrowModal(false)}
+                  className="px-4 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50">
+                  Bekor
+                </button>
+                <button type="submit"
+                  className="px-4 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl">
+                  To'ldirish
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Dispute Modal ────────────────────────────────────────────────── */}
+      {showDisputeModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h3 className="text-lg font-extrabold text-slate-900 mb-2">⚠️ Nizo ochish</h3>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
+              <p className="text-xs text-amber-700">
+                Nizo ochilsa escrow to'lovi muzlatiladi. Admin hal qilguncha kutiladi.
+              </p>
+            </div>
+            <form onSubmit={handleCreateDispute} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nizo sababi</label>
+                <textarea
+                  value={disputeReason}
+                  onChange={e => setDisputeReason(e.target.value)}
+                  rows={4}
+                  placeholder="Muammoni batafsil yozing..."
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 resize-none"
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={() => setShowDisputeModal(false)}
+                  className="px-4 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50">
+                  Bekor
+                </button>
+                <button type="submit" disabled={disputing}
+                  className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl disabled:opacity-50">
+                  {disputing ? 'Yuborilmoqda...' : 'Nizo ochish'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </>
   );

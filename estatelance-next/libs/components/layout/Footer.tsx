@@ -21,8 +21,6 @@ const CATEGORIES = [
   { label: 'IT & Dasturlash', href: '/browse?category=IT' },
 ];
 
-const CITIES = ['Toshkent', 'Samarqand', 'Buxoro', 'Namangan', 'Andijon', 'Farg\'ona'];
-
 const Footer = () => {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -82,24 +80,6 @@ const Footer = () => {
               O&apos;zbekistonda frilanserlar va mijozlarni bog&apos;laydigan platforma.
               Foto, dizayn, yuridik, IT va boshqa ko&apos;plab xizmatlar.
             </Typography>
-
-            {/* Stats pills */}
-            <Stack direction="row" flexWrap="wrap" gap={1} mb={3}>
-              {[
-                { val: '100+', lbl: 'Frilanser' },
-                { val: '200+', lbl: 'Bajarilgan ish' },
-                { val: '4.9★', lbl: 'O\'rtacha reyting' },
-              ].map((s) => (
-                <Box key={s.lbl} sx={{
-                  bgcolor: 'rgba(79,70,229,0.15)', border: '1px solid rgba(79,70,229,0.25)',
-                  borderRadius: 10, px: 1.5, py: 0.4,
-                  display: 'flex', alignItems: 'center', gap: 0.75,
-                }}>
-                  <Typography fontSize={12} fontWeight={800} color={accent}>{s.val}</Typography>
-                  <Typography fontSize={11} color={body}>{s.lbl}</Typography>
-                </Box>
-              ))}
-            </Stack>
 
             {/* Escrow badge */}
             <Stack direction="row" alignItems="center" spacing={1} sx={{
@@ -190,21 +170,6 @@ const Footer = () => {
                 </Box>
               </Stack>
             </Stack>
-
-            <Typography fontSize={11} fontWeight={700} color={heading} textTransform="uppercase" letterSpacing={1} mb={1.5}>
-              Shaharlar
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-              {CITIES.map((city) => (
-                <Box key={city} sx={{
-                  bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
-                  borderRadius: 10, px: 1.25, py: 0.3,
-                }}>
-                  <Typography fontSize={11} color={body}>{city}</Typography>
-                </Box>
-              ))}
-            </Box>
           </Box>
         </Box>
       </Box>

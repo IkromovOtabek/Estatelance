@@ -5,42 +5,51 @@
 // ─── Google Fonts ─────────────────────────────────────────────────────────────
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-// ─── CSS Custom Properties ────────────────────────────────────────────────────
+// ─── CSS Custom Properties — LIGHT (Minimal & Clean) ─────────────────────────
 :root {
-  --primary:        #4f46e5;
-  --primary-dark:   #4338ca;
-  --primary-light:  #818cf8;
-  --primary-bg:     #eef2ff;
-  --primary-border: #c7d2fe;
+  // Primary — Indigo
+  --primary:        #6366F1;
+  --primary-dark:   #4F46E5;
+  --primary-light:  #818CF8;
+  --primary-bg:     #EEF2FF;
+  --primary-border: #C7D2FE;
 
-  --success:      #22c55e;
-  --warning:      #f59e0b;
-  --danger:       #ef4444;
-  --info:         #0ea5e9;
+  // Status
+  --success:      #22C55E;
+  --warning:      #F59E0B;
+  --danger:       #EF4444;
+  --info:         #0EA5E9;
 
-  --text-1:  #0f172a;
-  --text-2:  #374151;
-  --text-3:  #64748b;
-  --text-4:  #94a3b8;
+  // Typography — Zinc palette (colder & sharper than Slate)
+  --text-1:  #18181B;   // zinc-900
+  --text-2:  #3F3F46;   // zinc-700
+  --text-3:  #71717A;   // zinc-500
+  --text-4:  #A1A1AA;   // zinc-400
 
-  --surface:    #ffffff;
-  --surface-2:  #f8fafc;
-  --border:     #e2e8f0;
-  --border-2:   #f1f5f9;
+  // Surfaces
+  --surface:    #FFFFFF;
+  --surface-2:  #FAFAFA;   // zinc-50 — almost-white
+  --surface-3:  #F4F4F5;   // zinc-100
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
-  --shadow-xl: 0 20px 60px rgba(0,0,0,0.15);
+  // Borders — subtle, not distracting
+  --border:     #E4E4E7;   // zinc-200
+  --border-2:   #F4F4F5;   // zinc-100
 
-  --radius-sm:  8px;
-  --radius-md:  12px;
-  --radius-lg:  16px;
-  --radius-xl:  24px;
+  // Shadows — very light
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 32px rgba(0,0,0,0.08);
+  --shadow-xl: 0 20px 56px rgba(0,0,0,0.10);
+
+  // Radii — slightly tighter than before
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  20px;
   --radius-full: 999px;
 
-  --transition: 0.18s ease;
-  --transition-slow: 0.3s ease;
+  --transition: 0.15s ease;
+  --transition-slow: 0.25s ease;
 }
 
 // ─── Reset & Base ─────────────────────────────────────────────────────────────
@@ -55,179 +64,349 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+// ─── Bosh sahifa: keng kontent (ikki yonda 100px) ─────────────────────────────
+// Oddiy bo'limlar uchun: konteynerdan chiqib, ekran kengligida 100px gutter qoldiradi.
+.hw {
+  width: calc(100vw - 200px);
+  margin-left: calc(50% - 50vw + 100px);
+  margin-right: calc(50% - 50vw + 100px);
+  max-width: none;
+}
+// Rangli fonli bo'limlar uchun: fon to'liq kenglikda, kontent 100px ichkarida.
+.hw-bg {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding-left: 100px;
+  padding-right: 100px;
+}
+@media (max-width: 1024px) {
+  .hw {
+    width: auto;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .hw-bg {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+// ─── Bosh sahifa: navbatma-navbat fon ranglari + gradient ulanish ─────────────
+// Har bir bo'lim foni navbat bilan A/B rangda. Bo'lim tepasidagi gradient oldingi
+// bo'lim rangidan o'ziniki rangiga singib o'tadi → seam'lar bir-biriga ulanadi.
+.home-sections {
+  --band-a: #ffffff; // toq bo'limlar (oq)
+  --band-b: #f3f2fc; // juft bo'limlar (och lavanda)
+  --hero-bg: #f2f1fb; // hero foni (light)
+  --footer-bg: #f8fafc; // footer foni (light)
+  // LayoutBasic dagi main py:4 (pastki 32px) ni bekor qilib, oxirgi bo'lim footerga ulanadi
+  margin-bottom: -32px;
+}
+.home-sections.is-dark {
+  --band-a: #0b0f1d;
+  --band-b: #121a30;
+  --hero-bg: #0b0b14;
+  --footer-bg: #0f172a;
+}
+// Toq bo'limlar: tepada B'dan A'ga o'tadi, pasti A
+.home-sections > section:nth-of-type(odd) {
+  background: linear-gradient(180deg, var(--band-b) 0%, var(--band-a) 16%, var(--band-a) 100%);
+}
+// Juft bo'limlar: tepada A'dan B'ga o'tadi, pasti B
+.home-sections > section:nth-of-type(even) {
+  background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 16%, var(--band-b) 100%);
+}
+// Hero: pastki qismi keyingi bo'lim rangiga (band-a) singib, 2-bo'limga ulanadi
+.home-sections > section.bufu-hero {
+  background: linear-gradient(180deg, var(--hero-bg) 0%, var(--hero-bg) 80%, var(--band-a) 100%) !important;
+}
+// Oxirgi bo'lim: pasti footer rangiga singib, footerga silliq ulanadi
+.home-sections > section:last-of-type {
+  background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 16%, var(--band-b) 80%, var(--footer-bg) 100%) !important;
+}
+
+// ─── AI yordamchi spinner ─────────────────────────────────────────────────────
+.ai-spin {
+  animation: aiSpin 0.8s linear infinite;
+}
+@keyframes aiSpin {
+  to { transform: rotate(360deg); }
+}
+
+// ─── Kategoriya marquee (1 qator, uzluksiz harakat) ───────────────────────────
+.cat-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+}
+.cat-track {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  animation: catScroll 36s linear infinite;
+}
+.cat-marquee:hover .cat-track {
+  animation-play-state: paused;
+}
+@keyframes catScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cat-track { animation: none; }
+}
+
+// ─── Scroll-reveal (bo'limlar scroll'da yumshoq paydo bo'ladi) ─────────────────
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: opacity, transform;
+}
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
 body {
   font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-  background-color: var(--surface-2, #f8fafc);
+  background-color: #FAFAFA;
   color: var(--text-1);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-// ─── DARK MODE ────────────────────────────────────────────────────────────────
-// CSS variables dark mode uchun o'zgartiriladi.
-// MUI komponentlari _app.tsx dagi darkMuiTheme orqali boshqariladi.
-// Bu blok faqat Tailwind utility klasslari va native HTML elementlar uchun.
+// ─── DARK MODE — Dark Premium ──────────────────────────────────────────────────
+// Fon: #09090B (zinc-950), Accent: #A855F7 (purple-500)
+// Karta: #111111 / #18181B, Border: #27272A (zinc-800)
 .dark {
   // ── CSS Custom Properties override ───────────────────────────────────────────
-  --primary:        #818cf8;
-  --primary-dark:   #6366f1;
-  --primary-light:  #a5b4fc;
-  --primary-bg:     rgba(99,102,241,0.15);
-  --primary-border: rgba(99,102,241,0.3);
+  --primary:        #A855F7;          // purple-500
+  --primary-dark:   #9333EA;          // purple-600
+  --primary-light:  #C084FC;          // purple-400
+  --primary-bg:     rgba(168,85,247,0.12);
+  --primary-border: rgba(168,85,247,0.25);
 
-  --text-1:    #f1f5f9;
-  --text-2:    #cbd5e1;
-  --text-3:    #94a3b8;
-  --text-4:    #64748b;
+  --text-1:    #FAFAFA;               // zinc-50
+  --text-2:    #D4D4D8;               // zinc-300
+  --text-3:    #71717A;               // zinc-500
+  --text-4:    #52525B;               // zinc-600
 
-  --surface:   #1e293b;
-  --surface-2: #0f172a;
-  --border:    #334155;
-  --border-2:  #1e293b;
+  --surface:    #111111;              // card background
+  --surface-2:  #09090B;              // page background (zinc-950)
+  --surface-3:  #18181B;              // elevated card (zinc-900)
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+  --border:     #27272A;              // zinc-800
+  --border-2:   #1C1C1E;              // even more subtle
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.6);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,0.7);
+  --shadow-xl: 0 20px 64px rgba(0,0,0,0.8);
 
   // ── Page background ───────────────────────────────────────────────────────────
-  body { background-color: #0f172a; color: #f1f5f9; }
+  body {
+    background-color: #09090B;
+    color: #FAFAFA;
+  }
 
   // ── Scrollbar ─────────────────────────────────────────────────────────────────
-  ::-webkit-scrollbar-track  { background: #0f172a; }
-  ::-webkit-scrollbar-thumb  { background: #334155; &:hover { background: #475569; } }
+  ::-webkit-scrollbar-track  { background: #09090B; }
+  ::-webkit-scrollbar-thumb  { background: #27272A; &:hover { background: #3F3F46; } }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // TAILWIND BACKGROUND CLASSES
+  // TAILWIND BACKGROUND CLASSES → Dark Premium remap
   // ─────────────────────────────────────────────────────────────────────────────
-  .bg-white          { background-color: #1e293b !important; }
-  .bg-slate-50       { background-color: #0f172a !important; }
-  .bg-slate-100      { background-color: #1e293b !important; }
-  .bg-slate-200      { background-color: #293548 !important; }
-  .bg-gray-50        { background-color: #0f172a !important; }
-  .bg-gray-100       { background-color: #1e293b !important; }
+  .bg-white          { background-color: #111111  !important; }
+  .bg-slate-50       { background-color: #09090B  !important; }
+  .bg-slate-100      { background-color: #18181B  !important; }
+  .bg-slate-200      { background-color: #27272A  !important; }
+  .bg-gray-50        { background-color: #09090B  !important; }
+  .bg-gray-100       { background-color: #18181B  !important; }
 
-  // Rangli bg-lar — opacity bilan (badge, tag kabi elementlar uchun)
-  .bg-indigo-50      { background-color: rgba(99,102,241,0.15)  !important; }
-  .bg-indigo-100     { background-color: rgba(99,102,241,0.2)   !important; }
+  // Badge / chip ranglari — purple glow
+  .bg-indigo-50      { background-color: rgba(168,85,247,0.12)  !important; }
+  .bg-indigo-100     { background-color: rgba(168,85,247,0.18)  !important; }
+  .bg-indigo-600     { background-color: #9333EA                !important; }
+  .bg-purple-50      { background-color: rgba(168,85,247,0.12)  !important; }
+  .bg-purple-100     { background-color: rgba(168,85,247,0.18)  !important; }
   .bg-emerald-50     { background-color: rgba(16,185,129,0.12)  !important; }
   .bg-emerald-100    { background-color: rgba(16,185,129,0.18)  !important; }
   .bg-amber-50       { background-color: rgba(245,158,11,0.12)  !important; }
   .bg-amber-100      { background-color: rgba(245,158,11,0.18)  !important; }
-  .bg-purple-50      { background-color: rgba(168,85,247,0.12)  !important; }
   .bg-blue-50        { background-color: rgba(59,130,246,0.12)  !important; }
   .bg-red-50         { background-color: rgba(239,68,68,0.12)   !important; }
   .bg-green-50       { background-color: rgba(34,197,94,0.12)   !important; }
-  .bg-yellow-50      { background-color: rgba(234,179,8,0.12)   !important; }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // TAILWIND TEXT CLASSES
   // ─────────────────────────────────────────────────────────────────────────────
-  .text-slate-900    { color: #f1f5f9  !important; }
-  .text-slate-800    { color: #e2e8f0  !important; }
-  .text-slate-700    { color: #cbd5e1  !important; }
-  .text-slate-600    { color: #94a3b8  !important; }
-  .text-slate-500    { color: #64748b  !important; }
-  .text-slate-400    { color: #475569  !important; }
-  .text-gray-900     { color: #f1f5f9  !important; }
-  .text-gray-800     { color: #e2e8f0  !important; }
-  .text-gray-700     { color: #cbd5e1  !important; }
-  .text-gray-600     { color: #94a3b8  !important; }
-  .text-gray-500     { color: #64748b  !important; }
+  .text-slate-900    { color: #FAFAFA   !important; }
+  .text-slate-800    { color: #E4E4E7   !important; }
+  .text-slate-700    { color: #D4D4D8   !important; }
+  .text-slate-600    { color: #A1A1AA   !important; }
+  .text-slate-500    { color: #71717A   !important; }
+  .text-slate-400    { color: #52525B   !important; }
+  .text-gray-900     { color: #FAFAFA   !important; }
+  .text-gray-800     { color: #E4E4E7   !important; }
+  .text-gray-700     { color: #D4D4D8   !important; }
+  .text-gray-600     { color: #A1A1AA   !important; }
+  .text-gray-500     { color: #71717A   !important; }
 
-  // Rangli matnlar — dark modeda biroz ochroq
-  .text-indigo-600   { color: #a5b4fc !important; }
-  .text-indigo-700   { color: #818cf8 !important; }
-  .text-emerald-700  { color: #6ee7b7 !important; }
-  .text-amber-700    { color: #fcd34d !important; }
-  .text-purple-700   { color: #d8b4fe !important; }
-  .text-blue-700     { color: #93c5fd !important; }
-  .text-red-700      { color: #fca5a5 !important; }
+  // Accent — purple based
+  .text-indigo-600   { color: #C084FC !important; }
+  .text-indigo-700   { color: #A855F7 !important; }
+  .text-indigo-500   { color: #C084FC !important; }
+  .text-purple-700   { color: #D8B4FE !important; }
+  .text-emerald-700  { color: #6EE7B7 !important; }
+  .text-amber-700    { color: #FCD34D !important; }
+  .text-blue-700     { color: #93C5FD !important; }
+  .text-red-600      { color: #FCA5A5 !important; }
+  .text-red-700      { color: #FCA5A5 !important; }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // TAILWIND BORDER CLASSES
   // ─────────────────────────────────────────────────────────────────────────────
-  .border-slate-200  { border-color: #334155 !important; }
-  .border-slate-100  { border-color: #1e293b !important; }
-  .border-gray-200   { border-color: #334155 !important; }
-  .divide-slate-100  > * + * { border-color: #1e293b !important; }
-  .divide-slate-200  > * + * { border-color: #334155 !important; }
-  hr { border-color: #334155 !important; }
+  .border-slate-200  { border-color: #27272A !important; }
+  .border-slate-100  { border-color: #1C1C1E !important; }
+  .border-gray-200   { border-color: #27272A !important; }
+  .divide-slate-100  > * + * { border-color: #1C1C1E !important; }
+  .divide-slate-200  > * + * { border-color: #27272A !important; }
+  hr { border-color: #27272A !important; }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // HOVER STATES
   // ─────────────────────────────────────────────────────────────────────────────
-  .hover\:bg-slate-50:hover   { background-color: rgba(255,255,255,0.04) !important; }
-  .hover\:bg-slate-100:hover  { background-color: #1e293b !important; }
-  .hover\:bg-white:hover      { background-color: #1e293b !important; }
-  .hover\:shadow-md:hover     { box-shadow: 0 4px 24px rgba(0,0,0,0.5) !important; }
+  .hover\:bg-slate-50:hover   { background-color: rgba(255,255,255,0.04)  !important; }
+  .hover\:bg-slate-100:hover  { background-color: #18181B                 !important; }
+  .hover\:bg-white:hover      { background-color: #18181B                 !important; }
+  .hover\:shadow-md:hover     { box-shadow: 0 4px 24px rgba(0,0,0,0.7)   !important; }
+
+  // Button hover — purple glow
+  .hover\:bg-indigo-700:hover { background-color: #9333EA !important; }
+  .hover\:bg-indigo-50:hover  { background-color: rgba(168,85,247,0.15) !important; }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // NATIVE INPUT / TEXTAREA / SELECT
+  // NATIVE INPUTS
   // ─────────────────────────────────────────────────────────────────────────────
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
   textarea,
   select {
-    background-color: transparent !important;
-    color: #f1f5f9 !important;
-    border-color: #334155 !important;
+    background-color: #111111 !important;
+    color: #FAFAFA !important;
+    border-color: #27272A !important;
     color-scheme: dark;
-    &::placeholder { color: #475569 !important; }
-    &:focus, &:focus-visible { border-color: #334155 !important; outline: none !important; box-shadow: none !important; }
+    &::placeholder { color: #52525B !important; }
+    &:focus, &:focus-visible {
+      border-color: rgba(168,85,247,0.5) !important;
+      outline: none !important;
+      box-shadow: 0 0 0 3px rgba(168,85,247,0.15) !important;
+    }
     &:-webkit-autofill,
     &:-webkit-autofill:hover,
     &:-webkit-autofill:focus,
     &:-webkit-autofill:active {
-      -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
-      -webkit-text-fill-color: #f1f5f9 !important;
-      caret-color: #f1f5f9 !important;
+      -webkit-box-shadow: 0 0 0 1000px #111111 inset !important;
+      -webkit-text-fill-color: #FAFAFA !important;
+      caret-color: #FAFAFA !important;
       transition: background-color 9999s ease-in-out 0s;
     }
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // CARD-BASE (custom class)
+  // CARD CLASSES
   // ─────────────────────────────────────────────────────────────────────────────
   .card-base {
-    background-color: #1e293b !important;
-    border-color: #334155 !important;
-    &:hover { border-color: rgba(99,102,241,0.4) !important; box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important; }
+    background-color: #111111 !important;
+    border-color: #27272A !important;
+    &:hover {
+      border-color: rgba(168,85,247,0.35) !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(168,85,247,0.15) !important;
+    }
   }
-  .card-flat  { background-color: #1e293b !important; border-color: #334155 !important; }
-  .card-glass {
-    background: rgba(30,41,59,0.8) !important;
-    border-color: rgba(99,102,241,0.2) !important;
-    backdrop-filter: blur(16px);
+  .card-flat     { background-color: #111111  !important; border-color: #27272A !important; }
+  .card-glass    {
+    background: rgba(17,17,17,0.85) !important;
+    border-color: rgba(168,85,247,0.15) !important;
+    backdrop-filter: blur(20px);
   }
-  .card-elevated { background-color: #1e293b !important; }
+  .card-elevated { background-color: #18181B !important; }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ROUNDED-2XL bordered cards — most common pattern in the codebase
+  // ─────────────────────────────────────────────────────────────────────────────
+  .rounded-2xl.border.border-slate-200,
+  .rounded-2xl.border.border-slate-100 {
+    background-color: #111111 !important;
+    border-color: #27272A !important;
+  }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // SKELETON
   // ─────────────────────────────────────────────────────────────────────────────
-  .skeleton,
-  .skeleton-text,
-  .skeleton-title,
-  .skeleton-card {
-    background: linear-gradient(90deg, #1e293b 25%, #293548 50%, #1e293b 75%) !important;
+  .skeleton, .skeleton-text, .skeleton-title, .skeleton-card {
+    background: linear-gradient(90deg, #18181B 25%, #27272A 50%, #18181B 75%) !important;
+    background-size: 200% 100% !important;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // BADGE
+  // BADGES
   // ─────────────────────────────────────────────────────────────────────────────
   .badge {
-    &.badge-open    { background: rgba(34,197,94,0.15);  color: #86efac; border-color: rgba(34,197,94,0.3);  }
-    &.badge-active  { background: rgba(99,102,241,0.15); color: #a5b4fc; border-color: rgba(99,102,241,0.3); }
-    &.badge-done    { background: rgba(100,116,139,0.15);color: #94a3b8; border-color: rgba(100,116,139,0.3);}
-    &.badge-pending { background: rgba(245,158,11,0.15); color: #fcd34d; border-color: rgba(245,158,11,0.3); }
-    &.badge-spam    { background: rgba(239,68,68,0.15);  color: #fca5a5; border-color: rgba(239,68,68,0.3);  }
-    &.badge-new     { background: rgba(14,165,233,0.15); color: #7dd3fc; border-color: rgba(14,165,233,0.3); }
+    &.badge-open    { background: rgba(34,197,94,0.12);   color: #86EFAC; border-color: rgba(34,197,94,0.25);   }
+    &.badge-active  { background: rgba(168,85,247,0.12);  color: #D8B4FE; border-color: rgba(168,85,247,0.25);  }
+    &.badge-done    { background: rgba(82,82,91,0.15);    color: #A1A1AA; border-color: rgba(82,82,91,0.3);     }
+    &.badge-pending { background: rgba(245,158,11,0.12);  color: #FCD34D; border-color: rgba(245,158,11,0.25);  }
+    &.badge-spam    { background: rgba(239,68,68,0.12);   color: #FCA5A5; border-color: rgba(239,68,68,0.25);   }
+    &.badge-new     { background: rgba(168,85,247,0.15);  color: #C084FC; border-color: rgba(168,85,247,0.3);   }
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // SELECTION
   // ─────────────────────────────────────────────────────────────────────────────
-  ::selection { background: rgba(129,140,248,0.25); color: #a5b4fc; }
+  ::selection { background: rgba(168,85,247,0.25); color: #D8B4FE; }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // FOCUS RING — purple instead of indigo
+  // ─────────────────────────────────────────────────────────────────────────────
+  .focus\:ring-indigo-300:focus,
+  .focus\:ring-2:focus {
+    --tw-ring-color: rgba(168,85,247,0.35) !important;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PRIMARY BUTTONS — purple in dark mode
+  // ─────────────────────────────────────────────────────────────────────────────
+  .bg-indigo-600 {
+    background-color: #9333EA !important;
+    &:hover { background-color: #7C3AED !important; }
+  }
+  button.bg-indigo-600,
+  a.bg-indigo-600 {
+    background-color: #9333EA !important;
+    box-shadow: 0 4px 16px rgba(147,51,234,0.35) !important;
+    &:hover { background-color: #7C3AED !important; }
+  }
 }
 
 a { text-decoration: none; color: inherit; }

@@ -8,7 +8,7 @@ import {
   CheckCircle, Clock, XCircle, Rocket
 } from '@phosphor-icons/react';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
-import { GET_MY_JOBS } from '../../apollo/user/query';
+import { GET_MY_JOBS, GET_MY_ANALYTICS } from '../../apollo/user/query';
 import { useReactiveVar } from '@apollo/client';
 import { userVar } from '../../apollo/store';
 
@@ -26,13 +26,21 @@ const DashboardPage = () => {
   const [tab, setTab] = useState<TabKey>('all');
 
   const { data } = useQuery(GET_MY_JOBS, {
-    variables: { input: { page: 1, limit: 10 } },
+    fetchPolicy: 'cache-and-network',
+  });
+
+  const isFreelancer = user?.userType === 'FREELANCER';
+
+  const { data: analyticsData } = useQuery(GET_MY_ANALYTICS, {
+    skip: !isFreelancer,
     fetchPolicy: 'cache-and-network',
   });
 
   const jobs = data?.getMyJobs ?? [];
-  const activeJobs   = jobs.filter((j: any) => j.status === 'ACTIVE');
-  const pendingJobs  = jobs.filter((j: any) => j.status === 'PENDING');
+  const analytics = analyticsData?.getMyAnalytics;
+
+  const activeJobs    = jobs.filter((j: any) => j.status === 'ACTIVE');
+  const pendingJobs   = jobs.filter((j: any) => j.status === 'OPEN');
   const completedJobs = jobs.filter((j: any) => j.status === 'COMPLETED');
 
   const filteredJobs = tab === 'all'       ? jobs
@@ -41,14 +49,17 @@ const DashboardPage = () => {
     : completedJobs;
 
   const displayName = user?.fullName ?? user?.username ?? 'Foydalanuvchi';
-  const earnings = completedJobs.reduce((s: number, j: any) => s + (j.budget ?? 0), 0);
-  const completionRate = jobs.length > 0 ? Math.round((completedJobs.length / jobs.length) * 100) : 0;
 
-  const STATS = [
-    { label: 'Faol ishlar',   value: activeJobs.length,  icon: <Briefcase size={22} color="#4f46e5" />, bg: 'bg-indigo-50',  delta: '+2' },
-    { label: "Daromad (so'm)", value: earnings.toLocaleString() || '0', icon: <CurrencyDollar size={22} color="#10b981" />, bg: 'bg-emerald-50', delta: '+12%' },
-    { label: 'Yuborilgan takliflar', value: jobs.length,  icon: <PaperPlaneTilt size={22} color="#f59e0b" />, bg: 'bg-amber-50',   delta: '+5' },
-    { label: "Tugagan ishlar",  value: completedJobs.length, icon: <Star size={22} color="#a855f7" weight="fill" />, bg: 'bg-purple-50', delta: '' },
+  const STATS = isFreelancer && analytics ? [
+    { label: 'Jami takliflar',     value: analytics.totalBids,                           icon: <PaperPlaneTilt size={22} color="#f59e0b" />, bg: 'bg-amber-50',   delta: '' },
+    { label: 'Qabul qilingan',     value: analytics.acceptedBids,                        icon: <CheckCircle size={22} color="#10b981" />,    bg: 'bg-emerald-50', delta: '' },
+    { label: 'Tugagan ishlar',     value: analytics.completedJobs,                       icon: <Star size={22} color="#a855f7" weight="fill" />, bg: 'bg-purple-50', delta: '' },
+    { label: "Jami daromad ($)",   value: `$${analytics.totalEarned.toLocaleString()}`,  icon: <CurrencyDollar size={22} color="#4f46e5" />, bg: 'bg-indigo-50',  delta: '' },
+  ] : [
+    { label: 'Faol ishlar',        value: activeJobs.length,                             icon: <Briefcase size={22} color="#4f46e5" />,      bg: 'bg-indigo-50',  delta: '' },
+    { label: "Kutilayotgan ishlar",value: pendingJobs.length,                            icon: <Clock size={22} color="#f59e0b" />,           bg: 'bg-amber-50',   delta: '' },
+    { label: 'Tugagan ishlar',     value: completedJobs.length,                          icon: <Star size={22} color="#a855f7" weight="fill" />, bg: 'bg-purple-50', delta: '' },
+    { label: "Jami ishlar",        value: jobs.length,                                   icon: <ChartLineUp size={22} color="#10b981" />,    bg: 'bg-emerald-50', delta: '' },
   ];
 
   return (
@@ -97,20 +108,50 @@ const DashboardPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: recent jobs */}
         <div className="lg:col-span-2">
-          {/* Profile completion */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-bold text-slate-900">Profil to'liqligi</p>
-              <span className="text-sm font-bold text-indigo-600">{completionRate}%</span>
+          {/* Analytics for freelancers / Profile info for agents */}
+          {isFreelancer && analytics ? (
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-5">
+              <p className="text-sm font-bold text-slate-900 mb-4">Profil statistikasi</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center">
+                  <p className="text-xl font-extrabold text-indigo-600">{analytics.profileViews}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Ko'rishlar</p>
+                </div>
+                <div className="text-center border-x border-slate-100">
+                  <p className="text-xl font-extrabold text-amber-500">⭐ {analytics.averageRating.toFixed(1)}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">O'rtacha reyting</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-extrabold text-emerald-600">{analytics.followerCount}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Obunachilar</p>
+                </div>
+              </div>
+              {analytics.totalBids > 0 && (
+                <div className="mt-4">
+                  <div className="flex justify-between text-xs text-slate-500 mb-1">
+                    <span>Qabul qilinish darajasi</span>
+                    <span className="font-bold text-emerald-600">
+                      {Math.round((analytics.acceptedBids / analytics.totalBids) * 100)}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 rounded-full transition-all duration-700"
+                      style={{ width: `${Math.round((analytics.acceptedBids / analytics.totalBids) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-              <div
-                className="h-full bg-indigo-600 rounded-full transition-all duration-700"
-                style={{ width: `${completionRate}%` }}
-              />
+          ) : (
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-bold text-slate-900">Jami ishlar</p>
+                <span className="text-sm font-bold text-indigo-600">{jobs.length}</span>
+              </div>
+              <p className="text-xs text-slate-400">Barcha e'lon qilgan ishlaringiz</p>
             </div>
-            <p className="text-xs text-slate-400 mt-1.5">Profilni to'ldiring va ko'proq mijozlar jalb qiling</p>
-          </div>
+          )}
 
           {/* Tabs */}
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">

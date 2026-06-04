@@ -1,4 +1,5 @@
 import { Field, Float, InputType, Int, ObjectType } from '@nestjs/graphql';
+
 import { IsEnum, IsNotEmpty, IsOptional, Length, Min } from 'class-validator';
 import { UserType } from '../enums/common.enums';
 import { PaginationInput } from '../types/common.types';
@@ -194,6 +195,22 @@ export class UpdateProfileInput {
   @IsOptional()
   @Field(() => String, { nullable: true })
   companyImage?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  githubUrl?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  behanceUrl?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  linkedinUrl?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  videoPortfolioUrl?: string;
 }
 
 // ─── Input: Get List of Users / Freelancers ───────────────────────────────────
@@ -206,4 +223,48 @@ export class GetFreelancersInput extends PaginationInput {
   @IsOptional()
   @Field(() => String, { nullable: true })
   searchText?: string;
+
+  @IsOptional()
+  @Field(() => Float, { nullable: true })
+  hourlyRateMin?: number;
+
+  @IsOptional()
+  @Field(() => Float, { nullable: true })
+  hourlyRateMax?: number;
+
+  @IsOptional()
+  @Field(() => Float, { nullable: true })
+  minRating?: number;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  availability?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  location?: string;
+}
+
+@ObjectType()
+export class FreelancerAnalytics {
+  @Field(() => Int)
+  totalBids: number;
+
+  @Field(() => Int)
+  acceptedBids: number;
+
+  @Field(() => Int)
+  completedJobs: number;
+
+  @Field(() => Float)
+  totalEarned: number;
+
+  @Field(() => Float)
+  averageRating: number;
+
+  @Field(() => Int)
+  profileViews: number;
+
+  @Field(() => Int)
+  followerCount: number;
 }

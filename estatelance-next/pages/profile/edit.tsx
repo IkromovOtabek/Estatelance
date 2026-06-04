@@ -63,12 +63,18 @@ const EditProfilePage = () => {
   const [bio, setBio] = useState('');
   const [location, setLocation] = useState('');
   const [profileImage, setProfileImage] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [availability, setAvailability] = useState<FreelancerAvailability>(FreelancerAvailability.AVAILABLE);
   const [freelancerCategory, setFreelancerCategory] = useState('');
   const [hourlyRate, setHourlyRate] = useState('');
   const [skillInput, setSkillInput] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
+  const [githubUrl, setGithubUrl] = useState('');
+  const [behanceUrl, setBehanceUrl] = useState('');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [videoPortfolioUrl, setVideoPortfolioUrl] = useState('');
+  const [resumeUrl, setResumeUrl] = useState('');
 
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -88,6 +94,7 @@ const EditProfilePage = () => {
       setBio(profile.bio ?? '');
       setLocation(profile.location ?? '');
       setProfileImage(profile.profileImage ?? '');
+      setPhoneNumber(profile.phoneNumber ?? '');
       setAvailability(profile.availability ?? FreelancerAvailability.AVAILABLE);
       setFreelancerCategory(profile.freelancerCategory ?? '');
       setHourlyRate(profile.hourlyRate ? String(profile.hourlyRate) : '');
@@ -99,6 +106,11 @@ const EditProfilePage = () => {
           description: p.description ?? '',
         }))
       );
+      setGithubUrl(profile.githubUrl ?? '');
+      setBehanceUrl(profile.behanceUrl ?? '');
+      setLinkedinUrl(profile.linkedinUrl ?? '');
+      setVideoPortfolioUrl(profile.videoPortfolioUrl ?? '');
+      setResumeUrl(profile.resumeUrl ?? '');
       setInitialized(true);
     }
   }, [data, initialized]);
@@ -144,6 +156,12 @@ const EditProfilePage = () => {
     if (bio.trim()) input.bio = bio.trim();
     if (location.trim()) input.location = location.trim();
     if (profileImage.trim()) input.profileImage = profileImage.trim();
+    if (phoneNumber.trim()) input.phoneNumber = phoneNumber.trim();
+    if (githubUrl.trim()) input.githubUrl = githubUrl.trim();
+    if (behanceUrl.trim()) input.behanceUrl = behanceUrl.trim();
+    if (linkedinUrl.trim()) input.linkedinUrl = linkedinUrl.trim();
+    if (videoPortfolioUrl.trim()) input.videoPortfolioUrl = videoPortfolioUrl.trim();
+    if (resumeUrl.trim()) input.resumeUrl = resumeUrl.trim();
 
     // Freelancer-specific fields
     if (isFreelancer) {
@@ -301,6 +319,70 @@ const EditProfilePage = () => {
                     onChange={(e) => setBio(e.target.value)}
                     inputProps={{ maxLength: 500 }}
                     helperText={`${bio.length}/500`}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* ── Section: Contact & Links ──────────────────────────────── */}
+            <Box sx={{ p: 3, bgcolor: 'white', borderRadius: 3, border: '1px solid #e2e8f0' }}>
+              <Typography fontWeight={700} mb={2.5} fontSize={15}>
+                Aloqa va ijtimoiy havolalar
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth size="small"
+                    label="Telefon raqami"
+                    placeholder="+998 90 123 45 67"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth size="small"
+                    label="Resume URL (PDF)"
+                    placeholder="https://drive.google.com/..."
+                    value={resumeUrl}
+                    onChange={(e) => setResumeUrl(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth size="small"
+                    label="GitHub profil"
+                    placeholder="https://github.com/username"
+                    value={githubUrl}
+                    onChange={(e) => setGithubUrl(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth size="small"
+                    label="Behance profil"
+                    placeholder="https://behance.net/username"
+                    value={behanceUrl}
+                    onChange={(e) => setBehanceUrl(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth size="small"
+                    label="LinkedIn profil"
+                    placeholder="https://linkedin.com/in/username"
+                    value={linkedinUrl}
+                    onChange={(e) => setLinkedinUrl(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth size="small"
+                    label="Video portfolio (YouTube/Vimeo)"
+                    placeholder="https://youtube.com/..."
+                    value={videoPortfolioUrl}
+                    onChange={(e) => setVideoPortfolioUrl(e.target.value)}
+                    helperText="Ishlaringiz yoki demo video havola"
                   />
                 </Grid>
               </Grid>

@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import {
   ChatCircle, X, ArrowLeft, PaperPlaneTilt,
-  Check, ArrowSquareOut, Users,
+  Check, ArrowSquareOut, Users, Sparkle, Robot, CircleNotch,
 } from '@phosphor-icons/react';
 import { io, Socket } from 'socket.io-client';
 import { userVar } from '../../../apollo/store';
@@ -71,8 +71,15 @@ export default function ChatWidget() {
   useEffect(() => { setMounted(true); }, []);
 
   const [open,       setOpen]       = useState(false);
-  const [view,       setView]       = useState<'public'|'namePrompt'|'dm'>('public');
+  const [view,       setView]       = useState<'public'|'namePrompt'|'dm'|'ai'>('ai');
   const [input,      setInput]      = useState('');
+
+  // AI yordamchi
+  type AiMsg = { role: 'user' | 'assistant'; content: string };
+  const [aiMsgs,    setAiMsgs]    = useState<AiMsg[]>([]);
+  const [aiInput,   setAiInput]   = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const aiBottom = useRef<HTMLDivElement>(null);
   const [onlineCount, setOnlineCount] = useState(0);
   const [unread,     setUnread]     = useState(0);
   const [joinedPublic, setJoinedPublic] = useState(false);
@@ -134,6 +141,33 @@ export default function ChatWidget() {
   // Auto-scroll
   useEffect(() => { pubBottom.current?.scrollIntoView({ behavior: 'smooth' }); }, [publicMsgs.length]);
   useEffect(() => { dmBottom.current?.scrollIntoView({ behavior: 'smooth' }); }, [localMsgs.length]);
+  useEffect(() => { aiBottom.current?.scrollIntoView({ behavior: 'smooth' }); }, [aiMsgs.length, aiLoading]);
+
+  // ── AI yordamchiga xabar yuborish ──────────────────────────────────────────
+  const sendAi = useCallback(async () => {
+    const text = aiInput.trim();
+    if (!text || aiLoading) return;
+    setAiInput('');
+    const nextMsgs: AiMsg[] = [...aiMsgs, { role: 'user', content: text }];
+    setAiMsgs(nextMsgs);
+    setAiLoading(true);
+    try {
+      const res = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: nextMsgs }),
+      });
+      const data = await res.json();
+      const reply = res.ok
+        ? (data.reply as string)
+        : (data.error as string) || "Kechirasiz, javob bera olmadim.";
+      setAiMsgs((prev) => [...prev, { role: 'assistant', content: reply }]);
+    } catch {
+      setAiMsgs((prev) => [...prev, { role: 'assistant', content: "Tarmoq xatosi. Qayta urinib ko'ring." }]);
+    } finally {
+      setAiLoading(false);
+    }
+  }, [aiInput, aiLoading, aiMsgs]);
 
   // ── When widget opens — join public immediately ────────────────────────────
   useEffect(() => {
@@ -167,6 +201,16 @@ export default function ChatWidget() {
     setGuestName(name);
     doJoinPublic(name);
   };
+
+  // "Jonli chat" tabiga o'tish (kerak bo'lsa public'ga ulanadi yoki ism so'raydi)
+  const openPublicTab = useCallback(() => {
+    if (joinedPublic) { setView('public'); return; }
+    const name = user._id
+      ? (user.fullName ?? user.username ?? 'User')
+      : (guestName || (typeof window !== 'undefined' ? localStorage.getItem('bufu_guest_name') : '') || '');
+    if (name) { setView('public'); setTimeout(() => doJoinPublic(name), 50); }
+    else { setView('namePrompt'); }
+  }, [joinedPublic, user._id, guestName, doJoinPublic]);
 
   // ── DM queries ─────────────────────────────────────────────────────────────
   const { data: convData, refetch: refetchConvs } = useQuery(GET_MY_CONVERSATIONS, {
@@ -280,7 +324,7 @@ export default function ChatWidget() {
           }}>
             <Stack direction="row" alignItems="center" spacing={1}>
               {view === 'dm' && (
-                <IconButton size="small" onClick={() => { setView('public'); setInput(''); }}
+                <IconButton size="small" onClick={() => { setInput(''); openPublicTab(); }}
                   sx={{ color: 'rgba(255,255,255,0.8)', p: 0.25 }}>
                   <ArrowLeft size={17} />
                 </IconButton>
@@ -292,6 +336,16 @@ export default function ChatWidget() {
                     {peerName?.[0]?.toUpperCase()}
                   </Avatar>
                   <Typography fontWeight={700} fontSize={13} color="white">{peerName}</Typography>
+                </Stack>
+              ) : view === 'ai' ? (
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Box sx={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#a855f7,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Sparkle size={15} color="white" weight="fill" />
+                  </Box>
+                  <Box>
+                    <Typography fontWeight={800} fontSize={14} color="white" lineHeight={1.1}>AI yordamchi</Typography>
+                    <Typography fontSize={10} color="rgba(255,255,255,0.7)">BuFu bo'yicha savollar</Typography>
+                  </Box>
                 </Stack>
               ) : (
                 <Box>
@@ -324,6 +378,136 @@ export default function ChatWidget() {
               </IconButton>
             </Stack>
           </Box>
+
+          {/* ── Tabs (AI / Jonli chat) ── */}
+          {(view === 'ai' || view === 'public') && (
+            <Stack direction="row" sx={{ flexShrink: 0, bgcolor: isDark ? 'rgba(15,23,42,0.6)' : 'rgba(255,255,255,0.7)', borderBottom: `1px solid ${isDark ? '#1e293b' : '#c7d2fe'}` }}>
+              {[
+                { key: 'ai' as const, label: 'AI yordamchi', icon: <Sparkle size={15} weight="fill" /> },
+                { key: 'public' as const, label: 'Jonli chat', icon: <ChatCircle size={15} weight="fill" /> },
+              ].map((t) => {
+                const active = view === t.key;
+                return (
+                  <Box
+                    key={t.key}
+                    onClick={() => (t.key === 'public' ? openPublicTab() : setView('ai'))}
+                    sx={{
+                      flex: 1, py: 1, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75,
+                      color: active ? '#6366f1' : (isDark ? '#94a3b8' : '#64748b'),
+                      fontWeight: active ? 800 : 600, fontSize: 12,
+                      borderBottom: active ? '2px solid #6366f1' : '2px solid transparent',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {t.icon}
+                    <span>{t.label}</span>
+                  </Box>
+                );
+              })}
+            </Stack>
+          )}
+
+          {/* ── AI ASSISTANT ── */}
+          {view === 'ai' && (
+            <>
+              <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5, background: 'transparent' }}>
+                {aiMsgs.length === 0 && !aiLoading && (
+                  <Box sx={{ textAlign: 'center', py: 4, px: 1.5 }}>
+                    <Box sx={{ width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#a855f7,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 1.5 }}>
+                      <Robot size={26} color="white" weight="fill" />
+                    </Box>
+                    <Typography fontWeight={800} fontSize={14} color={isDark ? '#e2e8f0' : '#0f172a'} mb={0.5}>
+                      Salom! Men BuFu AI yordamchisiman
+                    </Typography>
+                    <Typography fontSize={12} color={isDark ? '#94a3b8' : '#64748b'} mb={2}>
+                      Platforma, frilanserlik yoki ish topish bo'yicha xohlagan savolingizni bering.
+                    </Typography>
+                    <Stack spacing={0.75}>
+                      {[
+                        'BuFu qanday ishlaydi?',
+                        'Frilanser sifatida qanday boshlash mumkin?',
+                        "To'lovlar qanday himoyalangan?",
+                      ].map((q) => (
+                        <Box
+                          key={q}
+                          onClick={() => { setAiInput(q); }}
+                          sx={{
+                            px: 1.5, py: 1, borderRadius: 2, cursor: 'pointer', fontSize: 12,
+                            bgcolor: isDark ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.08)',
+                            border: `1px solid ${isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.18)'}`,
+                            color: isDark ? '#c7d2fe' : '#4f46e5', fontWeight: 600,
+                            '&:hover': { bgcolor: isDark ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.14)' },
+                          }}
+                        >
+                          {q}
+                        </Box>
+                      ))}
+                    </Stack>
+                  </Box>
+                )}
+                <Stack spacing={0.75}>
+                  {aiMsgs.map((msg, idx) => {
+                    const isMine = msg.role === 'user';
+                    return (
+                      <Stack key={idx} direction="row"
+                        justifyContent={isMine ? 'flex-end' : 'flex-start'}
+                        alignItems="flex-end" spacing={0.75}>
+                        {!isMine && (
+                          <Box sx={{ width: 26, height: 26, flexShrink: 0, borderRadius: '50%', background: 'linear-gradient(135deg,#a855f7,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Sparkle size={13} color="white" weight="fill" />
+                          </Box>
+                        )}
+                        <Box sx={{
+                          maxWidth: '78%', px: 1.5, py: 0.9,
+                          borderRadius: isMine ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                          bgcolor: isMine ? '#4f46e5' : (isDark ? 'rgba(30,41,59,0.85)' : 'rgba(255,255,255,0.92)'),
+                          color: isMine ? 'white' : (isDark ? '#e2e8f0' : '#0f172a'),
+                          boxShadow: isMine ? '0 2px 8px rgba(79,70,229,0.35)' : (isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.08)'),
+                          backdropFilter: 'blur(4px)',
+                        }}>
+                          <Typography fontSize={13} lineHeight={1.55} sx={{ whiteSpace: 'pre-wrap' }}>{msg.content}</Typography>
+                        </Box>
+                      </Stack>
+                    );
+                  })}
+                  {aiLoading && (
+                    <Stack direction="row" alignItems="flex-end" spacing={0.75}>
+                      <Box sx={{ width: 26, height: 26, flexShrink: 0, borderRadius: '50%', background: 'linear-gradient(135deg,#a855f7,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Sparkle size={13} color="white" weight="fill" />
+                      </Box>
+                      <Box sx={{
+                        px: 1.5, py: 1, borderRadius: '14px 14px 14px 4px',
+                        bgcolor: isDark ? 'rgba(30,41,59,0.85)' : 'rgba(255,255,255,0.92)',
+                        display: 'flex', alignItems: 'center', gap: 0.75,
+                      }}>
+                        <CircleNotch size={15} color="#6366f1" className="ai-spin" />
+                        <Typography fontSize={12} color={isDark ? '#94a3b8' : '#64748b'}>Yozmoqda...</Typography>
+                      </Box>
+                    </Stack>
+                  )}
+                  <div ref={aiBottom} />
+                </Stack>
+              </Box>
+
+              <Box sx={{ p: 1.5, bgcolor: isDark ? 'rgba(15,23,42,0.7)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', borderTop: `1px solid ${isDark ? '#1e293b' : '#c7d2fe'}`, flexShrink: 0 }}>
+                <Stack direction="row" spacing={1} alignItems="flex-end">
+                  <TextField
+                    size="small" fullWidth multiline maxRows={3}
+                    placeholder="Savolingizni yozing..."
+                    value={aiInput}
+                    onChange={e => setAiInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAi(); } }}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: isDark ? 'rgba(30,41,59,0.8)' : 'rgba(255,255,255,0.9)', fontSize: 13, '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? '#334155' : '#c7d2fe' }, '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1' } }, '& .MuiInputBase-input': { color: isDark ? '#e2e8f0' : '#0f172a' } }}
+                  />
+                  <IconButton onClick={sendAi} disabled={!aiInput.trim() || aiLoading}
+                    sx={{ bgcolor: aiInput.trim() && !aiLoading ? '#4f46e5' : '#e2e8f0', color: aiInput.trim() && !aiLoading ? 'white' : '#94a3b8', width: 36, height: 36, borderRadius: 2, flexShrink: 0, '&:hover': { bgcolor: aiInput.trim() && !aiLoading ? '#4338ca' : '#e2e8f0' }, transition: 'all 0.15s' }}>
+                    <PaperPlaneTilt size={17} weight="fill" />
+                  </IconButton>
+                </Stack>
+              </Box>
+            </>
+          )}
 
           {/* ── NAME PROMPT ── */}
           {view === 'namePrompt' && (
@@ -516,8 +700,8 @@ export default function ChatWidget() {
           onClick={() => {
             const next = !open;
             setOpen(next);
-            if (next && view !== 'dm') {
-              // Auto-join public on open
+            if (next && view === 'public') {
+              // Auto-join public on open (faqat jonli chat tab ochiq bo'lsa)
               const name = user._id
                 ? (user.fullName ?? user.username ?? 'User')
                 : (guestName || (typeof window !== 'undefined' ? localStorage.getItem('bufu_guest_name') : '') || '');
@@ -537,7 +721,7 @@ export default function ChatWidget() {
             transition: 'transform 0.15s',
           }}
         >
-          {open ? <X size={22} weight="bold" /> : <ChatCircle size={24} weight="fill" />}
+          {open ? <X size={22} weight="bold" /> : <Sparkle size={24} weight="fill" />}
         </IconButton>
 
         {!open && unread > 0 && (

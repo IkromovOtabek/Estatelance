@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaTypes } from 'mongoose';
 import { Field, Float, Int, ObjectType } from '@nestjs/graphql';
-import { JobCategory, JobStatus, PropertyType } from '../libs/enums/common.enums';
+import { EscrowStatus, JobCategory, JobStatus, PropertyType } from '../libs/enums/common.enums';
 
 @Schema({ timestamps: true })
 @ObjectType()
@@ -109,6 +109,33 @@ export class Job extends Document {
   @Field(() => String, { nullable: true })
   hiredFreelancerId?: string;
 
+  // Escrow payment tracking
+  @Prop({ enum: EscrowStatus, default: EscrowStatus.NONE })
+  @Field(() => String, { nullable: true })
+  escrowStatus?: EscrowStatus;
+
+  @Prop({ default: 0 })
+  @Field(() => Float, { nullable: true })
+  escrowAmount?: number;
+
+  // Agent's review of the freelancer (set after job is completed)
+  @Prop({ default: null })
+  @Field(() => Float, { nullable: true })
+  agentRating?: number;
+
+  @Prop({ trim: true })
+  @Field(() => String, { nullable: true })
+  agentReviewText?: string;
+
+  // Freelancer's review of the agent (set after job is completed)
+  @Prop({ default: null })
+  @Field(() => Float, { nullable: true })
+  freelancerRating?: number;
+
+  @Prop({ trim: true })
+  @Field(() => String, { nullable: true })
+  freelancerReviewText?: string;
+
   // Set when owner boosts the job to top
   @Prop({ default: null })
   @Field(() => String, { nullable: true })
@@ -135,3 +162,6 @@ export const JobSchema = SchemaFactory.createForClass(Job);
 // Index for fast filtering by category and status
 JobSchema.index({ category: 1, status: 1 });
 JobSchema.index({ agentId: 1 });
+// Asosiy ro'yxat so'rovi: status bo'yicha filtr + bumpedAt/createdAt bo'yicha sort
+JobSchema.index({ status: 1, bumpedAt: -1, createdAt: -1 });
+JobSchema.index({ hiredFreelancerId: 1 });

@@ -5,6 +5,8 @@ import { UserService } from './user.service';
 import { User, UserSchema } from '../../schemas/User.model';
 import { Follow, FollowSchema } from '../../schemas/Follow.model';
 import { ProfileView, ProfileViewSchema } from '../../schemas/ProfileView.model';
+import { Bid, BidSchema } from '../../schemas/Bid.model';
+import { Job, JobSchema } from '../../schemas/Job.model';
 import { AuthModule } from '../auth/auth.module';
 import { NotificationModule } from '../notification/notification.module';
 import { TelegramBotModule } from '../telegram-bot/telegram-bot.module';
@@ -15,6 +17,8 @@ import { TelegramBotModule } from '../telegram-bot/telegram-bot.module';
       { name: User.name, schema: UserSchema },
       { name: Follow.name, schema: FollowSchema },
       { name: ProfileView.name, schema: ProfileViewSchema },
+      { name: Bid.name, schema: BidSchema },
+      { name: Job.name, schema: JobSchema },
     ]),
     AuthModule,
     NotificationModule,

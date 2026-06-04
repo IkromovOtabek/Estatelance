@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
@@ -32,7 +32,7 @@ import { GET_JOBS, GET_FREELANCERS } from '../apollo/user/query';
 import { userVar } from '../apollo/store';
 import withLayoutBasic from '../libs/components/layout/LayoutBasic';
 import { Job, User } from '../libs/types';
-import { JobStatus } from '../libs/enums';
+import { JobStatus, UserType } from '../libs/enums';
 import { getCatIcon } from '../libs/utils/jobCategoryIcons';
 
 // ─── Category meta ─────────────────────────────────────────────────────────────
@@ -276,11 +276,37 @@ const HomePage = () => {
   const user = useReactiveVar(userVar);
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const revealRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Smooth scroll-reveal: bo'limlar ekranga kirganda yumshoq paydo bo'ladi
+  useEffect(() => {
+    const root = revealRef.current;
+    if (!root) return;
+    const sections = Array.from(
+      root.querySelectorAll<HTMLElement>('section:not(.bufu-hero)')
+    );
+    if (typeof IntersectionObserver === 'undefined') return;
+    sections.forEach((el) => el.classList.add('reveal-on-scroll'));
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-visible');
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+    sections.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
   const isDark = mounted && resolvedTheme === 'dark';
   const isLoggedIn = mounted && !!user._id;
+  const isFreelancer = isLoggedIn && user.userType === UserType.FREELANCER;
+  const isAgent = isLoggedIn && user.userType === UserType.AGENT;
 
   const { data: jobsData, loading: jobsLoading } = useQuery(GET_JOBS, {
     variables: { input: { page: 1, limit: 20, status: JobStatus.OPEN } },
@@ -288,7 +314,7 @@ const HomePage = () => {
   });
 
   const { data: freelancersData, loading: freelancersLoading } = useQuery(GET_FREELANCERS, {
-    variables: { input: { page: 1, limit: 12 } },
+    variables: { input: { page: 1, limit: 50 } },
     fetchPolicy: 'cache-and-network',
   });
 
@@ -297,12 +323,23 @@ const HomePage = () => {
   const popularJobs = [...allJobs]
     .sort((a, b) => (b.bidCount ?? 0) - (a.bidCount ?? 0))
     .slice(0, 6);
-  const topFreelancers: User[] = [...(freelancersData?.getFreelancers ?? [])]
+  const allFreelancers: User[] = freelancersData?.getFreelancers ?? [];
+  const topFreelancers: User[] = [...allFreelancers]
     .sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0))
     .slice(0, 5);
 
+  // Hero "trust" bloki uchun: rasmi borlarni oldinga qo'yib, 5 ta avatar
+  const heroAvatars: User[] = [...allFreelancers]
+    .sort((a, b) => (b.profileImage ? 1 : 0) - (a.profileImage ? 1 : 0))
+    .slice(0, 5);
+  const freelancerCount = allFreelancers.length;
+  const ratedFreelancers = allFreelancers.filter((f) => (f.averageRating ?? 0) > 0);
+  const heroAvgRating = ratedFreelancers.length
+    ? (ratedFreelancers.reduce((sum, f) => sum + (f.averageRating ?? 0), 0) / ratedFreelancers.length).toFixed(1)
+    : null;
+
   return (
-    <>
+    <div ref={revealRef} className={`home-sections${isDark ? ' is-dark' : ''}`}>
       <Head>
         <title>BuFu — O'zbekiston frilanserlar platformasi | Ish toping yoki frilanser yollang</title>
         <meta
@@ -321,272 +358,400 @@ const HomePage = () => {
         <link rel="canonical" href="https://bufu.uz" />
       </Head>
 
-      {/* ─── HERO ─────────────────────────────────────────────────────────── */}
+      {/* ─── HERO (kod bilan · light/dark) ────────────────────────────────── */}
       <section
-        className="relative w-screen min-h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden"
+        className="bufu-hero relative w-screen overflow-hidden"
         style={{
-          backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+          backgroundColor: isDark ? '#0B0B14' : '#F2F1FB',
           marginLeft: 'calc(-50vw + 50%)',
           marginRight: 'calc(-50vw + 50%)',
+          marginTop: '-32px',
           transition: 'background-color 0.25s ease',
         }}
       >
-        {/* Glow orb */}
+        {/* Decorative blobs */}
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
-          style={{
-            background: isDark
-              ? 'radial-gradient(circle, rgba(79,70,229,0.4) 0%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)',
-            filter: 'blur(60px)',
-          }}
+          className="absolute -top-24 -right-16 w-[420px] h-[420px] rounded-full pointer-events-none"
+          style={{ background: isDark ? 'radial-gradient(circle, rgba(99,102,241,0.30), transparent 70%)' : 'radial-gradient(circle, rgba(99,102,241,0.16), transparent 70%)', filter: 'blur(20px)' }}
         />
-        {/* Light mode decorative circles */}
-        {!isDark && (
-          <>
-            <div className="absolute top-20 right-20 w-72 h-72 bg-indigo-100/60 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-20 left-20 w-56 h-56 bg-purple-100/60 rounded-full blur-3xl pointer-events-none" />
-          </>
-        )}
+        <div
+          className="absolute top-20 -left-24 w-[360px] h-[360px] rounded-full pointer-events-none"
+          style={{ background: isDark ? 'radial-gradient(circle, rgba(168,85,247,0.26), transparent 70%)' : 'radial-gradient(circle, rgba(168,85,247,0.18), transparent 70%)', filter: 'blur(20px)' }}
+        />
+        {/* Confetti */}
+        <div className="confetti-wrap pointer-events-none absolute inset-0 overflow-hidden">
+          {[
+            { l: '8%',  t: '14%', c: '#6366F1', d: '0s' },
+            { l: '20%', t: '8%',  c: '#A855F7', d: '.4s' },
+            { l: '33%', t: '20%', c: '#F59E0B', d: '.8s' },
+            { l: '46%', t: '10%', c: '#22C55E', d: '.2s' },
+            { l: '60%', t: '16%', c: '#EF4444', d: '.6s' },
+            { l: '74%', t: '9%',  c: '#6366F1', d: '1s' },
+            { l: '88%', t: '22%', c: '#A855F7', d: '.3s' },
+          ].map((p, i) => (
+            <span key={i} className="confetti" style={{ left: p.l, top: p.t, backgroundColor: p.c, animationDelay: p.d }} />
+          ))}
+        </div>
 
-        <div className="relative z-10 max-w-3xl mx-auto w-full">
-          {/* Badge */}
-          <span className={`inline-block px-4 py-1.5 mb-6 rounded-full text-xs font-bold tracking-wider uppercase border backdrop-blur-sm ${
-            isDark
-              ? 'text-indigo-300 border-indigo-500/30 bg-white/5'
-              : 'text-indigo-600 border-indigo-200 bg-indigo-50/80'
-          }`}>
-            O'zbekistonda 1-raqamli platforma
-          </span>
+        <div className="relative hw py-14 lg:py-20 grid lg:grid-cols-2 gap-12 items-center">
+          {/* ── Left ── */}
+          <div className="hero-left">
+            <h1 className={`text-4xl sm:text-5xl lg:text-[3.4rem] font-black leading-[1.05] tracking-tight mb-5 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              Orzuingizdagi ishni{' '}
+              <span style={{ background: 'linear-gradient(120deg, #6366F1, #A855F7)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                BuFu
+              </span>
+              da toping
+            </h1>
 
-          <h1 className={`text-4xl sm:text-5xl md:text-6xl font-black mb-6 leading-tight tracking-tight ${
-            isDark ? 'text-white' : 'text-slate-900'
-          }`}>
-            Build Future —{' '}
-            <span className={isDark ? 'text-indigo-400' : 'text-indigo-600'}>O'zbekiston</span>{' '}
-            frilanserlar platformasi
-          </h1>
+            <p className={`text-lg leading-relaxed mb-8 max-w-xl ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              O'zbekistonning eng ishonchli freelancer platformasi. Mutaxassis yollang yoki o'z mahoratingiz bilan daromad olishni bugundan boshlang.
+            </p>
 
-          <p className={`text-lg mb-10 max-w-2xl mx-auto leading-relaxed ${
-            isDark ? 'text-slate-300' : 'text-slate-600'
-          }`}>
-            Eng malakali mutaxassislarni toping yoki o'z mahoratingiz orqali daromad olishni bugundan boshlang.
-            Frilans — kelajak iqtisodiyoti.
-          </p>
-
-          {/* Search Bar */}
-          <div className="w-full max-w-2xl mx-auto mb-16">
-            <div className={`flex flex-col md:flex-row gap-2 p-2 rounded-xl shadow-2xl ${
-              isDark ? 'bg-slate-800 shadow-black/40' : 'bg-white shadow-indigo-100/60'
-            }`}>
-              <div className="flex-1 flex items-center px-4 gap-3">
-                <MagnifyingGlass size={20} className={isDark ? 'text-slate-400' : 'text-slate-400'} />
-                <input
-                  type="text"
-                  placeholder="Qanday ish yoki mutaxassis kerak?"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full border-none outline-none text-sm py-3 bg-transparent placeholder-slate-400 ${
-                    isDark ? 'text-slate-100' : 'text-slate-900'
-                  }`}
-                />
-              </div>
-              <Link
-                href={searchQuery ? `/jobs?q=${encodeURIComponent(searchQuery)}` : '/jobs'}
-                className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold text-sm hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 no-underline"
-              >
-                Izlash
-              </Link>
+            {/* CTA buttons — auth holati va rolga qarab */}
+            <div className="flex flex-wrap items-center gap-3 mb-9">
+              {isFreelancer ? (
+                /* Frilanser: ish topish */
+                <Link
+                  href="/jobs"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all no-underline shadow-lg shadow-indigo-500/30"
+                >
+                  <MagnifyingGlass size={18} weight="bold" /> Ish topish
+                </Link>
+              ) : isAgent ? (
+                /* Ish beruvchi (agent): ish e'lon joylash + ishchi izlash */
+                <>
+                  <Link
+                    href="/my-works/create"
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all no-underline shadow-lg shadow-indigo-500/30"
+                  >
+                    <Briefcase size={18} weight="bold" /> Ish e'lon joylash
+                  </Link>
+                  <Link
+                    href="/browse"
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm transition-all no-underline"
+                    style={{ backgroundColor: '#A855F7', boxShadow: '0 10px 24px rgba(168,85,247,0.32)' }}
+                  >
+                    <MagnifyingGlass size={18} weight="bold" /> Ishchi izlash
+                  </Link>
+                </>
+              ) : (
+                /* Signup bo'lmagan (mehmon) foydalanuvchi */
+                <>
+                  <Link
+                    href="/browse"
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all no-underline shadow-lg shadow-indigo-500/30"
+                  >
+                    <MagnifyingGlass size={18} weight="bold" /> Mutaxassis topish
+                  </Link>
+                  <Link
+                    href="/account"
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm transition-all no-underline"
+                    style={{ backgroundColor: '#A855F7', boxShadow: '0 10px 24px rgba(168,85,247,0.32)' }}
+                  >
+                    <Briefcase size={18} weight="bold" /> Ishchi izlayapman
+                  </Link>
+                </>
+              )}
             </div>
+
+            {/* Trust — real frilanserlar (avatar stack) */}
+            {heroAvatars.length > 0 && (
+              <div className="flex items-center gap-4">
+                <div className="flex -space-x-3">
+                  {heroAvatars.map((f, i) => {
+                    const name = f.fullName ?? f.username ?? 'U';
+                    return (
+                      <div
+                        key={f._id}
+                        className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold"
+                        style={{
+                          zIndex: heroAvatars.length - i,
+                          background: 'linear-gradient(135deg,#6366F1,#A855F7)',
+                          border: `2px solid ${isDark ? '#0B0B14' : '#F2F1FB'}`,
+                        }}
+                        title={name}
+                      >
+                        {f.profileImage ? (
+                          <img src={f.profileImage} alt={name} className="w-full h-full object-cover" />
+                        ) : (
+                          name[0]?.toUpperCase()
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div>
+                  <div className={`text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+                    <span className="font-black" style={{ color: '#6366F1' }}>{freelancerCount}+</span> frilanser bizga ishonadi
+                  </div>
+                  {heroAvgRating && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span className="flex items-center gap-0.5">
+                        {[0, 1, 2, 3, 4].map((n) => (
+                          <Star key={n} size={13} weight="fill" color="#F59E0B" />
+                        ))}
+                      </span>
+                      <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{heroAvgRating}</span>
+                      <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>o'rtacha reyting</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Stats */}
-          <div className={`grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-xl mx-auto border-t pt-12 ${
-            isDark ? 'border-white/10' : 'border-slate-200'
-          }`}>
+          {/* ── Right: live cards ── */}
+          <div className="hero-right relative">
+            {/* Floating "Ish topdingiz!" toast */}
+            <div
+              className="hero-toast absolute -top-5 left-2 z-20 flex items-center gap-2.5 px-4 py-2.5 rounded-xl"
+              style={{
+                backgroundColor: isDark ? '#17172A' : '#FFFFFF',
+                border: `1px solid ${isDark ? '#27272A' : '#ECECF5'}`,
+                boxShadow: isDark ? '0 12px 30px rgba(0,0,0,0.5)' : '0 12px 30px rgba(99,102,241,0.15)',
+              }}
+            >
+              <span className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(120deg,#6366F1,#A855F7)' }}>
+                <CheckCircle size={16} weight="fill" color="#fff" />
+              </span>
+              <div>
+                <div className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Ish topdingiz! 🎉</div>
+                <div className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Yangi imkoniyat sizni kutmoqda</div>
+              </div>
+            </div>
+
+            {/* Card 1: freelancer match */}
+            <div
+              className="hero-card relative z-10 rounded-2xl p-5 mb-4"
+              style={{
+                backgroundColor: isDark ? '#17172A' : '#FFFFFF',
+                border: `1px solid ${isDark ? '#27272A' : '#ECECF5'}`,
+                boxShadow: isDark ? '0 20px 48px rgba(0,0,0,0.5)' : '0 20px 48px rgba(99,102,241,0.12)',
+              }}
+            >
+              <div className={`flex items-center gap-2 text-xs font-bold mb-4 ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
+                <Star size={14} weight="fill" className="text-indigo-500" /> Sizga mos freelancer
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-lg" style={{ background: 'linear-gradient(135deg,#6366F1,#A855F7)' }}>
+                    BR
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-green-500" style={{ border: `2.5px solid ${isDark ? '#17172A' : '#fff'}` }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Behzod R.</div>
+                  <div className="text-indigo-500 text-xs font-semibold">UI/UX Designer</div>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Star size={12} weight="fill" className="text-amber-400" />
+                    <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>5.0</span>
+                    <span className={`text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>(128 ta baho)</span>
+                  </div>
+                </div>
+                <div className="text-center px-3 py-2 rounded-xl" style={{ backgroundColor: isDark ? 'rgba(34,197,94,0.14)' : '#DCFCE7' }}>
+                  <div className="flex items-center gap-1 text-green-600 font-bold text-xs">
+                    <CheckCircle size={14} weight="fill" /> Mos keldi!
+                  </div>
+                  <div className="text-[10px] text-green-600 font-semibold mt-0.5">98% moslik</div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-4">
+                {['Figma', 'UI/UX', 'Web Design', 'Prototyping'].map((t) => (
+                  <span key={t} className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{t}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Card 2: matched job */}
+            <div
+              className="hero-card-2 relative z-10 rounded-2xl p-5"
+              style={{
+                backgroundColor: isDark ? '#17172A' : '#FFFFFF',
+                border: `1px solid ${isDark ? '#27272A' : '#ECECF5'}`,
+                boxShadow: isDark ? '0 20px 48px rgba(0,0,0,0.5)' : '0 20px 48px rgba(99,102,241,0.12)',
+              }}
+            >
+              <div className={`flex items-center gap-2 text-xs font-bold mb-3 ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
+                <Briefcase size={14} weight="fill" className="text-indigo-500" /> Siz uchun mos ish
+              </div>
+              <div className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Mobil ilova uchun UI/UX dizayn</div>
+              <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>TechNova LLC · Toshkent, O'zbekiston</div>
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {['UI/UX', 'Mobile', 'Figma'].map((t) => (
+                  <span key={t} className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{t}</span>
+                ))}
+              </div>
+              <div className={`flex items-center justify-between mt-4 pt-4 border-t ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+                <div>
+                  <div className="text-indigo-500 font-black text-lg leading-none">12 000 000 so'm</div>
+                  <div className={`text-[11px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>bir loyiha uchun</div>
+                </div>
+                <Link
+                  href="/jobs"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-white font-bold text-xs no-underline transition-all hover:opacity-90"
+                  style={{ background: 'linear-gradient(120deg,#6366F1,#A855F7)' }}
+                >
+                  Taklif yuborish <ArrowRight size={14} weight="bold" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <style jsx>{`
+          .bufu-hero { min-height: calc(100vh - 64px); display: flex; align-items: center; }
+          .hero-left > * { animation: heroUp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+          .hero-left > *:nth-child(1) { animation-delay: 0.05s; }
+          .hero-left > *:nth-child(2) { animation-delay: 0.13s; }
+          .hero-left > *:nth-child(3) { animation-delay: 0.21s; }
+          .hero-left > *:nth-child(4) { animation-delay: 0.29s; }
+          .hero-left > *:nth-child(5) { animation-delay: 0.37s; }
+          .hero-left > *:nth-child(6) { animation-delay: 0.45s; }
+          .hero-toast { animation: heroUp 0.6s ease both, floatY 4s ease-in-out 0.8s infinite; animation-delay: 0.5s; }
+          .hero-card { animation: heroUp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: 0.35s; }
+          .hero-card-2 { animation: heroUp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: 0.5s; }
+          .confetti { position: absolute; width: 9px; height: 9px; border-radius: 2px; opacity: 0.85; animation: confettiFall 5s linear infinite; }
+          @keyframes heroUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes floatY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+          @keyframes confettiFall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 0; } 15% { opacity: 0.9; } 100% { transform: translateY(120px) rotate(220deg); opacity: 0; } }
+          @media (prefers-reduced-motion: reduce) {
+            .hero-left > *, .hero-toast, .hero-card, .hero-card-2, .confetti { animation: none !important; }
+          }
+        `}</style>
+      </section>
+
+      {/* ─── HOW IT WORKS (step-by-step · faqat mehmonlar uchun) ──────────── */}
+      {!isLoggedIn && (
+        <section className="py-24 hw-bg">
+          <div className="text-center mb-16">
+            <span
+              className="inline-block px-3 py-1 mb-3 rounded-full text-xs font-bold tracking-wide"
+              style={{ background: isDark ? 'rgba(99,102,241,0.15)' : '#eef2ff', color: '#6366f1' }}
+            >
+              ODDIY 4 QADAM
+            </span>
+            <h2 className={`text-3xl font-black mb-3 ${isDark ? 'text-white' : 'text-slate-900'}`}>Platforma qanday ishlaydi?</h2>
+            <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+              Ro'yxatdan o'tib, bir necha daqiqada birinchi loyihangizni boshlang
+            </p>
+          </div>
+
+          <div className="relative grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-4">
+            {/* Bog'lovchi chiziq (faqat desktop) */}
+            <div
+              className="hidden md:block absolute top-8 left-[12.5%] right-[12.5%] h-0.5"
+              style={{
+                background: isDark
+                  ? 'linear-gradient(90deg, #6366f1, #a855f7)'
+                  : 'linear-gradient(90deg, #c7d2fe, #e9d5ff)',
+              }}
+            />
             {[
-              { val: '500+', label: 'Frilanserlar' },
-              { val: '1000+', label: 'Loyihalar' },
-              { val: '200+', label: 'Mijozlar' },
-            ].map(s => (
-              <div key={s.label} className="flex flex-col items-center">
-                <span className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{s.val}</span>
-                <span className={`text-xs font-bold uppercase tracking-widest mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{s.label}</span>
+              {
+                num: '1',
+                title: "Ro'yxatdan o'ting",
+                desc: "Frilanser yoki mijoz sifatida o'z profilingizni yarating.",
+                icon: <GraduationCap size={26} weight="fill" />,
+              },
+              {
+                num: '2',
+                title: 'Loyihani joylashtiring',
+                desc: 'Vazifa tavsifini yozing va budjetingizni belgilang.',
+                icon: <ClipboardText size={26} weight="fill" />,
+              },
+              {
+                num: '3',
+                title: 'Eng yaxshisini tanlang',
+                desc: "Nomzodlar portfoliosi va reytingini ko'rib chiqing.",
+                icon: <Star size={26} weight="fill" />,
+              },
+              {
+                num: '4',
+                title: "Xavfsiz to'lov",
+                desc: "Ish yakunlangandan so'ng tizim orqali to'lovni amalga oshiring.",
+                icon: <ShieldCheck size={26} weight="fill" />,
+              },
+            ].map((step, i, arr) => (
+              <div key={step.num} className="relative flex flex-col items-center text-center">
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 relative z-10 text-white"
+                  style={{
+                    background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                    boxShadow: '0 12px 28px rgba(99,102,241,0.35)',
+                  }}
+                >
+                  <span
+                    className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white text-indigo-600 text-xs font-black flex items-center justify-center"
+                    style={{ border: '2px solid #e0e7ff' }}
+                  >
+                    {step.num}
+                  </span>
+                  {step.icon}
+                </div>
+                <h4 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{step.title}</h4>
+                <p className={`text-sm leading-relaxed max-w-[230px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {step.desc}
+                </p>
+                {/* Mobil uchun pastga ko'rsatkich */}
+                {i < arr.length - 1 && (
+                  <ArrowRight size={22} weight="bold" className="md:hidden text-indigo-400 mt-6 rotate-90" />
+                )}
               </div>
             ))}
           </div>
-        </div>
-      </section>
+
+          <div className="text-center mt-14">
+            <Link
+              href="/account"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all no-underline shadow-lg shadow-indigo-500/30"
+            >
+              Hoziroq boshlash <ArrowRight size={18} weight="bold" />
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* ─── CATEGORIES ───────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
+      <section className="py-24 hw-bg">
         <div className="text-center mb-16">
           <h2 className={`text-3xl font-black mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>Yo'nalishlar bo'yicha izlash</h2>
           <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Har qanday murakkablikdagi vazifalar uchun mutaxassislar</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {CATEGORIES_DISPLAY.map(({ key }) => {
-            const cat = CAT[key] ?? CAT.OTHER;
-            return (
-              <Link key={key} href={`/browse?category=${key}`} className="no-underline group">
-                <div
-                  className="p-5 rounded-2xl flex flex-col items-center text-center hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer border"
-                  style={{
-                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                    borderColor: isDark ? '#334155' : '#e2e8f0',
-                    boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.4)' : undefined,
-                  }}
-                >
+        <div className="cat-marquee" style={{ width: '100%' }}>
+          <div className="cat-track">
+            {[...CATEGORIES_DISPLAY, ...CATEGORIES_DISPLAY].map(({ key }, i) => {
+              const cat = CAT[key] ?? CAT.OTHER;
+              return (
+                <Link key={`${key}-${i}`} href={`/browse?category=${key}`} className="no-underline group shrink-0 w-40" aria-hidden={i >= CATEGORIES_DISPLAY.length}>
                   <div
-                    className="w-14 h-14 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
+                    className="p-5 rounded-2xl flex flex-col items-center text-center hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer border"
                     style={{
-                      backgroundColor: isDark ? cat.darkBg : cat.bg,
-                      color: isDark ? cat.darkText : cat.text,
+                      backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                      borderColor: isDark ? '#334155' : '#e2e8f0',
+                      boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.4)' : undefined,
                     }}
                   >
-                    {getCatIcon(key, 28)}
-                  </div>
-                  <span className={`text-xs font-semibold leading-tight ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{cat.label}</span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ─── HOW IT WORKS ─────────────────────────────────────────────────── */}
-      <section
-        className="py-24 px-6 md:px-12 overflow-hidden"
-        style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc' }}
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row gap-16 items-center">
-            <div className="flex-1">
-              <h2 className={`text-3xl font-black mb-8 ${isDark ? 'text-white' : 'text-slate-900'}`}>Platforma qanday ishlaydi?</h2>
-              <div className="space-y-8">
-                {[
-                  {
-                    num: '1',
-                    title: "Ro'yxatdan o'ting",
-                    desc: "Frilanser yoki mijoz sifatida o'z profilingizni yarating.",
-                    icon: <GraduationCap size={22} weight="fill" />,
-                  },
-                  {
-                    num: '2',
-                    title: 'Loyihani joylashtiring',
-                    desc: "Vazifa tavsifini yozing va budjetingizni belgilang.",
-                    icon: <ClipboardText size={22} weight="fill" />,
-                  },
-                  {
-                    num: '3',
-                    title: 'Eng yaxshisini tanlang',
-                    desc: "Nomzodlar portfoliosi va reytingini ko'rib chiqing.",
-                    icon: <Star size={22} weight="fill" />,
-                  },
-                  {
-                    num: '4',
-                    title: "Xavfsiz to'lov",
-                    desc: "Ish yakunlangandan so'ng tizim orqali to'lovni amalga oshiring.",
-                    icon: <ShieldCheck size={22} weight="fill" />,
-                  },
-                ].map((step) => (
-                  <div key={step.num} className="flex gap-5">
-                    <div className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 font-black text-lg shadow-lg shadow-indigo-200">
-                      {step.num}
+                    <div
+                      className="w-14 h-14 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
+                      style={{
+                        backgroundColor: isDark ? cat.darkBg : cat.bg,
+                        color: isDark ? cat.darkText : cat.text,
+                      }}
+                    >
+                      {getCatIcon(key, 28)}
                     </div>
-                    <div>
-                      <h4 className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>{step.title}</h4>
-                      <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{step.desc}</p>
-                    </div>
+                    <span className={`text-xs font-semibold leading-tight ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{cat.label}</span>
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex-1 relative">
-              {/* Glow blobs */}
-              <div className="absolute -top-10 -right-10 w-56 h-56 bg-indigo-400/20 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-purple-400/20 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="w-full aspect-square rounded-3xl overflow-hidden shadow-2xl relative z-10"
-                style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%)' }}>
-
-                {/* Floating cards */}
-                <div className="absolute inset-0 p-6 flex flex-col justify-between">
-
-                  {/* Top row */}
-                  <div className="flex justify-between items-start gap-3">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex-1 border border-white/10">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-full bg-green-400 flex items-center justify-center">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
-                        <span className="text-white/70 text-xs font-medium">Ish topildi</span>
-                      </div>
-                      <p className="text-white font-bold text-sm">3D Vizualizatsiya</p>
-                      <p className="text-indigo-300 text-xs mt-0.5">$1,200 • Toshkent</p>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex-1 border border-white/10">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-full bg-amber-400 flex items-center justify-center">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        </div>
-                        <span className="text-white/70 text-xs font-medium">Top frilanser</span>
-                      </div>
-                      <p className="text-white font-bold text-sm">Azizbek T.</p>
-                      <p className="text-indigo-300 text-xs mt-0.5">★ 4.9 • 48 ish</p>
-                    </div>
-                  </div>
-
-                  {/* Center 3D abstract */}
-                  <div className="flex items-center justify-center flex-1 py-4">
-                    <svg width="180" height="160" viewBox="0 0 180 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      {/* Back cube */}
-                      <polygon points="90,10 150,45 150,115 90,150 30,115 30,45" fill="none" stroke="rgba(167,139,250,0.3)" strokeWidth="1.5"/>
-                      {/* Main cube top */}
-                      <polygon points="90,30 130,52 90,74 50,52" fill="rgba(139,92,246,0.4)" stroke="rgba(167,139,250,0.6)" strokeWidth="1.5"/>
-                      {/* Main cube left */}
-                      <polygon points="50,52 90,74 90,114 50,92" fill="rgba(109,40,217,0.5)" stroke="rgba(167,139,250,0.4)" strokeWidth="1.5"/>
-                      {/* Main cube right */}
-                      <polygon points="130,52 90,74 90,114 130,92" fill="rgba(124,58,237,0.6)" stroke="rgba(196,181,253,0.4)" strokeWidth="1.5"/>
-                      {/* Small cube top */}
-                      <polygon points="90,48 110,58 90,68 70,58" fill="rgba(196,181,253,0.5)" stroke="rgba(221,214,254,0.7)" strokeWidth="1"/>
-                      {/* Small cube left */}
-                      <polygon points="70,58 90,68 90,88 70,78" fill="rgba(167,139,250,0.4)" stroke="rgba(196,181,253,0.5)" strokeWidth="1"/>
-                      {/* Small cube right */}
-                      <polygon points="110,58 90,68 90,88 110,78" fill="rgba(139,92,246,0.5)" stroke="rgba(196,181,253,0.5)" strokeWidth="1"/>
-                      {/* Floating dots */}
-                      <circle cx="30" cy="35" r="4" fill="rgba(167,139,250,0.6)"/>
-                      <circle cx="150" cy="35" r="3" fill="rgba(196,181,253,0.5)"/>
-                      <circle cx="18" cy="80" r="2.5" fill="rgba(139,92,246,0.5)"/>
-                      <circle cx="162" cy="90" r="2" fill="rgba(167,139,250,0.4)"/>
-                      {/* Lines */}
-                      <line x1="30" y1="35" x2="50" y2="52" stroke="rgba(167,139,250,0.3)" strokeWidth="1" strokeDasharray="3,3"/>
-                      <line x1="150" y1="35" x2="130" y2="52" stroke="rgba(167,139,250,0.3)" strokeWidth="1" strokeDasharray="3,3"/>
-                    </svg>
-                  </div>
-
-                  {/* Bottom stats */}
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { label: 'Frilanserlar', value: '500+', color: '#a78bfa' },
-                      { label: 'Ishlar',        value: '124',   color: '#34d399' },
-                      { label: "Muvaffaqiyat",  value: '98%',   color: '#fbbf24' },
-                    ].map((s) => (
-                      <div key={s.label} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center border border-white/10">
-                        <p className="text-lg font-extrabold" style={{ color: s.color }}>{s.value}</p>
-                        <p className="text-white/50 text-[10px] mt-0.5">{s.label}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ─── LATEST JOBS ──────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
+      <section className="py-24 hw-bg">
         <div className="flex justify-between items-end mb-12">
           <div>
             <h2 className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Oxirgi loyihalar</h2>
@@ -616,7 +781,7 @@ const HomePage = () => {
       </section>
 
       {/* ─── POPULAR JOBS ─────────────────────────────────────────────────── */}
-      <section className="py-16 px-6 md:px-12 max-w-7xl mx-auto">
+      <section className="py-16 hw-bg">
         <div className="flex justify-between items-end mb-12">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -649,8 +814,8 @@ const HomePage = () => {
       </section>
 
       {/* ─── TOP FREELANCERS ──────────────────────────────────────────────── */}
-      <section className="py-24" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc' }}>
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
+      <section className="py-24 hw-bg">
+        <div>
           <div className="text-center mb-16">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Star size={24} weight="fill" className="text-amber-400" />
@@ -688,7 +853,7 @@ const HomePage = () => {
       </section>
 
       {/* ─── PRICING ──────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
+      <section className="py-24 hw-bg">
         <div className="text-center mb-16">
           <h2 className={`text-3xl font-black mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>Platforma paketlari</h2>
           <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Ehtiyojlaringizga mos tarifni tanlang</p>
@@ -740,8 +905,8 @@ const HomePage = () => {
       </section>
 
       {/* ─── FAQ ──────────────────────────────────────────────────────────── */}
-      <section className="py-24" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc' }}>
-        <div className="max-w-3xl mx-auto px-6">
+      <section className="py-24 hw-bg">
+        <div className="max-w-3xl mx-auto">
           <h2 className={`text-3xl font-black text-center mb-12 ${isDark ? 'text-white' : 'text-slate-900'}`}>Ko'p so'raladigan savollar</h2>
           <div className="space-y-3">
             {FAQS.map(([question, answer]) => (
@@ -752,7 +917,7 @@ const HomePage = () => {
       </section>
 
       {/* ─── APP DOWNLOAD BANNER ──────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
+      <section className="py-24 hw-bg">
         <div className="bg-indigo-600 rounded-3xl p-10 md:p-14 flex flex-col md:flex-row items-center gap-12 overflow-hidden relative">
           {/* Decorative orb */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
@@ -790,7 +955,7 @@ const HomePage = () => {
 
       {/* ─── CTA BANNER (not logged in) ───────────────────────────────────── */}
       {!isLoggedIn && (
-        <section className="py-8 px-6 md:px-12 max-w-7xl mx-auto pb-24">
+        <section className="py-8 pb-24 hw-bg">
           <div
             className="rounded-2xl p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden"
             style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' }}
@@ -822,7 +987,7 @@ const HomePage = () => {
           </div>
         </section>
       )}
-    </>
+    </div>
   );
 };
 

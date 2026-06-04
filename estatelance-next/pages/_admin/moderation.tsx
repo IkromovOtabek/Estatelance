@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useQuery, useMutation } from '@apollo/client';
 import {
   MagnifyingGlass, Bell, CheckCircle, XCircle, Eye,
   ChartBar, Users, Gear, ArrowLeft, Briefcase,
-  CurrencyDollar, Clock, Buildings, Tag
+  CurrencyDollar, Clock, Buildings, Tag, Warning
 } from '@phosphor-icons/react';
+import { GET_ALL_DISPUTES } from '../../apollo/user/query';
+import { RESOLVE_DISPUTE } from '../../apollo/user/mutation';
 
 interface Job {
   id: string;
@@ -85,6 +88,28 @@ const ModerationPage = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [checked, setChecked] = useState<string[]>([]);
   const [rejectReason, setRejectReason] = useState('');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'disputes'>('jobs');
+
+  // Disputes
+  const { data: disputesData, refetch: refetchDisputes } = useQuery(GET_ALL_DISPUTES, {
+    fetchPolicy: 'cache-and-network',
+  });
+  const disputes: any[] = disputesData?.getAllDisputes ?? [];
+  const [resolveDispute, { loading: resolving }] = useMutation(RESOLVE_DISPUTE);
+  const [selectedDispute, setSelectedDispute] = useState<any | null>(null);
+  const [disputeDecision, setDisputeDecision] = useState('FAVOR_FREELANCER');
+  const [disputeAdminNote, setDisputeAdminNote] = useState('');
+
+  const handleResolveDispute = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDispute) return;
+    await resolveDispute({
+      variables: { input: { disputeId: selectedDispute._id, decision: disputeDecision, adminNote: disputeAdminNote } },
+    });
+    setSelectedDispute(null);
+    setDisputeAdminNote('');
+    refetchDisputes();
+  };
 
   const filtered = jobs.filter(j =>
     j.status === 'PENDING' &&
@@ -165,8 +190,27 @@ const ModerationPage = () => {
           {/* Top bar */}
           <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-extrabold text-slate-900">Ishlar moderatsiyasi</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Tasdiqlash kutilayotgan loyihalar va ish e'lonlari</p>
+              <h2 className="text-xl font-extrabold text-slate-900">Moderatsiya</h2>
+              <div className="flex gap-4 mt-2">
+                <button
+                  onClick={() => setActiveTab('jobs')}
+                  className={`text-sm font-semibold pb-1 border-b-2 transition-colors ${activeTab === 'jobs' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                >
+                  Ish e'lonlari
+                </button>
+                <button
+                  onClick={() => setActiveTab('disputes')}
+                  className={`text-sm font-semibold pb-1 border-b-2 transition-colors flex items-center gap-1 ${activeTab === 'disputes' ? 'border-red-500 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                >
+                  <Warning size={14} />
+                  Nizolar
+                  {disputes.filter(d => d.status === 'OPEN').length > 0 && (
+                    <span className="ml-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                      {disputes.filter(d => d.status === 'OPEN').length}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -341,6 +385,119 @@ const ModerationPage = () => {
               )}
             </div>
           </div>
+
+          {/* Disputes tab content */}
+          {activeTab === 'disputes' && (
+            <div className="flex-1 overflow-auto p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* Disputes list */}
+                <div className="space-y-3">
+                  {disputes.length === 0 ? (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center">
+                      <Warning size={36} className="mx-auto mb-2 text-slate-300" />
+                      <p className="text-slate-500 font-semibold">Nizolar yo'q</p>
+                    </div>
+                  ) : disputes.map((d: any) => (
+                    <div
+                      key={d._id}
+                      onClick={() => { setSelectedDispute(d); setDisputeDecision('FAVOR_FREELANCER'); setDisputeAdminNote(''); }}
+                      className={`bg-white border rounded-2xl p-4 cursor-pointer hover:shadow-sm transition-all ${selectedDispute?._id === d._id ? 'border-red-400 ring-1 ring-red-300' : 'border-slate-200'}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-bold text-sm text-slate-900">{d.jobTitle ?? 'Ish'}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{d.filedByName} → {d.againstName}</p>
+                          <p className="text-xs text-slate-600 mt-1.5 line-clamp-2">{d.reason}</p>
+                        </div>
+                        <span className={`flex-shrink-0 text-xs font-bold px-2 py-1 rounded-full ${
+                          d.status === 'OPEN' ? 'bg-amber-50 text-amber-700' :
+                          d.status === 'RESOLVED' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {d.status === 'OPEN' ? 'Ochiq' : d.status === 'RESOLVED' ? 'Hal qilindi' : d.status}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-2">
+                        {new Date(d.createdAt).toLocaleString('uz-UZ')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Resolve panel */}
+                {selectedDispute && selectedDispute.status === 'OPEN' && (
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 sticky top-6 h-fit">
+                    <h3 className="text-base font-extrabold text-slate-900 mb-1">Nizo hal qilish</h3>
+                    <p className="text-xs text-slate-500 mb-4">"{selectedDispute.jobTitle}"</p>
+
+                    <div className="bg-slate-50 rounded-xl p-3 mb-4 text-sm text-slate-700">
+                      <p className="font-semibold mb-1">Sabab:</p>
+                      <p className="text-slate-600">{selectedDispute.reason}</p>
+                    </div>
+
+                    <form onSubmit={handleResolveDispute} className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-2">Qaror</label>
+                        <div className="space-y-2">
+                          {[
+                            { val: 'FAVOR_FREELANCER', label: '✅ Frilanser foydasiga — Escrow chiqariladi' },
+                            { val: 'FAVOR_AGENT',      label: '↩️ Agent foydasiga — Escrow qaytariladi' },
+                            { val: 'SPLIT',            label: '⚖️ Ikki tomon o\'rtasida taqsimlash' },
+                          ].map(opt => (
+                            <label key={opt.val} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio" name="decision"
+                                value={opt.val}
+                                checked={disputeDecision === opt.val}
+                                onChange={() => setDisputeDecision(opt.val)}
+                                className="accent-indigo-600"
+                              />
+                              <span className="text-sm text-slate-700">{opt.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Admin izohi (ixtiyoriy)</label>
+                        <textarea
+                          rows={3}
+                          value={disputeAdminNote}
+                          onChange={e => setDisputeAdminNote(e.target.value)}
+                          placeholder="Qaror sababi, natija haqida izoh..."
+                          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 resize-none"
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                        <button type="button" onClick={() => setSelectedDispute(null)}
+                          className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50">
+                          Bekor
+                        </button>
+                        <button type="submit" disabled={resolving}
+                          className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm disabled:opacity-50">
+                          {resolving ? 'Saqlanmoqda...' : 'Hal qilish'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {selectedDispute && selectedDispute.status === 'RESOLVED' && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
+                    <p className="font-bold text-emerald-800 mb-2">✅ Hal qilingan</p>
+                    <p className="text-sm text-emerald-700">
+                      <strong>Qaror:</strong> {{
+                        FAVOR_AGENT: 'Agent foydasiga',
+                        FAVOR_FREELANCER: 'Frilanser foydasiga',
+                        SPLIT: "Ikki tomon o'rtasida",
+                      }[selectedDispute.decision] ?? selectedDispute.decision}
+                    </p>
+                    {selectedDispute.adminNote && (
+                      <p className="text-sm text-emerald-600 mt-1"><strong>Izoh:</strong> {selectedDispute.adminNote}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </>

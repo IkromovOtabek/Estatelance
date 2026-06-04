@@ -4,7 +4,8 @@ import { JobService } from './job.service';
 import { Job } from '../../schemas/Job.model';
 import { ActiveUserGuard, AuthGuard, OptionalAuthGuard } from '../auth/auth.guard';
 import { AuthUser } from '../auth/auth-user.decorator';
-import { CreateJobInput, GetJobsInput, UpdateJobInput } from '../../libs/dto/job.dto';
+import { CreateJobInput, GetJobsInput, LeaveReviewInput, UpdateJobInput } from '../../libs/dto/job.dto';
+import { Float } from '@nestjs/graphql';
 
 @Resolver()
 export class JobResolver {
@@ -82,5 +83,42 @@ export class JobResolver {
     @Args('jobId') jobId: string,
   ): Promise<Job> {
     return this.jobService.completeJob(agentId, jobId);
+  }
+
+  @UseGuards(ActiveUserGuard)
+  @Mutation(() => Job)
+  async leaveReview(
+    @AuthUser('_id') userId: string,
+    @Args('input') input: LeaveReviewInput,
+  ): Promise<Job> {
+    return this.jobService.leaveReview(userId, input);
+  }
+
+  @UseGuards(ActiveUserGuard)
+  @Mutation(() => Job)
+  async repeatHire(
+    @AuthUser('_id') agentId: string,
+    @Args('jobId') jobId: string,
+  ): Promise<Job> {
+    return this.jobService.repeatHire(agentId, jobId);
+  }
+
+  @UseGuards(ActiveUserGuard)
+  @Mutation(() => Job)
+  async depositEscrow(
+    @AuthUser('_id') agentId: string,
+    @Args('jobId') jobId: string,
+    @Args('amount', { type: () => Float }) amount: number,
+  ): Promise<Job> {
+    return this.jobService.depositEscrow(agentId, jobId, amount);
+  }
+
+  @UseGuards(ActiveUserGuard)
+  @Mutation(() => Job)
+  async releaseEscrow(
+    @AuthUser('_id') agentId: string,
+    @Args('jobId') jobId: string,
+  ): Promise<Job> {
+    return this.jobService.releaseEscrow(agentId, jobId);
   }
 }

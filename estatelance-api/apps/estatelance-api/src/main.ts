@@ -1,11 +1,22 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { LoggingInterceptor } from './libs/interceptor/logging.interceptor';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function startServer() {
   const app = await NestFactory.create(AppModule);
+
+  // Xavfsizlik header'lari. CSP/COEP o'chirilgan — GraphQL playground va
+  // cross-origin rasm yuklash (uploads) buzilmasligi uchun.
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
 
   // WebSocket adapter
   app.useWebSocketAdapter(new IoAdapter(app));

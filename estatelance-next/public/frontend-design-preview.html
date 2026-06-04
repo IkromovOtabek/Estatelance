@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UzJob — Dizayn yo'nalishlari (Preview)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..700&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Schibsted+Grotesk:wght@400..900&family=Syne:wght@600;700;800&family=Sora:wght@300;400;500;600;700&family=Gabarito:wght@400..900&family=Figtree:wght@300..900&family=Instrument+Serif:ital@0;1&family=Newsreader:opsz,wght@6..72,300..600&family=Unbounded:wght@400..800&family=Familjen+Grotesk:wght@400..700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: #0c0d10; color: #fff; -webkit-font-smoothing: antialiased; }
+
+  /* ─── Preview chrome ─── */
+  .pv-top {
+    font-family: 'Sora', sans-serif;
+    padding: 40px 24px 28px; text-align: center;
+    background: radial-gradient(120% 100% at 50% 0%, #1a1c22 0%, #0c0d10 70%);
+    border-bottom: 1px solid #1f2128;
+  }
+  .pv-kicker { display:inline-block; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color:#7c8190; border:1px solid #2a2d36; border-radius:999px; padding:6px 14px; margin-bottom:16px; }
+  .pv-top h1 { font-family:'Fraunces', serif; font-weight:600; font-size: clamp(26px, 4vw, 40px); letter-spacing:-0.5px; }
+  .pv-top p { color:#8c92a0; font-size:14px; margin-top:10px; max-width:560px; margin-inline:auto; line-height:1.6; }
+  .pv-nav { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:22px; }
+  .pv-nav a { font-size:12.5px; color:#aab0bd; text-decoration:none; padding:8px 16px; border:1px solid #262932; border-radius:10px; transition:.2s; }
+  .pv-nav a:hover { background:#181a20; color:#fff; border-color:#3a3e49; }
+
+  .direction { padding: 22px; }
+  .dir-tag {
+    font-family:'Sora',sans-serif; max-width:1180px; margin:0 auto 14px; display:flex;
+    align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .dir-tag .num { font-size:12px; font-weight:700; color:#0c0d10; background:#fff; width:24px; height:24px; border-radius:7px; display:flex; align-items:center; justify-content:center; }
+  .dir-tag .name { font-size:14px; font-weight:700; }
+  .dir-tag .meta { font-size:12px; color:#7c8190; }
+  .frame { max-width:1180px; margin:0 auto; border-radius:22px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.45); }
+
+  /* shared entrance animation */
+  @keyframes rise { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  .reveal > * { animation: rise .7s cubic-bezier(.2,.7,.2,1) both; }
+
+  /* ════════════════ A · EDITORIAL TRUST (light, warm) ════════════════ */
+  .A { background:#FBF7EF; color:#1B1712; font-family:'Hanken Grotesk',sans-serif; padding:38px 44px 44px; position:relative; }
+  .A::before { content:""; position:absolute; inset:0; background-image:radial-gradient(#e7ddcb 1px, transparent 1px); background-size:22px 22px; opacity:.5; pointer-events:none; }
+  .A > * { position:relative; }
+  .A .nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:54px; }
+  .A .logo { font-family:'Fraunces',serif; font-weight:600; font-size:22px; letter-spacing:-.5px; }
+  .A .logo em { font-style:italic; color:#C2562F; }
+  .A .links { display:flex; gap:26px; font-size:13.5px; color:#6a6259; }
+  .A .links span:hover { color:#1B1712; cursor:pointer; }
+  .A .cta { background:#1B1712; color:#FBF7EF; padding:10px 20px; border-radius:999px; font-size:13px; font-weight:700; }
+  .A .badge { display:inline-flex; align-items:center; gap:7px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#C2562F; margin-bottom:22px; }
+  .A .badge::before { content:""; width:26px; height:1.5px; background:#C2562F; }
+  .A h2 { font-family:'Fraunces',serif; font-weight:600; font-size:clamp(34px,5vw,60px); line-height:1.02; letter-spacing:-1.5px; max-width:760px; }
+  .A h2 em { font-style:italic; color:#C2562F; }
+  .A .sub { font-size:16px; color:#6a6259; line-height:1.65; max-width:480px; margin:22px 0 30px; }
+  .A .btns { display:flex; gap:12px; align-items:center; }
+  .A .bp { background:#C2562F; color:#fff; padding:13px 26px; border-radius:12px; font-weight:700; font-size:14px; }
+  .A .bs { color:#1B1712; padding:13px 22px; font-weight:600; font-size:14px; border-bottom:2px solid #1B1712; }
+  .A .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:48px; }
+  .A .card { background:#fff; border:1px solid #ECE3D4; border-radius:16px; padding:20px; }
+  .A .card .av { width:42px; height:42px; border-radius:12px; background:#F3EADb; color:#C2562F; font-family:'Fraunces',serif; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .A .card h4 { font-size:15px; margin:14px 0 4px; }
+  .A .card p { font-size:13px; color:#8b8378; line-height:1.5; }
+  .A .card .row { display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:14px; border-top:1px solid #F0E8DB; }
+  .A .card .price { font-family:'Fraunces',serif; font-weight:700; font-size:17px; }
+  .A .card .tag { font-size:11px; font-weight:700; color:#6B7A5A; background:#EEF1E7; padding:4px 10px; border-radius:999px; }
+
+  /* ════════════════ B · STRUCTURED / ARCHITECTURAL (light, raw) ════════════════ */
+  .B { background:#EDEDE8; color:#101113; font-family:'Schibsted Grotesk',sans-serif; padding:38px 44px 44px; position:relative; }
+  .B::before { content:""; position:absolute; inset:0; background-image:linear-gradient(#dcdcd5 1px,transparent 1px),linear-gradient(90deg,#dcdcd5 1px,transparent 1px); background-size:40px 40px; opacity:.6; pointer-events:none; }
+  .B > * { position:relative; }
+  .B .nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:56px; border-bottom:2px solid #101113; padding-bottom:18px; }
+  .B .logo { font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:21px; letter-spacing:-1px; text-transform:uppercase; }
+  .B .logo span { color:#3F46E0; }
+  .B .links { display:flex; gap:24px; font-size:12px; text-transform:uppercase; letter-spacing:1px; font-weight:600; color:#5a5c61; }
+  .B .cta { background:#C8FF00; color:#101113; padding:9px 18px; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; }
+  .B .badge { font-family:'Bricolage Grotesque',sans-serif; display:inline-block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; background:#101113; color:#C8FF00; padding:5px 12px; margin-bottom:20px; }
+  .B h2 { font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:clamp(36px,5.5vw,66px); line-height:.96; letter-spacing:-2px; text-transform:uppercase; max-width:820px; }
+  .B h2 span { color:#3F46E0; }
+  .B .sub { font-size:15px; color:#46484d; line-height:1.6; max-width:460px; margin:20px 0 28px; }
+  .B .btns { display:flex; gap:10px; }
+  .B .bp { background:#101113; color:#fff; padding:14px 26px; font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.5px; }
+  .B .bs { background:transparent; color:#101113; padding:14px 24px; font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.5px; border:2px solid #101113; }
+  .B .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:46px; border:2px solid #101113; }
+  .B .stat { padding:22px; border-right:2px solid #101113; }
+  .B .stat:last-child { border-right:none; }
+  .B .stat .n { font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:32px; letter-spacing:-1px; }
+  .B .stat .l { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5a5c61; margin-top:4px; font-weight:600; }
+
+  /* ════════════════ C · TWILIGHT PREMIUM (dark, luxury) ════════════════ */
+  .C { background:#0A0F0D; color:#EAF2EE; font-family:'Sora',sans-serif; padding:40px 44px 46px; position:relative; overflow:hidden; }
+  .C .glow1 { position:absolute; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle,rgba(47,191,135,.22),transparent 70%); top:-120px; right:-80px; pointer-events:none; }
+  .C .glow2 { position:absolute; width:360px; height:360px; border-radius:50%; background:radial-gradient(circle,rgba(227,179,65,.12),transparent 70%); bottom:-140px; left:-60px; pointer-events:none; }
+  .C > *:not(.glow1):not(.glow2) { position:relative; }
+  .C .nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:56px; }
+  .C .logo { font-family:'Syne',sans-serif; font-weight:800; font-size:21px; letter-spacing:-.5px; }
+  .C .logo span { background:linear-gradient(120deg,#2FBF87,#E3B341); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .C .links { display:flex; gap:24px; font-size:13px; color:#8fa39a; }
+  .C .cta { border:1px solid rgba(47,191,135,.4); color:#2FBF87; padding:9px 18px; border-radius:999px; font-size:13px; font-weight:600; background:rgba(47,191,135,.08); }
+  .C .badge { display:inline-flex; align-items:center; gap:8px; font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:#E3B341; background:rgba(227,179,65,.08); border:1px solid rgba(227,179,65,.2); padding:6px 14px; border-radius:999px; margin-bottom:22px; }
+  .C h2 { font-family:'Syne',sans-serif; font-weight:800; font-size:clamp(34px,5vw,58px); line-height:1.05; letter-spacing:-1.5px; max-width:780px; }
+  .C h2 span { background:linear-gradient(120deg,#2FBF87 30%,#E3B341); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .C .sub { font-size:16px; color:#8fa39a; line-height:1.65; max-width:470px; margin:22px 0 30px; }
+  .C .btns { display:flex; gap:12px; align-items:center; }
+  .C .bp { background:linear-gradient(120deg,#2FBF87,#1f9d6c); color:#04130d; padding:14px 28px; border-radius:12px; font-weight:700; font-size:14px; box-shadow:0 10px 30px rgba(47,191,135,.3); }
+  .C .bs { color:#EAF2EE; padding:14px 22px; font-weight:500; font-size:14px; border:1px solid #1e2a25; border-radius:12px; }
+  .C .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:48px; }
+  .C .card { background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01)); border:1px solid #18231e; border-radius:18px; padding:20px; backdrop-filter:blur(8px); }
+  .C .card .av { width:42px; height:42px; border-radius:50%; background:linear-gradient(120deg,#2FBF87,#E3B341); color:#04130d; font-family:'Syne',sans-serif; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .C .card h4 { font-size:15px; margin:14px 0 4px; font-weight:600; }
+  .C .card p { font-size:13px; color:#7f9389; line-height:1.5; }
+  .C .card .row { display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:14px; border-top:1px solid #16201b; }
+  .C .card .price { font-family:'Syne',sans-serif; font-weight:800; font-size:17px; color:#2FBF87; }
+  .C .card .stars { font-size:12px; color:#E3B341; }
+
+  /* ════════════════ D · SOFT FRIENDLY (light, rounded, warm) ════════════════ */
+  .D { background:#FFF6F0; color:#2A2342; font-family:'Figtree',sans-serif; padding:38px 44px 44px; position:relative; overflow:hidden; }
+  .D .blob1 { position:absolute; width:340px; height:340px; border-radius:50%; background:#FFD9CF; filter:blur(10px); opacity:.55; top:-90px; right:-50px; pointer-events:none; }
+  .D .blob2 { position:absolute; width:280px; height:280px; border-radius:50%; background:#CFF3EC; filter:blur(10px); opacity:.6; bottom:-110px; left:-40px; pointer-events:none; }
+  .D > *:not(.blob1):not(.blob2) { position:relative; }
+  .D .nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:50px; }
+  .D .logo { font-family:'Gabarito',sans-serif; font-weight:800; font-size:23px; letter-spacing:-.5px; }
+  .D .logo span { color:#FF6B5C; }
+  .D .links { display:flex; gap:24px; font-size:14px; font-weight:500; color:#6f6688; }
+  .D .links span:hover { color:#2A2342; cursor:pointer; }
+  .D .cta { background:#fff; color:#2A2342; padding:10px 20px; border-radius:999px; font-size:13px; font-weight:700; box-shadow:0 6px 18px rgba(42,35,66,.08); }
+  .D .badge { display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:#FF6B5C; background:#FFE6E0; padding:7px 15px; border-radius:999px; margin-bottom:22px; }
+  .D h2 { font-family:'Gabarito',sans-serif; font-weight:800; font-size:clamp(34px,5vw,58px); line-height:1.04; letter-spacing:-1.2px; max-width:740px; }
+  .D h2 span { color:#FF6B5C; }
+  .D .sub { font-size:16px; color:#6f6688; line-height:1.65; max-width:480px; margin:22px 0 30px; }
+  .D .btns { display:flex; gap:12px; align-items:center; }
+  .D .bp { background:#FF6B5C; color:#fff; padding:14px 28px; border-radius:14px; font-weight:700; font-size:14px; box-shadow:0 10px 24px rgba(255,107,92,.32); }
+  .D .bs { background:#14B8A6; color:#fff; padding:14px 26px; border-radius:14px; font-weight:700; font-size:14px; box-shadow:0 10px 24px rgba(20,184,166,.28); }
+  .D .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:48px; }
+  .D .card { background:#fff; border-radius:22px; padding:22px; box-shadow:0 14px 34px rgba(42,35,66,.07); }
+  .D .card .av { width:48px; height:48px; border-radius:16px; background:#FFE6E0; color:#FF6B5C; font-family:'Gabarito',sans-serif; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .D .card:nth-child(2) .av { background:#CFF3EC; color:#0E9384; }
+  .D .card:nth-child(3) .av { background:#E7E0FF; color:#6D5BD0; }
+  .D .card h4 { font-size:16px; margin:14px 0 4px; font-weight:700; }
+  .D .card p { font-size:13px; color:#8a82a0; line-height:1.5; }
+  .D .card .row { display:flex; justify-content:space-between; align-items:center; margin-top:16px; }
+  .D .card .price { font-family:'Gabarito',sans-serif; font-weight:800; font-size:17px; }
+  .D .card .tag { font-size:12px; font-weight:700; color:#0E9384; background:#E0F5F1; padding:5px 12px; border-radius:999px; }
+
+  /* ════════════════ E · MONO EDITORIAL (stark newspaper, B/W + red) ════════════════ */
+  .E { background:#FAF9F6; color:#0A0A0A; font-family:'Newsreader',serif; padding:38px 44px 44px; position:relative; }
+  .E .nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; padding-bottom:16px; border-bottom:1px solid #0A0A0A; }
+  .E .logo { font-family:'Instrument Serif',serif; font-size:30px; letter-spacing:-.5px; }
+  .E .logo em { font-style:italic; color:#D7263D; }
+  .E .links { display:flex; gap:26px; font-family:'Newsreader',serif; font-size:14px; color:#3a3a3a; }
+  .E .links span:hover { color:#D7263D; cursor:pointer; }
+  .E .cta { font-family:'Newsreader',serif; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1px; border:1px solid #0A0A0A; padding:8px 16px; }
+  .E .masthead { display:flex; justify-content:space-between; font-size:11px; text-transform:uppercase; letter-spacing:2px; color:#6a6a6a; padding:8px 0 26px; border-bottom:3px double #0A0A0A; margin-bottom:30px; }
+  .E .badge { display:inline-block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:2px; color:#D7263D; margin-bottom:14px; }
+  .E h2 { font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(40px,6vw,74px); line-height:1.0; letter-spacing:-1px; max-width:860px; }
+  .E h2 em { font-style:italic; color:#D7263D; }
+  .E .sub { font-size:18px; color:#33312c; line-height:1.6; max-width:540px; margin:22px 0 30px; column-count:1; }
+  .E .btns { display:flex; gap:14px; align-items:center; }
+  .E .bp { background:#0A0A0A; color:#FAF9F6; padding:13px 28px; font-family:'Newsreader',serif; font-weight:600; font-size:15px; }
+  .E .bs { color:#0A0A0A; padding:13px 22px; font-weight:600; font-size:15px; border-bottom:2px solid #D7263D; }
+  .E .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0; margin-top:44px; border-top:1px solid #0A0A0A; }
+  .E .col { padding:22px 22px 22px 0; border-right:1px solid #d8d6cf; }
+  .E .col:last-child { border-right:none; padding-right:0; }
+  .E .col .k { font-size:11px; text-transform:uppercase; letter-spacing:2px; color:#D7263D; }
+  .E .col h4 { font-family:'Instrument Serif',serif; font-weight:400; font-size:26px; margin:8px 0; }
+  .E .col p { font-size:14px; color:#55534d; line-height:1.55; }
+
+  /* ════════════════ F · NEO RETRO (dark, neon cyan/lime, futuristic) ════════════════ */
+  .F { background:#05060A; color:#E8FBFF; font-family:'Familjen Grotesk',sans-serif; padding:40px 44px 46px; position:relative; overflow:hidden; }
+  .F::before { content:""; position:absolute; inset:0; background-image:linear-gradient(rgba(46,242,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(46,242,255,.07) 1px,transparent 1px); background-size:46px 46px; mask-image:radial-gradient(100% 80% at 50% 0%,#000 30%,transparent 80%); pointer-events:none; }
+  .F .orb { position:absolute; width:380px; height:380px; border-radius:50%; background:radial-gradient(circle,rgba(46,242,255,.18),transparent 70%); top:-130px; right:-60px; pointer-events:none; }
+  .F > *:not(.orb) { position:relative; }
+  .F .nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:54px; }
+  .F .logo { font-family:'Unbounded',sans-serif; font-weight:700; font-size:20px; letter-spacing:-.5px; }
+  .F .logo span { color:#2EF2FF; }
+  .F .links { display:flex; gap:24px; font-size:13px; color:#8fa6ad; }
+  .F .links span:hover { color:#2EF2FF; cursor:pointer; }
+  .F .cta { border:1px solid #2EF2FF; color:#2EF2FF; padding:9px 18px; border-radius:8px; font-size:13px; font-weight:600; box-shadow:0 0 18px rgba(46,242,255,.25); }
+  .F .badge { display:inline-flex; align-items:center; gap:8px; font-family:'Unbounded',sans-serif; font-size:11px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase; color:#C6FF3D; border:1px solid rgba(198,255,61,.3); padding:6px 14px; border-radius:8px; margin-bottom:22px; }
+  .F h2 { font-family:'Unbounded',sans-serif; font-weight:700; font-size:clamp(32px,4.8vw,56px); line-height:1.06; letter-spacing:-1px; max-width:800px; }
+  .F h2 span { color:#2EF2FF; text-shadow:0 0 28px rgba(46,242,255,.45); }
+  .F .sub { font-size:16px; color:#94aab1; line-height:1.65; max-width:480px; margin:22px 0 30px; }
+  .F .btns { display:flex; gap:12px; align-items:center; }
+  .F .bp { background:#2EF2FF; color:#04121a; padding:14px 28px; border-radius:10px; font-weight:700; font-size:14px; box-shadow:0 0 30px rgba(46,242,255,.4); }
+  .F .bs { color:#C6FF3D; padding:14px 24px; border-radius:10px; font-weight:600; font-size:14px; border:1px solid rgba(198,255,61,.35); }
+  .F .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:48px; }
+  .F .card { background:rgba(46,242,255,.04); border:1px solid rgba(46,242,255,.16); border-radius:14px; padding:20px; }
+  .F .card .av { width:44px; height:44px; border-radius:10px; background:linear-gradient(120deg,#2EF2FF,#C6FF3D); color:#04121a; font-family:'Unbounded',sans-serif; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .F .card h4 { font-size:15px; margin:14px 0 4px; font-weight:600; }
+  .F .card p { font-size:13px; color:#7e949b; line-height:1.5; }
+  .F .card .row { display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:14px; border-top:1px solid rgba(46,242,255,.12); }
+  .F .card .price { font-family:'Unbounded',sans-serif; font-weight:700; font-size:16px; color:#2EF2FF; }
+  .F .card .stars { font-size:12px; color:#C6FF3D; }
+
+  @media (max-width:760px){
+    .A,.B,.C,.D,.E,.F{ padding:24px; }
+    .A .cards,.C .cards,.D .cards,.F .cards{ grid-template-columns:1fr; }
+    .B .stats{ grid-template-columns:repeat(2,1fr); }
+    .B .stat:nth-child(2){ border-right:none; }
+    .E .grid{ grid-template-columns:1fr; }
+    .E .col{ border-right:none; border-bottom:1px solid #d8d6cf; padding:18px 0; }
+    .E .col:last-child{ border-bottom:none; }
+    .A .links,.B .links,.C .links,.D .links,.E .links,.F .links{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+  <header class="pv-top">
+    <span class="pv-kicker">frontend-design · preview</span>
+    <h1>UzJob — 6 ta dizayn yo'nalishi</h1>
+    <p>Bu faqat ko'rib chiqish uchun standalone sahifa. Loyihaning haqiqiy komponentlariga (Top.tsx, account, profil va h.k.) hech qanday o'zgartirish kiritilmagan. Yoqqanini tanlasangiz, keyin shu uslubni real sahifalarga qo'llaymiz.</p>
+    <nav class="pv-nav">
+      <a href="#a">A · Editorial Trust</a>
+      <a href="#b">B · Architectural</a>
+      <a href="#c">C · Twilight Premium</a>
+      <a href="#d">D · Soft Friendly</a>
+      <a href="#e">E · Mono Editorial</a>
+      <a href="#f">F · Neo Retro</a>
+    </nav>
+  </header>
+
+  <!-- ─── DIRECTION A ─── -->
+  <section class="direction" id="a">
+    <div class="dir-tag">
+      <span class="num">A</span>
+      <span class="name">Editorial Trust</span>
+      <span class="meta">Fraunces + Hanken Grotesk · qog'oz/siyoh + terrakota · ishonchli, jurnaldek</span>
+    </div>
+    <div class="frame">
+      <div class="A reveal">
+        <div class="nav">
+          <div class="logo">Uz<em>Job</em></div>
+          <div class="links"><span>Frilanserlar</span><span>Ishlar</span><span>Maqolalar</span><span>E'lonlar</span></div>
+          <div class="cta">Kirish</div>
+        </div>
+        <div class="badge">O'zbekiston · ko'chmas mulk</div>
+        <h2>Mulkingiz uchun eng yaxshi <em>mutaxassis</em>laringizni toping.</h2>
+        <p class="sub">Fotograf, dizayner, yurist yoki SMM — barchasi bir joyda. Ishonchli profil, real reyting, tez aloqa.</p>
+        <div class="btns">
+          <div class="bp">Mutaxassis topish</div>
+          <div class="bs">Ish joylash →</div>
+        </div>
+        <div class="cards">
+          <div class="card"><div class="av">TS</div><h4>Travis Scott</h4><p>3D vizualizatsiya & interyer render</p><div class="row"><span class="price">$28/soat</span><span class="tag">★ 4.9</span></div></div>
+          <div class="card"><div class="av">MA</div><h4>Madina A.</h4><p>Ko'chmas mulk fotografiyasi</p><div class="row"><span class="price">$20/soat</span><span class="tag">★ 5.0</span></div></div>
+          <div class="card"><div class="av">JK</div><h4>Jasur K.</h4><p>Yuridik & kadastr xizmatlari</p><div class="row"><span class="price">$35/soat</span><span class="tag">★ 4.8</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── DIRECTION B ─── -->
+  <section class="direction" id="b">
+    <div class="dir-tag">
+      <span class="num">B</span>
+      <span class="name">Architectural</span>
+      <span class="meta">Bricolage + Schibsted Grotesk · beton/to'r + lime aksent · dadil, strukturali</span>
+    </div>
+    <div class="frame">
+      <div class="B reveal">
+        <div class="nav">
+          <div class="logo">Uz<span>Job</span></div>
+          <div class="links"><span>Frilanserlar</span><span>Ishlar</span><span>Maqolalar</span></div>
+          <div class="cta">Kirish</div>
+        </div>
+        <div class="badge">100+ mutaxassis · O'zbekiston</div>
+        <h2>Ish toping.<br><span>Mutaxassis</span> yollang.</h2>
+        <p class="sub">To'g'ridan-to'g'ri, vositachisiz. Ko'chmas mulk sohasi uchun ixtisoslashgan frilanс platforma.</p>
+        <div class="btns">
+          <div class="bp">Boshlash</div>
+          <div class="bs">Qanday ishlaydi</div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="n">2,400+</div><div class="l">Frilanserlar</div></div>
+          <div class="stat"><div class="n">5,800+</div><div class="l">Bajarilgan ish</div></div>
+          <div class="stat"><div class="n">14</div><div class="l">Yo'nalish</div></div>
+          <div class="stat"><div class="n">4.9</div><div class="l">O'rtacha reyting</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── DIRECTION C ─── -->
+  <section class="direction" id="c">
+    <div class="dir-tag">
+      <span class="num">C</span>
+      <span class="name">Twilight Premium</span>
+      <span class="meta">Syne + Sora · obsidian + zumrad/oltin · premium, hozirgi yashil brendga mos</span>
+    </div>
+    <div class="frame">
+      <div class="C reveal">
+        <div class="glow1"></div><div class="glow2"></div>
+        <div class="nav">
+          <div class="logo">Uz<span>Job</span></div>
+          <div class="links"><span>Frilanserlar</span><span>Ishlar</span><span>Maqolalar</span><span>AI Tavsiya</span></div>
+          <div class="cta">Kirish</div>
+        </div>
+        <div class="badge">★ Premium platforma</div>
+        <h2>Ko'chmas mulk uchun <span>elita mutaxassislar</span> bir joyda.</h2>
+        <p class="sub">AI tavsiya, xavfsiz to'lov va tasdiqlangan profillar. Loyihangizni ishonch bilan yakunlang.</p>
+        <div class="btns">
+          <div class="bp">Mutaxassis topish</div>
+          <div class="bs">Ish joylash</div>
+        </div>
+        <div class="cards">
+          <div class="card"><div class="av">TS</div><h4>Travis Scott</h4><p>3D vizualizatsiya & render</p><div class="row"><span class="price">$28/soat</span><span class="stars">★ 4.9</span></div></div>
+          <div class="card"><div class="av">MA</div><h4>Madina A.</h4><p>Mulk fotografiyasi & dron</p><div class="row"><span class="price">$20/soat</span><span class="stars">★ 5.0</span></div></div>
+          <div class="card"><div class="av">JK</div><h4>Jasur K.</h4><p>Yuridik & kadastr</p><div class="row"><span class="price">$35/soat</span><span class="stars">★ 4.8</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── DIRECTION D ─── -->
+  <section class="direction" id="d">
+    <div class="dir-tag">
+      <span class="num">D</span>
+      <span class="name">Soft Friendly</span>
+      <span class="meta">Gabarito + Figtree · pastel shaftoli/yalpiz · iliq, do'stona, yumaloq</span>
+    </div>
+    <div class="frame">
+      <div class="D reveal">
+        <div class="blob1"></div><div class="blob2"></div>
+        <div class="nav">
+          <div class="logo">Uz<span>Job</span></div>
+          <div class="links"><span>Frilanserlar</span><span>Ishlar</span><span>Maqolalar</span><span>Yordam</span></div>
+          <div class="cta">Kirish</div>
+        </div>
+        <div class="badge">★ 2 400+ ishonchli mutaxassis</div>
+        <h2>Keling, <span>mos mutaxassis</span>ni birga topamiz.</h2>
+        <p class="sub">Oson, tez va xavfsiz. Bir necha bosqichda ish joylang yoki o'z xizmatingizni taklif qiling.</p>
+        <div class="btns">
+          <div class="bp">Mutaxassis topish</div>
+          <div class="bs">Ishchi izlayapman</div>
+        </div>
+        <div class="cards">
+          <div class="card"><div class="av">TS</div><h4>Travis Scott</h4><p>3D vizualizatsiya & interyer</p><div class="row"><span class="price">$28/soat</span><span class="tag">★ 4.9</span></div></div>
+          <div class="card"><div class="av">MA</div><h4>Madina A.</h4><p>Mulk fotografiyasi</p><div class="row"><span class="price">$20/soat</span><span class="tag">★ 5.0</span></div></div>
+          <div class="card"><div class="av">JK</div><h4>Jasur K.</h4><p>Yuridik & kadastr</p><div class="row"><span class="price">$35/soat</span><span class="tag">★ 4.8</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── DIRECTION E ─── -->
+  <section class="direction" id="e">
+    <div class="dir-tag">
+      <span class="num">E</span>
+      <span class="name">Mono Editorial</span>
+      <span class="meta">Instrument Serif + Newsreader · oq/qora gazeta + qizil aksent · jiddiy, klassik</span>
+    </div>
+    <div class="frame">
+      <div class="E reveal">
+        <div class="nav">
+          <div class="logo">Uz<em>Job</em></div>
+          <div class="links"><span>Frilanserlar</span><span>Ishlar</span><span>Maqolalar</span><span>E'lonlar</span></div>
+          <div class="cta">Kirish</div>
+        </div>
+        <div class="masthead"><span>O'zbekiston · Ko'chmas mulk</span><span>2026 · Toshkent</span><span>№ 01 — Frilanс</span></div>
+        <div class="badge">Bosh maqola</div>
+        <h2>Mutaxassis bilan ishonchni bog'laydigan <em>yagona</em> maydon.</h2>
+        <p class="sub">Tasdiqlangan profillar, real reyting va shaffof narxlar. Ko'chmas mulk sohasidagi har bir ish uchun to'g'ri odam.</p>
+        <div class="btns">
+          <div class="bp">Mutaxassis topish</div>
+          <div class="bs">Ish joylash →</div>
+        </div>
+        <div class="grid">
+          <div class="col"><div class="k">001 — Tezkor</div><h4>Bir kunda jamoa</h4><p>Loyihangiz uchun bir necha soatda tasdiqlangan mutaxassislardan tashkil topgan jamoa.</p></div>
+          <div class="col"><div class="k">002 — Xavfsiz</div><h4>Kafolatli to'lov</h4><p>Mablag' faqat ish topshirilgandan so'ng yetkaziladi — ikki tomon uchun himoya.</p></div>
+          <div class="col"><div class="k">003 — Shaffof</div><h4>Real reyting</h4><p>Har bir baho haqiqiy bajarilgan ishga asoslangan. Soxta sharhlar yo'q.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── DIRECTION F ─── -->
+  <section class="direction" id="f">
+    <div class="dir-tag">
+      <span class="num">F</span>
+      <span class="name">Neo Retro</span>
+      <span class="meta">Unbounded + Familjen Grotesk · qora + neon cyan/lime · futuristik, texno</span>
+    </div>
+    <div class="frame">
+      <div class="F reveal">
+        <div class="orb"></div>
+        <div class="nav">
+          <div class="logo">Uz<span>Job</span></div>
+          <div class="links"><span>Frilanserlar</span><span>Ishlar</span><span>AI Tavsiya</span><span>Narxlar</span></div>
+          <div class="cta">Kirish</div>
+        </div>
+        <div class="badge">◆ AI bilan ishlaydi</div>
+        <h2>Kelajak ishi — <span>aqlli moslashtirish</span> bilan boshlanadi.</h2>
+        <p class="sub">AI tavsiya loyihangizga eng mos mutaxassisni tanlaydi. Tez, aniq va zamonaviy.</p>
+        <div class="btns">
+          <div class="bp">Boshlash</div>
+          <div class="bs">Demo ko'rish</div>
+        </div>
+        <div class="cards">
+          <div class="card"><div class="av">TS</div><h4>Travis Scott</h4><p>3D vizualizatsiya & render</p><div class="row"><span class="price">$28/soat</span><span class="stars">★ 4.9</span></div></div>
+          <div class="card"><div class="av">MA</div><h4>Madina A.</h4><p>Mulk fotografiyasi & dron</p><div class="row"><span class="price">$20/soat</span><span class="stars">★ 5.0</span></div></div>
+          <div class="card"><div class="av">JK</div><h4>Jasur K.</h4><p>Yuridik & kadastr</p><div class="row"><span class="price">$35/soat</span><span class="stars">★ 4.8</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // staggered entrance per direction when it scrolls into view
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        const kids = e.target.querySelectorAll(':scope > *');
+        kids.forEach((k, i) => { k.style.animationDelay = (i * 70) + 'ms'; });
+        io.unobserve(e.target);
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+  </script>
+</body>
+</html>
