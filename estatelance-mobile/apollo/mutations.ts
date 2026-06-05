@@ -120,7 +120,17 @@ export const TOGGLE_LIKE_POST = gql`
 
 export const ADD_COMMENT = gql`
   mutation AddComment($input: AddCommentInput!) {
-    addComment(input: $input) { _id text authorName createdAt }
+    addComment(input: $input) {
+      _id
+      comments {
+        _id
+        authorId
+        authorName
+        authorAvatar
+        text
+        createdAt
+      }
+    }
   }
 `;
 

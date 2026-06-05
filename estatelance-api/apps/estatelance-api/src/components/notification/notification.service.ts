@@ -2,21 +2,23 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Notification } from '../../schemas/Notification.model';
-import { NotificationType } from '../../libs/enums/common.enums';
+import { User } from '../../schemas/User.model';
+import { NotificationType, UserStatus, UserType } from '../../libs/enums/common.enums';
 
 @Injectable()
 export class NotificationService {
   constructor(
     @InjectModel('Notification') private readonly notificationModel: Model<Notification>,
+    @InjectModel('User') private readonly userModel: Model<User>,
   ) {}
 
-  // Send a notification to a user (called internally by other services)
   async createNotification(
     recipientId: string,
     notificationType: NotificationType,
     title: string,
     description: string,
     relatedItemId?: string,
+    linkPath?: string,
   ): Promise<Notification> {
     return this.notificationModel.create({
       recipientId,
@@ -24,10 +26,35 @@ export class NotificationService {
       title,
       description,
       relatedItemId,
+      linkPath,
     });
   }
 
-  // Get all notifications for the current user
+  async notifyAllAdmins(
+    title: string,
+    description: string,
+    relatedItemId?: string,
+    linkPath?: string,
+  ): Promise<void> {
+    const admins = await this.userModel
+      .find({ userType: UserType.ADMIN, userStatus: { $ne: UserStatus.DELETED } })
+      .select('_id')
+      .lean();
+
+    if (admins.length === 0) return;
+
+    await this.notificationModel.insertMany(
+      admins.map((admin) => ({
+        recipientId: admin._id.toString(),
+        notificationType: NotificationType.SYSTEM,
+        title,
+        description,
+        relatedItemId,
+        linkPath,
+      })),
+    );
+  }
+
   async getMyNotifications(userId: string): Promise<Notification[]> {
     return this.notificationModel
       .find({ recipientId: userId })
@@ -35,7 +62,6 @@ export class NotificationService {
       .limit(50);
   }
 
-  // Mark all of the user's notifications as read
   async markAllAsRead(userId: string): Promise<boolean> {
     await this.notificationModel.updateMany(
       { recipientId: userId, isRead: false },
@@ -44,7 +70,14 @@ export class NotificationService {
     return true;
   }
 
-  // Count how many unread notifications the user has
+  async markAsRead(userId: string, notificationId: string): Promise<boolean> {
+    await this.notificationModel.updateOne(
+      { _id: notificationId, recipientId: userId },
+      { isRead: true },
+    );
+    return true;
+  }
+
   async getUnreadCount(userId: string): Promise<number> {
     return this.notificationModel.countDocuments({ recipientId: userId, isRead: false });
   }

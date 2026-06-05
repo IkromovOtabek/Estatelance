@@ -18,6 +18,7 @@ import { NotificationModule } from './components/notification/notification.modul
 import { AdminModule } from './components/admin/admin.module';
 import { TelegramBotModule } from './components/telegram-bot/telegram-bot.module';
 import { DisputeModule } from './components/dispute/dispute.module';
+import { ResumeModule } from './components/resume/resume.module';
 import { GoogleController } from './components/auth/google.controller';
 
 const isProd = process.env.NODE_ENV === 'production';
@@ -55,6 +56,7 @@ const isProd = process.env.NODE_ENV === 'production';
     AdminModule,
     TelegramBotModule,
     DisputeModule,
+    ResumeModule,
   ],
   controllers: [GoogleController, HealthController],
   providers: [

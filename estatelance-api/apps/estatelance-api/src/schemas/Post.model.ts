@@ -67,7 +67,19 @@ export class Post extends Document {
   @Field(() => Int)
   viewCount: number;
 
-  @Prop({ type: Object, default: [] })
+  @Prop({
+    type: [
+      {
+        _id: { type: String, required: true },
+        authorId: { type: SchemaTypes.ObjectId, ref: 'User', required: true },
+        authorName: { type: String, required: true, trim: true },
+        authorAvatar: { type: String },
+        text: { type: String, required: true, trim: true },
+        createdAt: { type: String, required: true },
+      },
+    ],
+    default: [],
+  })
   @Field(() => [PostComment])
   comments: PostComment[];
 

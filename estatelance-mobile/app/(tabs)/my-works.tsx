@@ -272,7 +272,7 @@ export default function MyWorksScreen() {
             <Ionicons name="eye-outline" size={16} color={Colors.primary} />
             <Text style={[styles.actionText, { color: Colors.primary }]}>Ko'rish</Text>
           </TouchableOpacity>
-          {job.status === 'OPEN' && (
+          {(job.status === 'OPEN' || job.status === 'ACTIVE') && (
             <>
               <TouchableOpacity style={styles.actionBtn} onPress={() => openEdit(job)}>
                 <Ionicons name="pencil-outline" size={16} color={Colors.primary} />

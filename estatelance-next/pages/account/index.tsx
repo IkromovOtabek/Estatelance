@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import {
@@ -183,13 +183,7 @@ const AccountPage = () => {
     }
   }, [sessionChecked, user._id, user.needsOnboarding, router.query.onboarding]);
 
-  if (!sessionChecked) return null;
-  // needsOnboarding=true bo'lsa sahifani ko'rsatamiz (onboarding dialog ochiladi)
-  if (user._id && !user.needsOnboarding && router.query.onboarding !== 'google') return null;
-
   const isDark = resolvedTheme === 'dark';
-
-  // ── Dark mode color tokens ─────────────────────────────────────────────────
   const pageBg    = isDark ? '#0f172a' : '#faf8ff';
   const panelBg   = isDark ? '#1e293b' : '#ffffff';
   const textPrim  = isDark ? '#f1f5f9' : '#131b2e';
@@ -197,17 +191,15 @@ const AccountPage = () => {
   const textMuted = isDark ? '#64748b' : '#777587';
   const borderClr = isDark ? '#334155' : '#e2e8f0';
   const tabBarBg  = isDark ? '#1e293b' : '#eaedff';
-  const inputBg   = pageBg;   // inputlar sahifa foni bilan bir xil
+  const inputBg   = pageBg;
   const divider   = isDark ? '#334155' : '#e2e8f0';
 
-  // Input sx shortcut — barcha TextField uchun
-  const inputSx = {
+  const inputSx = useMemo(() => ({
     '& .MuiOutlinedInput-root': {
       backgroundColor: isDark ? 'transparent' : '#ffffff',
       borderRadius: 2,
       '& .MuiOutlinedInput-notchedOutline': {
         borderColor: isDark ? '#334155' : borderClr,
-        transition: 'border-color 0.2s',
       },
       '&:hover .MuiOutlinedInput-notchedOutline': {
         borderColor: isDark ? '#6366f1' : '#3525cd',
@@ -228,7 +220,31 @@ const AccountPage = () => {
     },
     '& .MuiInputLabel-root': { color: textMuted },
     '& .MuiInputLabel-root.Mui-focused': { color: isDark ? textMuted : '#3525cd' },
-  };
+  }), [isDark, textPrim, textMuted, borderClr]);
+
+  const passwordInputProps = useMemo(() => ({
+    startAdornment: (
+      <InputAdornment position="start">
+        <LockOutlinedIcon size={18} color="#777587" />
+      </InputAdornment>
+    ),
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton
+          size="small"
+          onClick={() => setShowPassword((v) => !v)}
+          edge="end"
+          sx={{ color: '#777587' }}
+          tabIndex={-1}
+        >
+          {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+        </IconButton>
+      </InputAdornment>
+    ),
+  }), [showPassword]);
+
+  if (!sessionChecked) return null;
+  if (user._id && !user.needsOnboarding && router.query.onboarding !== 'google') return null;
 
   // Outlined back button sx
   const backBtnSx = {
@@ -316,6 +332,8 @@ const AccountPage = () => {
     if (usernameAvailable === false) { setErrorMessage("Bu foydalanuvchi nomi band. Boshqa nom tanlang."); return; }
     if (!password || password.length < 6) { setErrorMessage("Parol kamida 6 ta belgi bo'lishi kerak."); return; }
     if (!selectedRole) { setErrorMessage("Rolni tanlang."); return; }
+    if (!signupPhone.trim()) { setErrorMessage("Telefon raqam kiritish majburiy."); return; }
+    if (signupPhone.replace(/\D/g, '').length < 9) { setErrorMessage("To'g'ri telefon raqam kiriting."); return; }
 
     setIsLoading(true);
     try {
@@ -745,7 +763,7 @@ const AccountPage = () => {
         </Box>
 
         {/* ── O'NG PANEL: forma ── */}
-        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: pageBg, p: { xs: 3, md: 5 }, overflowY: 'auto' }}>
+        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: pageBg, p: { xs: 3, md: 5 }, overflowY: 'auto', scrollbarGutter: 'stable' }}>
           <Box sx={{ width: '100%', maxWidth: 460 }}>
 
             {/* Mobil logo */}
@@ -817,7 +835,7 @@ const AccountPage = () => {
 
                 {/* TelegramLoginButton (widget) - agar botName mavjud bo'lsa */}
                 {botName && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 40, mb: 2 }}>
                     <TelegramLoginButton botName={botName} onAuth={handleTelegramAuth} buttonSize="medium" cornerRadius={8} />
                   </Box>
                 )}
@@ -848,16 +866,9 @@ const AccountPage = () => {
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       size="small" fullWidth required
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start"><LockOutlinedIcon size={18} color="#777587" /></InputAdornment>,
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton size="small" onClick={() => setShowPassword((v) => !v)} edge="end" sx={{ color: '#777587' }}>
-                              {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
+                      autoComplete="current-password"
+                      inputProps={{ autoComplete: 'current-password' }}
+                      InputProps={passwordInputProps}
                       sx={inputSx}
                     />
                     <Button
@@ -998,8 +1009,9 @@ const AccountPage = () => {
 
                       {/* Telefon raqam */}
                       <TextField
-                        label="Telefon raqam" value={signupPhone} onChange={(e) => setSignupPhone(e.target.value)}
-                        size="small" fullWidth placeholder="+998 90 123 45 67"
+                        label="Telefon raqam *" value={signupPhone} onChange={(e) => setSignupPhone(e.target.value)}
+                        size="small" fullWidth required type="tel"
+                        placeholder="+998 90 123 45 67"
                         helperText="Ish beruvchilar siz bilan bog'lanish uchun ishlatiladi"
                         FormHelperTextProps={{ sx: { fontSize: 11, color: '#94a3b8', mx: 0 } }}
                         InputProps={{ startAdornment: <InputAdornment position="start"><Phone size={18} color="#777587" /></InputAdornment> }}
@@ -1117,18 +1129,14 @@ const AccountPage = () => {
                       {/* Parol */}
                       <Box>
                         <TextField
-                          label="Parol" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
+                          label="Parol"
+                          type={showPassword ? 'text' : 'password'}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
                           size="small" fullWidth required
-                          InputProps={{
-                            startAdornment: <InputAdornment position="start"><LockOutlinedIcon size={18} color="#777587" /></InputAdornment>,
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                <IconButton size="small" onClick={() => setShowPassword(v => !v)} edge="end" sx={{ color: '#777587' }}>
-                                  {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
-                                </IconButton>
-                              </InputAdornment>
-                            ),
-                          }}
+                          autoComplete="new-password"
+                          inputProps={{ autoComplete: 'new-password' }}
+                          InputProps={passwordInputProps}
                           sx={inputSx}
                         />
                         {/* Kuchli parol yaratish tugmasi */}

@@ -13,6 +13,7 @@ import {
   JobStatus, UserType,
 } from '../../libs/enums';
 import { getCatIcon } from '../../libs/utils/jobCategoryIcons';
+import { compareJobsBoostFirst, isJobBoostActive } from '../../libs/utils/boost';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -55,12 +56,11 @@ const BOOST_BADGES: { label: string; bg: string; text: string }[] = [
   { label: 'VIP', bg: 'bg-amber-100',  text: 'text-amber-700'  },
 ];
 
-function getBoostBadge(idx: number) {
-  // For demo: every 5th card gets a boost badge based on index
-  if (idx % 7 === 0) return BOOST_BADGES[0];
-  if (idx % 7 === 3) return BOOST_BADGES[1];
-  if (idx % 7 === 5) return BOOST_BADGES[2];
-  return null;
+function getBoostBadgeFromJob(job: Job) {
+  if (!isJobBoostActive(job)) return null;
+  if (job.boostPlan === 'VIP') return BOOST_BADGES[2];
+  if (job.boostPlan === 'PRO') return BOOST_BADGES[1];
+  return BOOST_BADGES[0];
 }
 
 const ITEMS_PER_PAGE = 12;
@@ -159,7 +159,7 @@ const JobsPage = () => {
       input: {
         page: 1, limit: 200,
         category: filterCategory || undefined,
-        status: JobStatus.OPEN,
+        // status bermayapmiz — OPEN va ACTIVE (faol) ishlar client tomonda filtrlanadi
         searchText: search || undefined,
       },
     },
@@ -170,6 +170,8 @@ const JobsPage = () => {
   // Client-side filtering + sorting
   const filteredJobs = useMemo(() => {
     let result = allJobs.filter(j => {
+      // Faqat ochiq (OPEN) va faol (ACTIVE) ishlar; tugagan/bekor ko'rsatilmaydi
+      if (j.status !== JobStatus.OPEN && j.status !== JobStatus.ACTIVE) return false;
       if (budgetMin > 0 && (j.budget ?? 0) < budgetMin) return false;
       if (budgetMax < 5000 && (j.budget ?? 0) > budgetMax) return false;
       if (expLevels.length && j.experienceLevel && !expLevels.includes(j.experienceLevel)) return false;
@@ -182,15 +184,33 @@ const JobsPage = () => {
       return true;
     });
 
+    const createdAtMs = (j: Job) => {
+      const raw = j.createdAt ?? '';
+      if (/^\d+$/.test(raw)) return parseInt(raw, 10);
+      const t = new Date(raw).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    };
+
     switch (sortBy) {
-      case 'high':    result = [...result].sort((a, b) => (b.budget ?? 0) - (a.budget ?? 0)); break;
-      case 'low':     result = [...result].sort((a, b) => (a.budget ?? 0) - (b.budget ?? 0)); break;
-      case 'popular': result = [...result].sort((a, b) => (b.bidCount ?? 0) - (a.bidCount ?? 0)); break;
-      default:        result = [...result].sort((a, b) => {
-        const ta = /^\d+$/.test(a.createdAt ?? '') ? parseInt(a.createdAt!) : new Date(a.createdAt ?? 0).getTime();
-        const tb = /^\d+$/.test(b.createdAt ?? '') ? parseInt(b.createdAt!) : new Date(b.createdAt ?? 0).getTime();
-        return tb - ta;
-      });
+      case 'high':
+        result = [...result].sort((a, b) =>
+          compareJobsBoostFirst(a, b, (x, y) => (y.budget ?? 0) - (x.budget ?? 0)),
+        );
+        break;
+      case 'low':
+        result = [...result].sort((a, b) =>
+          compareJobsBoostFirst(a, b, (x, y) => (x.budget ?? 0) - (y.budget ?? 0)),
+        );
+        break;
+      case 'popular':
+        result = [...result].sort((a, b) =>
+          compareJobsBoostFirst(a, b, (x, y) => (y.bidCount ?? 0) - (x.bidCount ?? 0)),
+        );
+        break;
+      default:
+        result = [...result].sort((a, b) =>
+          compareJobsBoostFirst(a, b, (x, y) => createdAtMs(y) - createdAtMs(x)),
+        );
     }
     return result;
   }, [allJobs, budgetMin, budgetMax, expLevels, jobTypes, formats, filterLocation, sortBy]);
@@ -336,7 +356,7 @@ const JobsPage = () => {
       <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 items-start">
 
         {/* ════ LEFT SIDEBAR ════ */}
-        <aside className="hidden lg:block lg:col-span-3 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+        <aside className="hidden lg:block lg:col-span-3 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto scrollbar-hide">
           <div className="rounded-xl p-5" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
 
             {/* Header */}
@@ -594,9 +614,9 @@ const JobsPage = () => {
           {/* Job Cards */}
           {!loading && pagedJobs.length > 0 && (
             <div className="space-y-4">
-              {pagedJobs.map((job, idx) => {
-                const globalIdx = (page - 1) * ITEMS_PER_PAGE + idx;
-                const boost = getBoostBadge(globalIdx);
+              {pagedJobs.map((job) => {
+                const boost = getBoostBadgeFromJob(job);
+                const boosted = isJobBoostActive(job);
                 const viewers = job.viewCount ?? 0;
                 const isOwn = isAgent && user._id === job.agentId;
                 const salary = job.salaryFrom && job.salaryTo
@@ -614,7 +634,11 @@ const JobsPage = () => {
                 return (
                   <div
                     key={job._id}
-                    className="group bg-white border border-slate-200 rounded-xl p-5 hover:shadow-lg hover:border-indigo-400 transition-all duration-200 relative overflow-hidden"
+                    className={`group bg-white border rounded-xl p-5 hover:shadow-lg transition-all duration-200 relative overflow-hidden ${
+                      boosted
+                        ? 'border-indigo-300 ring-1 ring-indigo-200/80 hover:border-indigo-500'
+                        : 'border-slate-200 hover:border-indigo-400'
+                    }`}
                   >
                     {/* Top row */}
                     <div className="flex justify-between items-start gap-3 mb-3">
@@ -648,6 +672,10 @@ const JobsPage = () => {
                         {boost ? (
                           <span className={`text-[10px] font-black px-2 py-0.5 rounded tracking-widest ${boost.bg} ${boost.text}`}>
                             {boost.label}
+                          </span>
+                        ) : job.status === JobStatus.ACTIVE ? (
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded tracking-widest bg-amber-50 text-amber-600">
+                            FAOL
                           </span>
                         ) : (
                           <span className="text-[10px] font-black px-2 py-0.5 rounded tracking-widest bg-emerald-50 text-emerald-600">

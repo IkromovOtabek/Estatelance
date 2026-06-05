@@ -33,6 +33,17 @@ module.exports = {
         tighter: '-0.04em',
         tight:   '-0.02em',
       },
+      borderRadius: {
+        'none': '0',
+        'sm':   '10px',
+        DEFAULT:'12px',
+        'md':   '14px',
+        'lg':   '18px',
+        'xl':   '22px',
+        '2xl':  '28px',
+        '3xl':  '36px',
+        'full': '9999px',
+      },
       maxWidth: {
         container: '1280px',
       },
@@ -53,6 +64,16 @@ module.exports = {
     },
   },
   plugins: [
+    // Scrollbarni yashirish (scroll funksiyasi qoladi)
+    function({ addUtilities }) {
+      addUtilities({
+        '.scrollbar-hide': {
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none',
+          '&::-webkit-scrollbar': { display: 'none' },
+        },
+      });
+    },
     // Global button outline reset
     function({ addBase }) {
       addBase({

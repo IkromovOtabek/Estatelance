@@ -10,9 +10,13 @@ import { Notification, NotificationSchema } from '../../schemas/Notification.mod
 import { SiteVisit, SiteVisitSchema } from '../../schemas/SiteVisit.model';
 import { VisitorSession, VisitorSessionSchema } from '../../schemas/VisitorSession.model';
 import { AuthModule } from '../auth/auth.module';
+import { JobModule } from '../job/job.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
+    JobModule,
+    UserModule,
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Job.name, schema: JobSchema },

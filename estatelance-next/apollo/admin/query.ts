@@ -118,6 +118,121 @@ export const ADMIN_GET_DAILY_USER_DETAILS = gql`
   }
 `;
 
+export const ADMIN_GET_AD_TARGETS = gql`
+  query AdminGetAdTargets {
+    adminGetAdTargets {
+      id
+      title
+      advertiser
+      type
+      status
+      impressions
+      clicks
+      targetUrl
+      sourceKind
+      sourceId
+      boostPlan
+      createdAt
+      manageable
+      deletable
+    }
+  }
+`;
+
+export const ADMIN_GET_MODERATION_CANCELLED_JOBS = gql`
+  query AdminGetModerationCancelledJobs($limit: Int) {
+    adminGetModerationCancelledJobs(limit: $limit) {
+      _id
+      title
+      description
+      category
+      status
+      budget
+      agentName
+      agentId
+      cancelReason
+      cancelledAt
+      createdAt
+      requiredSkills
+      experienceLevel
+      location
+    }
+  }
+`;
+
+export const ADMIN_GET_BOOST_PAYMENT_HISTORY = gql`
+  query AdminGetBoostPaymentHistory($limit: Int) {
+    adminGetBoostPaymentHistory(limit: $limit) {
+      boostKind
+      agentName
+      agentUsername
+      profile {
+        _id
+        username
+        fullName
+        userType
+        boostRequestedPlan
+        boostPlan
+        boostPaymentStatus
+        boostReceiptUrl
+        boostPaymentSubmittedAt
+        boostPaymentReviewedAt
+        boostPaymentRejectReason
+        profileViewCount
+        followerCount
+      }
+      job {
+        _id
+        title
+        status
+        boostRequestedPlan
+        boostPlan
+        boostPaymentStatus
+        boostReceiptUrl
+        boostPaymentSubmittedAt
+        boostPaymentReviewedAt
+        boostPaymentRejectReason
+        agentName
+        budget
+        bidCount
+      }
+    }
+  }
+`;
+
+export const ADMIN_GET_PENDING_BOOST_PAYMENTS = gql`
+  query AdminGetPendingBoostPayments {
+    adminGetPendingBoostPayments {
+      boostKind
+      agentName
+      agentUsername
+      profile {
+        _id
+        username
+        fullName
+        userType
+        boostRequestedPlan
+        boostReceiptUrl
+        boostPaymentSubmittedAt
+        profileViewCount
+        followerCount
+      }
+      job {
+        _id
+        title
+        status
+        boostRequestedPlan
+        boostReceiptUrl
+        boostPaymentSubmittedAt
+        agentId
+        agentName
+        budget
+        bidCount
+      }
+    }
+  }
+`;
+
 // Public query — available to all users
 export const GET_ACTIVE_ANNOUNCEMENTS = gql`
   query GetActiveAnnouncements {

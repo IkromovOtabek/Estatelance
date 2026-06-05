@@ -1,4 +1,4 @@
-import { Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Int } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { NotificationService } from './notification.service';
@@ -20,6 +20,15 @@ export class NotificationResolver {
   @Mutation(() => Boolean)
   async markAllNotificationsRead(@AuthUser('_id') userId: string): Promise<boolean> {
     return this.notificationService.markAllAsRead(userId);
+  }
+
+  @UseGuards(AuthGuard)
+  @Mutation(() => Boolean)
+  async markNotificationRead(
+    @AuthUser('_id') userId: string,
+    @Args('notificationId') notificationId: string,
+  ): Promise<boolean> {
+    return this.notificationService.markAsRead(userId, notificationId);
   }
 
   @UseGuards(AuthGuard)

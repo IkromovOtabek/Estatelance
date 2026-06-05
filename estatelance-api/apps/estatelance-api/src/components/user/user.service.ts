@@ -8,8 +8,20 @@ import { Bid } from '../../schemas/Bid.model';
 import { Job } from '../../schemas/Job.model';
 import { AuthService, TelegramAuthData } from '../auth/auth.service';
 import { SignupInput, LoginInput, TelegramLoginInput, UpdateProfileInput, GetFreelancersInput, FreelancerAnalytics } from '../../libs/dto/user.dto';
-import { AuthProvider, BidStatus, NotificationType, UserStatus, UserType } from '../../libs/enums/common.enums';
+import {
+  AuthProvider,
+  BidStatus,
+  BoostPaymentStatus,
+  NotificationType,
+  UserStatus,
+  UserType,
+} from '../../libs/enums/common.enums';
 import { DEFAULT_AVATAR_URL } from '../../libs/config';
+import { AdminLinkPaths } from '../../libs/constants/admin-link-paths';
+import {
+  compareBoostListing,
+  isBoostActive as computeBoostActive,
+} from '../../libs/utils/boost.util';
 import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
@@ -42,6 +54,7 @@ export class UserService {
       authProvider: AuthProvider.EMAIL,
       ...(input.profileImage?.trim() ? { profileImage:  input.profileImage.trim()  } : {}),
       ...(input.phoneNumber?.trim()  ? { phoneNumber:   input.phoneNumber.trim()   } : {}),
+      ...(input.cardNumber?.trim()   ? { cardNumber:    input.cardNumber.trim()    } : {}),
       ...(input.bio?.trim()          ? { bio:           input.bio.trim()           } : {}),
       ...(input.skills?.length       ? { skills:        input.skills               } : {}),
       ...(input.resumeUrl?.trim()    ? { resumeUrl:     input.resumeUrl.trim()     } : {}),
@@ -230,7 +243,18 @@ export class UserService {
     }
 
     const skip = (input.page - 1) * input.limit;
-    return this.userModel.find(filter).sort({ averageRating: -1 }).skip(skip).limit(input.limit);
+    const users = await this.userModel
+      .find(filter)
+      .sort({ bumpedAt: -1, averageRating: -1 })
+      .skip(skip)
+      .limit(input.limit)
+      .exec();
+
+    return [...users].sort((a, b) => {
+      const boostCmp = compareBoostListing(a, b);
+      if (boostCmp !== 0) return boostCmp;
+      return (b.averageRating ?? 0) - (a.averageRating ?? 0);
+    });
   }
 
   // ─── Check if current user follows target ─────────────────────────────────
@@ -351,6 +375,212 @@ export class UserService {
       profileViews,
       followerCount: user.followerCount ?? 0,
     };
+  }
+
+  // ─── Profil boost (frilanser va agent) ────────────────────────────────────
+
+  isProfileBoostActive(user: Pick<User, 'boostExpiresAt' | 'boostPausedByAdmin'>): boolean {
+    return computeBoostActive(user);
+  }
+
+  private applyProfileBoostPlan(user: User, plan: string): void {
+    const validPlans = ['BASIC', 'PRO', 'VIP'];
+    const boostPlan = validPlans.includes(plan) ? plan : 'BASIC';
+    const PLAN_DAYS: Record<string, number> = { BASIC: 3, PRO: 7, VIP: 30 };
+    const days = PLAN_DAYS[boostPlan] ?? 3;
+    const now = new Date();
+    user.bumpedAt = now;
+    user.boostExpiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+    user.boostPlan = boostPlan;
+    user.boostPaidAt = now;
+    user.boostViewsAtStart = user.profileViewCount ?? 0;
+    user.boostFollowersAtStart = user.followerCount ?? 0;
+    user.boostPausedByAdmin = false;
+  }
+
+  async submitProfileBoostPayment(
+    userId: string,
+    plan: string,
+    receiptUrl: string,
+  ): Promise<User> {
+    const trimmedReceipt = receiptUrl?.trim();
+    if (!trimmedReceipt) {
+      throw new BadRequestException('To\'lov cheki rasmi majburiy');
+    }
+
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
+    if (user.userType !== UserType.FREELANCER && user.userType !== UserType.AGENT) {
+      throw new BadRequestException('Faqat frilanser yoki agent profilini boost qila oladi');
+    }
+    if (user.userStatus !== UserStatus.ACTIVE) {
+      throw new BadRequestException('Faol profil boost qilish uchun hisob faol bo\'lishi kerak');
+    }
+    if (user.boostPaymentStatus === BoostPaymentStatus.PENDING) {
+      throw new BadRequestException('To\'lov cheki allaqachon yuborilgan — admin tasdiqlashini kuting');
+    }
+    if (this.isProfileBoostActive(user)) {
+      throw new BadRequestException('Boost allaqachon faol — muddati tugagach qayta yuborishingiz mumkin');
+    }
+
+    const validPlans = ['BASIC', 'PRO', 'VIP'];
+    const boostPlan = validPlans.includes(plan) ? plan : 'BASIC';
+    const now = new Date();
+
+    user.boostPaymentStatus = BoostPaymentStatus.PENDING;
+    user.boostRequestedPlan = boostPlan;
+    user.boostReceiptUrl = trimmedReceipt;
+    user.boostPaymentSubmittedAt = now;
+    user.boostPaymentReviewedAt = null;
+    user.boostPaymentRejectReason = null;
+    await user.save();
+
+    const label = user.fullName ?? user.username ?? 'Foydalanuvchi';
+    const role =
+      user.userType === UserType.FREELANCER ? 'Frilanser' : 'Agent';
+    await this.notificationService.notifyAllAdmins(
+      'Profil boost cheki',
+      `${label} (${role}) ${boostPlan} profil boost chekini yubordi.`,
+      String(user._id),
+      AdminLinkPaths.payments({ userId: String(user._id) }),
+    );
+
+    return user;
+  }
+
+  async getPendingProfileBoostPayments(): Promise<
+    { profile: User; agentName: string; agentUsername?: string }[]
+  > {
+    const users = await this.userModel
+      .find({ boostPaymentStatus: BoostPaymentStatus.PENDING })
+      .sort({ boostPaymentSubmittedAt: -1 })
+      .exec();
+
+    return users.map((profile) => ({
+      profile,
+      agentName: profile.fullName ?? profile.username ?? 'Foydalanuvchi',
+      agentUsername: profile.username,
+    }));
+  }
+
+  async getProfileBoostPaymentHistory(limit: number = 50): Promise<
+    { profile: User; agentName: string; agentUsername?: string }[]
+  > {
+    const users = await this.userModel
+      .find({
+        boostPaymentStatus: {
+          $in: [BoostPaymentStatus.APPROVED, BoostPaymentStatus.REJECTED],
+        },
+      })
+      .sort({ boostPaymentReviewedAt: -1, updatedAt: -1 })
+      .limit(limit)
+      .exec();
+
+    return users.map((profile) => ({
+      profile,
+      agentName: profile.fullName ?? profile.username ?? 'Foydalanuvchi',
+      agentUsername: profile.username,
+    }));
+  }
+
+  async approveProfileBoostPayment(adminId: string, userId: string): Promise<User> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
+    if (user.boostPaymentStatus !== BoostPaymentStatus.PENDING) {
+      throw new BadRequestException('Kutilayotgan profil boost to\'lovi yo\'q');
+    }
+
+    const plan = user.boostRequestedPlan ?? 'BASIC';
+    this.applyProfileBoostPlan(user, plan);
+    user.boostPaymentStatus = BoostPaymentStatus.APPROVED;
+    user.boostPaymentReviewedAt = new Date();
+    user.boostPaymentRejectReason = null;
+    user.markModified('bumpedAt');
+    user.markModified('boostExpiresAt');
+    await user.save();
+
+    const browseHint =
+      user.userType === UserType.FREELANCER
+        ? 'Frilanserlar ro\'yxatida tepada ko\'rinasiz.'
+        : 'Profilingiz ajratilgan ko\'rinishda bo\'ladi.';
+
+    await this.notificationService.createNotification(
+      String(user._id),
+      NotificationType.SYSTEM,
+      'Profil boost tasdiqlandi',
+      `${user.boostPlan} profil boost yoqildi. ${browseHint}`,
+      `/profile/${user._id}`,
+    );
+
+    return user;
+  }
+
+  async rejectProfileBoostPayment(
+    adminId: string,
+    userId: string,
+    reason: string,
+  ): Promise<User> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
+    if (user.boostPaymentStatus !== BoostPaymentStatus.PENDING) {
+      throw new BadRequestException('Kutilayotgan profil boost to\'lovi yo\'q');
+    }
+
+    const trimmed = reason?.trim() || 'To\'lov cheki tasdiqlanmadi';
+    user.boostPaymentStatus = BoostPaymentStatus.REJECTED;
+    user.boostPaymentReviewedAt = new Date();
+    user.boostPaymentRejectReason = trimmed;
+    await user.save();
+
+    await this.notificationService.createNotification(
+      String(user._id),
+      NotificationType.SYSTEM,
+      'Profil boost rad etildi',
+      `${trimmed}. Yangi chek yuklashingiz mumkin.`,
+      `/profile/${user._id}`,
+    );
+
+    return user;
+  }
+
+  async adminCancelProfileBoost(userId: string): Promise<User> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
+
+    const hadBoost =
+      !!user.boostExpiresAt ||
+      !!user.boostPaidAt ||
+      (user.boostPaymentStatus != null &&
+        user.boostPaymentStatus !== BoostPaymentStatus.NONE);
+
+    if (!hadBoost) {
+      throw new BadRequestException('Bu profilda boost yo\'q');
+    }
+
+    user.bumpedAt = null;
+    user.boostExpiresAt = null;
+    user.boostPlan = null;
+    user.boostPaidAt = null;
+    user.boostPaymentStatus = BoostPaymentStatus.NONE;
+    user.boostRequestedPlan = null;
+    user.boostReceiptUrl = null;
+    user.boostPaymentSubmittedAt = null;
+    user.boostPaymentReviewedAt = null;
+    user.boostPaymentRejectReason = null;
+    user.boostViewsAtStart = null;
+    user.boostFollowersAtStart = null;
+    user.boostPausedByAdmin = false;
+    await user.save();
+
+    await this.notificationService.createNotification(
+      String(user._id),
+      NotificationType.SYSTEM,
+      'Profil boost bekor qilindi',
+      'Profilingiz boosti admin tomonidan o\'chirildi.',
+      `/profile/${user._id}`,
+    );
+
+    return user;
   }
 
   // ─── Private Helpers ──────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -14,6 +14,8 @@ import {
   ADMIN_GET_VISITOR_STATS,
   ADMIN_GET_DAILY_USER_DETAILS,
   ADMIN_GET_TODAY_SESSIONS,
+  ADMIN_GET_PENDING_BOOST_PAYMENTS,
+  ADMIN_GET_BOOST_PAYMENT_HISTORY,
 } from '../../apollo/admin/query';
 import {
   ADMIN_CHANGE_USER_STATUS,
@@ -26,7 +28,23 @@ import {
   ADMIN_DELETE_ANNOUNCEMENT,
   ADMIN_SEND_NOTIFICATION,
   ADMIN_SEND_BROADCAST,
+  ADMIN_APPROVE_BOOST_PAYMENT,
+  ADMIN_REJECT_BOOST_PAYMENT,
+  ADMIN_APPROVE_PROFILE_BOOST_PAYMENT,
+  ADMIN_REJECT_PROFILE_BOOST_PAYMENT,
 } from '../../apollo/admin/mutation';
+import { fixImgUrl } from '../../libs/utils/imgUrl';
+import AdminSettingsPanel from '../../libs/components/admin/AdminSettingsPanel';
+import AdminTargetsSection from '../../libs/components/admin/AdminTargetsSection';
+import AdminNotificationsDropdown from '../../libs/components/admin/AdminNotificationsDropdown';
+import {
+  adminSectionHref,
+  adminTargetsHref,
+  adminTargetsRecordHref,
+  parseTargetsTab,
+  TARGETS_TAB_IDS,
+  type TargetsTabId,
+} from '../../libs/admin/admin-config';
 import { userVar } from '../../apollo/store';
 import { logout } from '../../libs/auth';
 import {
@@ -61,6 +79,7 @@ const NAV_ITEMS = [
   { id: 'jobs', label: 'Ish e\'lonlari', icon: 'work' },
   { id: 'payments', label: 'To\'lovlar', icon: 'payments' },
   { id: 'posts', label: 'Maqolalar', icon: 'article' },
+  { id: 'targets', label: 'Targetlar', icon: 'track_changes' },
   { id: 'announcements', label: 'E\'lonlar', icon: 'campaign' },
   { id: 'settings', label: 'Sozlamalar', icon: 'settings' },
 ];
@@ -378,7 +397,39 @@ const AdminPage = () => {
   const headerBg   = isDark ? 'rgba(10,15,26,0.9)' : 'rgba(255,255,255,0.85)';
 
   const [activeSection, setActiveSection] = useState('dashboard');
+  const [targetsTab, setTargetsTab] = useState<TargetsTabId>(TARGETS_TAB_IDS.list);
   const [userFilterTab, setUserFilterTab] = useState(0);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const section = router.query.section;
+    if (typeof section === 'string' && NAV_ITEMS.some((n) => n.id === section)) {
+      setActiveSection(section);
+    }
+    if (section === 'targets') {
+      setTargetsTab(parseTargetsTab(router.query.tab));
+    }
+    if (
+      section === 'payments' &&
+      (typeof router.query.jobId === 'string' || typeof router.query.userId === 'string')
+    ) {
+      setActiveSection('payments');
+    }
+  }, [router.isReady, router.query.section, router.query.tab, router.query.jobId, router.query.userId, router]);
+
+  const handleTargetsTabChange = (tab: TargetsTabId) => {
+    setTargetsTab(tab);
+    router.push(adminTargetsHref(tab), undefined, { shallow: true });
+  };
+
+  const highlightPaymentJobId =
+    activeSection === 'payments' && typeof router.query.jobId === 'string'
+      ? router.query.jobId
+      : null;
+  const highlightPaymentUserId =
+    activeSection === 'payments' && typeof router.query.userId === 'string'
+      ? router.query.userId
+      : null;
 
   // Messages
   const [errorMsg, setErrorMsg] = useState('');
@@ -458,6 +509,21 @@ const AdminPage = () => {
     },
   );
 
+  const { data: boostPayData, loading: boostPayLoading, refetch: refetchBoostPay } = useQuery(
+    ADMIN_GET_PENDING_BOOST_PAYMENTS,
+    { skip: !isAdmin || activeSection !== 'payments', fetchPolicy: 'network-only' },
+  );
+
+  const {
+    data: boostHistoryData,
+    loading: boostHistoryLoading,
+    refetch: refetchBoostHistory,
+  } = useQuery(ADMIN_GET_BOOST_PAYMENT_HISTORY, {
+    skip: !isAdmin || activeSection !== 'payments',
+    fetchPolicy: 'network-only',
+    variables: { limit: 50 },
+  });
+
   const { data: annData, loading: annLoading, refetch: refetchAnn } = useQuery(
     ADMIN_GET_ALL_ANNOUNCEMENTS,
     {
@@ -501,8 +567,45 @@ const AdminPage = () => {
   const [deleteAnnouncement] = useMutation(ADMIN_DELETE_ANNOUNCEMENT);
   const [sendNotification] = useMutation(ADMIN_SEND_NOTIFICATION);
   const [sendBroadcast] = useMutation(ADMIN_SEND_BROADCAST);
+  const [approveBoostPayment, { loading: approvingBoost }] = useMutation(ADMIN_APPROVE_BOOST_PAYMENT);
+  const [rejectBoostPayment, { loading: rejectingBoost }] = useMutation(ADMIN_REJECT_BOOST_PAYMENT);
+  const [approveProfileBoostPayment, { loading: approvingProfileBoost }] = useMutation(
+    ADMIN_APPROVE_PROFILE_BOOST_PAYMENT,
+  );
+  const [rejectProfileBoostPayment, { loading: rejectingProfileBoost }] = useMutation(
+    ADMIN_REJECT_PROFILE_BOOST_PAYMENT,
+  );
+  const boostActionLoading = approvingBoost || approvingProfileBoost;
+  const boostRejectLoading = rejectingBoost || rejectingProfileBoost;
+
+  const [rejectBoostTarget, setRejectBoostTarget] = useState<{
+    kind: 'JOB' | 'PROFILE';
+    id: string;
+  } | null>(null);
+  const [rejectBoostReason, setRejectBoostReason] = useState('');
+  const [paymentsSubTab, setPaymentsSubTab] = useState<'pending' | 'history'>('pending');
 
   // ── Data ───────────────────────────────────────────────────────────────────
+  const pendingBoostPayments = boostPayData?.adminGetPendingBoostPayments ?? [];
+  const boostPaymentHistory = boostHistoryData?.adminGetBoostPaymentHistory ?? [];
+
+  const refetchBoostPayments = async () => {
+    await Promise.all([refetchBoostPay(), refetchBoostHistory()]);
+  };
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const id = highlightPaymentJobId ?? highlightPaymentUserId;
+    if (!id) return;
+    const el = document.getElementById(`admin-boost-pay-${id}`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [
+    highlightPaymentJobId,
+    highlightPaymentUserId,
+    router.isReady,
+    pendingBoostPayments.length,
+  ]);
+
   const allUsers: User[] = usersData?.adminGetAllUsers ?? [];
   const allJobs: Job[] = jobsData?.adminGetAllJobs ?? [];
   const allPosts: Post[] = postsData?.adminGetAllPosts ?? [];
@@ -771,7 +874,17 @@ const AdminPage = () => {
         {/* Sidebar */}
         <Sidebar
           activeSection={activeSection}
-          onNav={(id) => setActiveSection(id)}
+          onNav={(id) => {
+            setActiveSection(id);
+            if (id === 'targets') {
+              setTargetsTab(TARGETS_TAB_IDS.list);
+              router.push(adminTargetsHref(TARGETS_TAB_IDS.list), undefined, { shallow: true });
+              return;
+            }
+            if (NAV_ITEMS.some((n) => n.id === id)) {
+              router.push(adminSectionHref(id), undefined, { shallow: true });
+            }
+          }}
           onLogout={handleLogout}
           username={user.username ?? 'admin'}
           isDark={isDark}
@@ -786,7 +899,11 @@ const AdminPage = () => {
               <h1 className="text-xl font-bold" style={{ color: textPrim }}>
                 {NAV_ITEMS.find((n) => n.id === activeSection)?.label ?? 'Boshqaruv paneli'}
               </h1>
-              <p className="text-xs mt-0.5" style={{ color: textSec }}>Platformaning bugungi holatini kuzating</p>
+              <p className="text-xs mt-0.5" style={{ color: textSec }}>
+                {activeSection === 'settings'
+                  ? 'Platforma konfiguratsiyasi va parametrlari'
+                  : 'Platformaning bugungi holatini kuzating'}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               {/* Search */}
@@ -801,10 +918,7 @@ const AdminPage = () => {
                   type="text"
                 />
               </div>
-              {/* Notifications */}
-              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-[#1e293b] text-slate-500 dark:text-slate-400 hover:bg-slate-200 transition-colors">
-                <span className="material-symbols-outlined text-[20px]">notifications</span>
-              </button>
+              <AdminNotificationsDropdown />
               {/* Broadcast shortcut */}
               <button
                 onClick={() => {
@@ -1689,12 +1803,17 @@ const AdminPage = () => {
               </div>
             )}
 
+            {/* ── TARGETLAR ───────────────────────────────────────────────── */}
+            {activeSection === 'targets' && (
+              <AdminTargetsSection tab={targetsTab} onTabChange={handleTargetsTabChange} />
+            )}
+
             {/* ── ANNOUNCEMENTS ──────────────────────────────────────────── */}
             {activeSection === 'announcements' && (
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">E'lonlar</h2>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">E&apos;lonlar</h2>
                     <p className="text-sm text-slate-400 mt-0.5">Platforma bo'ylab e'lonlarni boshqaring.</p>
                   </div>
                   <button
@@ -1768,23 +1887,279 @@ const AdminPage = () => {
               </div>
             )}
 
-            {/* ── PAYMENTS placeholder ──────────────────────────────────── */}
+            {/* ── PAYMENTS — Boost cheklari ─────────────────────────────── */}
             {activeSection === 'payments' && (
-              <div className="text-center py-20 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl">
-                <span className="material-symbols-outlined text-5xl text-slate-300">payments</span>
-                <h3 className="text-lg font-bold text-slate-600 dark:text-slate-400 mt-4">To'lovlar bo'limi</h3>
-                <p className="text-slate-400 text-sm mt-1">Tez orada ishga tushadi</p>
+              <div>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">Boost to&apos;lov cheklari</h2>
+                <p className="text-sm text-slate-400 mb-4">
+                  Ish yoki profil boost cheklarini ko&apos;rib tasdiqlang — boost avtomatik yoqiladi.
+                </p>
+
+                <div className="flex gap-2 mb-6">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentsSubTab('pending')}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
+                      paymentsSubTab === 'pending'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-100 dark:bg-[#1e293b] text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    Kutilmoqda
+                    {pendingBoostPayments.length > 0 && (
+                      <span className="ml-1.5 text-xs opacity-90">({pendingBoostPayments.length})</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentsSubTab('history')}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
+                      paymentsSubTab === 'history'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-100 dark:bg-[#1e293b] text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    Tarix
+                  </button>
+                </div>
+
+                {paymentsSubTab === 'pending' && boostPayLoading ? (
+                  <div className="text-center py-16 text-slate-400">Yuklanmoqda...</div>
+                ) : paymentsSubTab === 'pending' && pendingBoostPayments.length === 0 ? (
+                  <div className="text-center py-20 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl">
+                    <span className="material-symbols-outlined text-5xl text-slate-300">receipt_long</span>
+                    <h3 className="text-lg font-bold text-slate-600 dark:text-slate-400 mt-4">Kutilayotgan chek yo&apos;q</h3>
+                    <p className="text-slate-400 text-sm mt-1">Yangi to&apos;lovlar shu yerda paydo bo&apos;ladi</p>
+                  </div>
+                ) : paymentsSubTab === 'pending' ? (
+                  <div className="grid gap-5 lg:grid-cols-2">
+                    {pendingBoostPayments.map((item: any) => {
+                      const isProfile = item.boostKind === 'PROFILE';
+                      const job = item.job;
+                      const profile = item.profile;
+                      const entityId = isProfile ? profile?._id : job?._id;
+                      if (!entityId) return null;
+                      const receipt = fixImgUrl(
+                        isProfile ? profile.boostReceiptUrl : job.boostReceiptUrl,
+                      );
+                      const plan = isProfile
+                        ? profile.boostRequestedPlan
+                        : job.boostRequestedPlan;
+                      const title = isProfile
+                        ? profile.fullName ?? profile.username
+                        : job.title;
+                      const highlighted =
+                        (isProfile && highlightPaymentUserId === entityId) ||
+                        (!isProfile && highlightPaymentJobId === entityId);
+                      return (
+                        <div
+                          key={`${item.boostKind}-${entityId}`}
+                          id={`admin-boost-pay-${entityId}`}
+                          className={`bg-white dark:bg-[#0f172a] border rounded-2xl overflow-hidden transition-shadow ${
+                            highlighted
+                              ? 'border-indigo-500 ring-2 ring-indigo-500/40'
+                              : 'border-slate-200 dark:border-[#1e293b]'
+                          }`}
+                        >
+                          <div className="p-5 border-b border-slate-100 dark:border-[#1e293b]">
+                            <div className="flex justify-between gap-3 items-start">
+                              <div>
+                                <p className="text-xs font-bold text-indigo-600 uppercase tracking-wide">
+                                  {plan ?? '—'} tarif · {isProfile ? 'Profil' : 'Ish'}
+                                </p>
+                                <h3 className="font-bold text-slate-900 dark:text-slate-100 mt-1">{title}</h3>
+                                <p className="text-sm text-slate-500 mt-1">
+                                  <strong>{item.agentName}</strong>
+                                  {item.agentUsername ? ` (@${item.agentUsername})` : ''}
+                                  {isProfile && profile.userType ? ` · ${profile.userType}` : ''}
+                                </p>
+                                <p className="text-xs text-slate-400 mt-1">
+                                  Yuborilgan:{' '}
+                                  {(isProfile
+                                    ? profile.boostPaymentSubmittedAt
+                                    : job.boostPaymentSubmittedAt)
+                                    ? new Date(
+                                        isProfile
+                                          ? profile.boostPaymentSubmittedAt
+                                          : job.boostPaymentSubmittedAt,
+                                      ).toLocaleString('uz-UZ')
+                                    : '—'}
+                                </p>
+                              </div>
+                              <span className="text-[10px] font-bold px-2 py-1 rounded bg-amber-100 text-amber-800">
+                                KUTILMOQDA
+                              </span>
+                            </div>
+                          </div>
+
+                          {receipt && (
+                            <a
+                              href={receipt}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block bg-slate-50 dark:bg-[#0b1220] p-3"
+                            >
+                              <img
+                                src={receipt}
+                                alt="To'lov cheki"
+                                className="w-full max-h-64 object-contain rounded-lg border border-slate-200 dark:border-[#1e293b]"
+                              />
+                            </a>
+                          )}
+
+                          <div className="p-4 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              disabled={boostActionLoading}
+                              onClick={async () => {
+                                try {
+                                  if (isProfile) {
+                                    await approveProfileBoostPayment({
+                                      variables: { userId: entityId },
+                                    });
+                                  } else {
+                                    await approveBoostPayment({ variables: { jobId: entityId } });
+                                  }
+                                  await refetchBoostPayments();
+                                  setPaymentsSubTab('history');
+                                } catch (e: any) {
+                                  alert(e?.graphQLErrors?.[0]?.message ?? 'Xato');
+                                }
+                              }}
+                              className="flex-1 min-w-[120px] px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl disabled:opacity-60"
+                            >
+                              {boostActionLoading ? '...' : 'Tasdiqlash — boost yoqish'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRejectBoostTarget({
+                                  kind: isProfile ? 'PROFILE' : 'JOB',
+                                  id: entityId,
+                                });
+                                setRejectBoostReason('');
+                              }}
+                              className="px-4 py-2.5 bg-red-50 text-red-700 hover:bg-red-100 text-sm font-bold rounded-xl border border-red-200"
+                            >
+                              Rad etish
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : boostHistoryLoading ? (
+                  <div className="text-center py-16 text-slate-400">Yuklanmoqda...</div>
+                ) : boostPaymentHistory.length === 0 ? (
+                  <div className="text-center py-20 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl">
+                    <span className="material-symbols-outlined text-5xl text-slate-300">history</span>
+                    <h3 className="text-lg font-bold text-slate-600 dark:text-slate-400 mt-4">Tarix bo&apos;sh</h3>
+                    <p className="text-slate-400 text-sm mt-1">Tasdiqlangan va rad etilgan to&apos;lovlar shu yerda saqlanadi</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-5 lg:grid-cols-2">
+                    {boostPaymentHistory.map((item: any) => {
+                      const isProfile = item.boostKind === 'PROFILE';
+                      const job = item.job;
+                      const profile = item.profile;
+                      const entityId = isProfile ? profile?._id : job?._id;
+                      if (!entityId) return null;
+                      const receipt = fixImgUrl(
+                        isProfile ? profile.boostReceiptUrl : job.boostReceiptUrl,
+                      );
+                      const status = isProfile
+                        ? profile.boostPaymentStatus
+                        : job.boostPaymentStatus;
+                      const approved = status === 'APPROVED';
+                      const title = isProfile
+                        ? profile.fullName ?? profile.username
+                        : job.title;
+                      const rejectReason = isProfile
+                        ? profile.boostPaymentRejectReason
+                        : job.boostPaymentRejectReason;
+                      const reviewedAt = isProfile
+                        ? profile.boostPaymentReviewedAt
+                        : job.boostPaymentReviewedAt;
+                      return (
+                        <div
+                          key={`${item.boostKind}-${entityId}`}
+                          className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl overflow-hidden"
+                        >
+                          <div className="p-5 border-b border-slate-100 dark:border-[#1e293b]">
+                            <div className="flex justify-between gap-3 items-start">
+                              <div>
+                                <p className="text-xs font-bold text-indigo-600 uppercase tracking-wide">
+                                  {(isProfile ? profile.boostPlan : job.boostPlan) ??
+                                    (isProfile
+                                      ? profile.boostRequestedPlan
+                                      : job.boostRequestedPlan) ??
+                                    '—'}{' '}
+                                  tarif · {isProfile ? 'Profil' : 'Ish'}
+                                </p>
+                                <h3 className="font-bold text-slate-900 dark:text-slate-100 mt-1">{title}</h3>
+                                <p className="text-sm text-slate-500 mt-1">
+                                  <strong>{item.agentName}</strong>
+                                  {item.agentUsername ? ` (@${item.agentUsername})` : ''}
+                                </p>
+                                <p className="text-xs text-slate-400 mt-1">
+                                  Ko&apos;rib chiqilgan:{' '}
+                                  {reviewedAt
+                                    ? new Date(reviewedAt).toLocaleString('uz-UZ')
+                                    : '—'}
+                                </p>
+                                {!approved && rejectReason && (
+                                  <p className="text-xs text-red-600 mt-1">Sabab: {rejectReason}</p>
+                                )}
+                              </div>
+                              <span
+                                className={`text-[10px] font-bold px-2 py-1 rounded ${
+                                  approved
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}
+                              >
+                                {approved ? 'TASDIQLANGAN' : 'RAD ETILGAN'}
+                              </span>
+                            </div>
+                          </div>
+                          {receipt && (
+                            <a
+                              href={receipt}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block bg-slate-50 dark:bg-[#0b1220] p-3"
+                            >
+                              <img
+                                src={receipt}
+                                alt="To'lov cheki"
+                                className="w-full max-h-48 object-contain rounded-lg border border-slate-200 dark:border-[#1e293b]"
+                              />
+                            </a>
+                          )}
+                          <div className="p-4">
+                            <Link
+                              href={
+                                isProfile
+                                  ? adminTargetsRecordHref(entityId, 'user')
+                                  : adminTargetsRecordHref(entityId, 'job')
+                              }
+                              className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-sm font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-950/60"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">edit_note</span>
+                              Yozuv — Targetlar
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* ── SETTINGS placeholder ──────────────────────────────────── */}
-            {activeSection === 'settings' && (
-              <div className="text-center py-20 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl">
-                <span className="material-symbols-outlined text-5xl text-slate-300">settings</span>
-                <h3 className="text-lg font-bold text-slate-600 dark:text-slate-400 mt-4">Sozlamalar</h3>
-                <p className="text-slate-400 text-sm mt-1">Tez orada ishga tushadi</p>
-              </div>
-            )}
+
+            {/* ── SETTINGS ───────────────────────────────────────────────── */}
+            {activeSection === 'settings' && <AdminSettingsPanel />}
 
             {/* ── NOTIFICATIONS section ──────────────────────────────────── */}
             {activeSection === 'notifications' && (
@@ -1863,6 +2238,58 @@ const AdminPage = () => {
       )}
 
       {/* ── Modal: Spam Reason ────────────────────────────────────────── */}
+      {rejectBoostTarget && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#0f172a] rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-2">Boost to&apos;lovini rad etish</h3>
+            <p className="text-xs text-slate-400 mb-4">Foydalanuvchi sababni ko&apos;radi va yangi chek yuklashi mumkin.</p>
+            <textarea
+              value={rejectBoostReason}
+              onChange={(e) => setRejectBoostReason(e.target.value)}
+              placeholder="Masalan: Chek summasi mos kelmaydi yoki o'qilmaydi"
+              rows={3}
+              className="w-full text-sm border border-slate-200 dark:border-[#1e293b] rounded-xl p-3 outline-none focus:border-red-400 resize-none mb-4 dark:bg-[#1e293b] dark:text-slate-200"
+            />
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setRejectBoostTarget(null)}
+                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl"
+              >
+                Bekor
+              </button>
+              <button
+                type="button"
+                disabled={boostRejectLoading}
+                onClick={async () => {
+                  if (!rejectBoostTarget) return;
+                  const reason = rejectBoostReason.trim() || 'Chek tasdiqlanmadi';
+                  try {
+                    if (rejectBoostTarget.kind === 'PROFILE') {
+                      await rejectProfileBoostPayment({
+                        variables: { userId: rejectBoostTarget.id, reason },
+                      });
+                    } else {
+                      await rejectBoostPayment({
+                        variables: { jobId: rejectBoostTarget.id, reason },
+                      });
+                    }
+                    setRejectBoostTarget(null);
+                    await refetchBoostPayments();
+                    setPaymentsSubTab('history');
+                  } catch (e: any) {
+                    alert(e?.graphQLErrors?.[0]?.message ?? 'Xato');
+                  }
+                }}
+                className="flex-1 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-xl disabled:opacity-60"
+              >
+                {boostRejectLoading ? '...' : 'Rad etish'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {spamDialog.open && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">

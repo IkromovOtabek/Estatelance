@@ -40,6 +40,20 @@ export interface User {
   reviews?: FreelancerReview[];
   availability?: string;
   spamReason?: string;
+  bumpedAt?: string;
+  boostExpiresAt?: string;
+  boostPlan?: string;
+  boostPausedByAdmin?: boolean;
+  boostPaidAt?: string;
+  boostPaymentStatus?: string;
+  boostRequestedPlan?: string;
+  boostReceiptUrl?: string;
+  boostPaymentSubmittedAt?: string;
+  boostPaymentReviewedAt?: string;
+  boostPaymentRejectReason?: string;
+  boostViewsAtStart?: number;
+  boostFollowersAtStart?: number;
+  cardNumber?: string;
   // Set after login, not stored in DB
   accessToken?: string;
 }
@@ -66,6 +80,16 @@ export interface Job {
   bumpedAt?: string;
   boostExpiresAt?: string;
   boostPlan?: string;
+  boostPausedByAdmin?: boolean;
+  boostPaidAt?: string;
+  boostPaymentStatus?: string;
+  boostRequestedPlan?: string;
+  boostReceiptUrl?: string;
+  boostPaymentSubmittedAt?: string;
+  boostPaymentReviewedAt?: string;
+  boostPaymentRejectReason?: string;
+  boostViewsAtStart?: number;
+  boostBidsAtStart?: number;
   createdAt?: string;
   salaryFrom?: number;
   salaryTo?: number;
@@ -144,6 +168,7 @@ export interface Notification {
   description: string;
   isRead: boolean;
   relatedItemId?: string;
+  linkPath?: string;
   createdAt?: string;
 }
 

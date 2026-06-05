@@ -144,3 +144,63 @@ export const END_SESSION = gql`
   }
 `;
 
+export const ADMIN_REMOVE_AD_TARGET = gql`
+  mutation AdminRemoveAdTarget($sourceKind: String!, $sourceId: String!) {
+    adminRemoveAdTarget(sourceKind: $sourceKind, sourceId: $sourceId)
+  }
+`;
+
+export const ADMIN_SET_AD_TARGET_STATUS = gql`
+  mutation AdminSetAdTargetStatus($sourceKind: String!, $sourceId: String!, $active: Boolean!) {
+    adminSetAdTargetStatus(sourceKind: $sourceKind, sourceId: $sourceId, active: $active) {
+      id
+      status
+      manageable
+    }
+  }
+`;
+
+export const ADMIN_APPROVE_BOOST_PAYMENT = gql`
+  mutation AdminApproveBoostPayment($jobId: String!) {
+    adminApproveBoostPayment(jobId: $jobId) {
+      _id
+      boostPaymentStatus
+      boostPlan
+      boostExpiresAt
+      boostPaidAt
+    }
+  }
+`;
+
+export const ADMIN_REJECT_BOOST_PAYMENT = gql`
+  mutation AdminRejectBoostPayment($jobId: String!, $reason: String!) {
+    adminRejectBoostPayment(jobId: $jobId, reason: $reason) {
+      _id
+      boostPaymentStatus
+      boostPaymentRejectReason
+    }
+  }
+`;
+
+export const ADMIN_APPROVE_PROFILE_BOOST_PAYMENT = gql`
+  mutation AdminApproveProfileBoostPayment($userId: String!) {
+    adminApproveProfileBoostPayment(userId: $userId) {
+      _id
+      boostPaymentStatus
+      boostPlan
+      boostExpiresAt
+      boostPaidAt
+    }
+  }
+`;
+
+export const ADMIN_REJECT_PROFILE_BOOST_PAYMENT = gql`
+  mutation AdminRejectProfileBoostPayment($userId: String!, $reason: String!) {
+    adminRejectProfileBoostPayment(userId: $userId, reason: $reason) {
+      _id
+      boostPaymentStatus
+      boostPaymentRejectReason
+    }
+  }
+`;
+

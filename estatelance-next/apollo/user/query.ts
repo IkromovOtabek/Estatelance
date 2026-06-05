@@ -41,6 +41,19 @@ export const GET_MY_PROFILE = gql`
       videoPortfolioUrl
       verifiedSkills
       phoneNumber
+      bumpedAt
+      boostExpiresAt
+      boostPlan
+      boostPausedByAdmin
+      boostPaidAt
+      boostPaymentStatus
+      boostRequestedPlan
+      boostReceiptUrl
+      boostPaymentSubmittedAt
+      boostPaymentReviewedAt
+      boostPaymentRejectReason
+      boostViewsAtStart
+      boostFollowersAtStart
     }
   }
 `;
@@ -77,6 +90,20 @@ export const GET_USER_BY_ID = gql`
       }
       availability
       phoneNumber
+      cardNumber
+      bumpedAt
+      boostExpiresAt
+      boostPlan
+      boostPausedByAdmin
+      boostPaidAt
+      boostPaymentStatus
+      boostRequestedPlan
+      boostReceiptUrl
+      boostPaymentSubmittedAt
+      boostPaymentReviewedAt
+      boostPaymentRejectReason
+      boostViewsAtStart
+      boostFollowersAtStart
     }
   }
 `;
@@ -108,6 +135,12 @@ export const GET_FREELANCERS = gql`
       linkedinUrl
       videoPortfolioUrl
       verifiedSkills
+      profileViewCount
+      followerCount
+      bumpedAt
+      boostExpiresAt
+      boostPlan
+      boostPausedByAdmin
     }
   }
 `;
@@ -189,6 +222,12 @@ export const GET_JOBS = gql`
       viewCount
       requiredSkills
       createdAt
+      bumpedAt
+      boostExpiresAt
+      boostPlan
+      boostPausedByAdmin
+      boostPaidAt
+      boostPaymentReviewedAt
     }
   }
 `;
@@ -216,7 +255,21 @@ export const GET_JOB_BY_ID = gql`
       bidCount
       viewCount
       hiredFreelancerId
+      escrowStatus
+      paymentDone
+      paymentDoneAt
       createdAt
+    }
+  }
+`;
+
+export const GET_BOOST_PAYMENT_INFO = gql`
+  query GetBoostPaymentInfo {
+    getBoostPaymentInfo {
+      cardNumber
+      phoneNumber
+      holderName
+      paymentNote
     }
   }
 `;
@@ -245,6 +298,20 @@ export const GET_MY_JOBS = gql`
       bumpedAt
       boostExpiresAt
       boostPlan
+      boostPausedByAdmin
+      boostPaidAt
+      boostPaymentStatus
+      boostRequestedPlan
+      boostReceiptUrl
+      boostPaymentSubmittedAt
+      boostPaymentReviewedAt
+      boostPaymentRejectReason
+      boostViewsAtStart
+      boostBidsAtStart
+      viewCount
+      hiredFreelancerId
+      paymentDone
+      cancelReason
       createdAt
     }
   }
@@ -274,6 +341,40 @@ export const GET_MY_BIDS = gql`
       coverLetter
       status
       createdAt
+    }
+  }
+`;
+
+// All bids across the agent's jobs — powers the "Takliflar" tab
+export const GET_BIDS_FOR_AGENT = gql`
+  query GetBidsForAgent {
+    getBidsForAgent {
+      _id
+      jobId
+      freelancerId
+      freelancerName
+      freelancerTitle
+      freelancerAvatar
+      bidAmount
+      coverLetter
+      status
+      createdAt
+    }
+  }
+`;
+
+// Freelancers who bid on a specific job — used when marking a job completed
+export const GET_JOB_BIDDERS = gql`
+  query GetJobBidders($jobId: String!) {
+    getJobBidders(jobId: $jobId) {
+      _id
+      username
+      fullName
+      profileImage
+      averageRating
+      completedJobCount
+      freelancerCategory
+      skills
     }
   }
 `;
@@ -389,6 +490,7 @@ export const GET_MY_NOTIFICATIONS = gql`
       description
       isRead
       relatedItemId
+      linkPath
       createdAt
     }
   }

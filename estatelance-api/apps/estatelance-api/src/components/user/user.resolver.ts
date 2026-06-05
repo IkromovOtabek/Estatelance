@@ -151,4 +151,15 @@ export class UserResolver {
   async getMyAnalytics(@AuthUser('_id') userId: string): Promise<FreelancerAnalytics> {
     return this.userService.getFreelancerAnalytics(userId);
   }
+
+  // ─── Profil boost (frilanser va agent) ──────────────────────────────────────
+  @UseGuards(ActiveUserGuard)
+  @Mutation(() => User)
+  async submitProfileBoostPayment(
+    @AuthUser('_id') userId: string,
+    @Args('plan') plan: string,
+    @Args('receiptUrl') receiptUrl: string,
+  ): Promise<User> {
+    return this.userService.submitProfileBoostPayment(userId, plan, receiptUrl);
+  }
 }

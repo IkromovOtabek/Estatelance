@@ -57,7 +57,10 @@ import {
 import { GET_USER_BY_ID, GET_MY_PROFILE, CHECK_IS_FOLLOWING } from '../../apollo/user/query';
 import MapModal, { getYandexSuggests } from '../../libs/components/common/YandexMapModal';
 import MiniMap from '../../libs/components/common/MiniMap';
-import { TOGGLE_FOLLOW, UPDATE_PROFILE } from '../../apollo/user/mutation';
+import BoostModal from '../../libs/components/common/BoostModal';
+import BoostProfileStats from '../../libs/components/common/BoostProfileStats';
+import { TOGGLE_FOLLOW, UPDATE_PROFILE, SUBMIT_PROFILE_BOOST_PAYMENT } from '../../apollo/user/mutation';
+import { isJobBoostActive } from '../../libs/utils/boost';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { User, PortfolioItem as PortfolioItemType } from '../../libs/types';
@@ -108,6 +111,10 @@ const ProfilePage = () => {
   const isLoggedIn = mounted && !!currentUser._id;
   const isOwnProfile = mounted && currentUser._id === userId;
   const isFreelancer = isOwnProfile && currentUser.userType === UserType.FREELANCER;
+  const canProfileBoost =
+    isOwnProfile &&
+    (currentUser.userType === UserType.FREELANCER || currentUser.userType === UserType.AGENT);
+  const [profileBoostOpen, setProfileBoostOpen] = useState(false);
 
   const [followLoading, setFollowLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -150,7 +157,10 @@ const ProfilePage = () => {
 
   // Queries
   const { data, loading, refetch } = useQuery(GET_USER_BY_ID, { variables: { userId }, skip: !userId });
-  const { data: myProfileData } = useQuery(GET_MY_PROFILE, { skip: !isOwnProfile, fetchPolicy: 'network-only' });
+  const { data: myProfileData, refetch: refetchMyProfile } = useQuery(GET_MY_PROFILE, {
+    skip: !isOwnProfile,
+    fetchPolicy: 'network-only',
+  });
   const { data: followCheckData } = useQuery(CHECK_IS_FOLLOWING, {
     variables: { targetUserId: userId },
     skip: !isLoggedIn || !userId || isOwnProfile,
@@ -159,8 +169,10 @@ const ProfilePage = () => {
 
   const [toggleFollow] = useMutation(TOGGLE_FOLLOW);
   const [updateProfile] = useMutation(UPDATE_PROFILE);
+  const [submitProfileBoostPayment] = useMutation(SUBMIT_PROFILE_BOOST_PAYMENT);
 
   const profile: User | null = data?.getUserById ?? null;
+  const ownProfile: User | null = myProfileData?.getMyProfile ?? profile;
 
   React.useEffect(() => {
     if (followCheckData?.checkIsFollowing !== undefined) setIsFollowing(followCheckData.checkIsFollowing);
@@ -623,6 +635,11 @@ const ProfilePage = () => {
                   {categoryLabel && (
                     <span className="px-2.5 py-0.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">
                       {categoryLabel}
+                    </span>
+                  )}
+                  {profile && isJobBoostActive(profile) && (
+                    <span className="px-2.5 py-0.5 text-[10px] font-black tracking-widest bg-violet-100 text-violet-700 rounded-full border border-violet-200">
+                      {profile.boostPlan === 'VIP' ? 'VIP' : profile.boostPlan === 'PRO' ? 'PRO' : 'TOP'}
                     </span>
                   )}
                 </div>
@@ -1124,13 +1141,32 @@ const ProfilePage = () => {
                   </button>
                 </div>
               ) : isOwnProfile ? (
-                <button
-                  onClick={openEditDialog}
-                  className="w-full py-3.5 rounded-xl text-sm font-semibold border border-indigo-200 text-indigo-600 flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all duration-200"
-                >
-                  <EditIcon size={18} />
-                  Profilni tahrirlash
-                </button>
+                <div className="space-y-3">
+                  {canProfileBoost && ownProfile && (
+                    <>
+                      <BoostProfileStats user={ownProfile} />
+                      {ownProfile.boostPaymentStatus !== 'PENDING' &&
+                        !isJobBoostActive(ownProfile) && (
+                          <button
+                            type="button"
+                            onClick={() => setProfileBoostOpen(true)}
+                            className="w-full py-3.5 rounded-xl text-sm font-bold bg-gradient-to-r from-violet-600 to-indigo-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-indigo-200/60 hover:opacity-95 transition-all"
+                          >
+                            <BoltIcon size={18} weight="fill" />
+                            Profilni boost qilish
+                          </button>
+                        )}
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={openEditDialog}
+                    className="w-full py-3.5 rounded-xl text-sm font-semibold border border-indigo-200 text-indigo-600 flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all duration-200"
+                  >
+                    <EditIcon size={18} />
+                    Profilni tahrirlash
+                  </button>
+                </div>
               ) : (
                 <Link href="/login">
                   <button className="w-full py-3.5 rounded-xl text-sm font-bold bg-indigo-600 text-white flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors">
@@ -1525,6 +1561,20 @@ const ProfilePage = () => {
           </Button>
         </Box>
       </Dialog>
+
+      <BoostModal
+        open={profileBoostOpen}
+        subjectTitle={ownProfile?.fullName ?? ownProfile?.username ?? 'Profil'}
+        subjectKind="profile"
+        onClose={() => setProfileBoostOpen(false)}
+        onSubmitReceipt={async (plan, receiptUrl) => {
+          await submitProfileBoostPayment({ variables: { plan, receiptUrl } });
+          setProfileBoostOpen(false);
+          await refetch();
+          await refetchMyProfile();
+          alert('Chek yuborildi. Admin tasdiqlagach profil boost yoqiladi.');
+        }}
+      />
     </>
   );
 };

@@ -158,6 +158,29 @@ export class TrackVisitInput {
   sessionId?: string;
 }
 
+// ─── Object: Admin reklama / target (boost ish + platforma reklamasi) ───────
+@ObjectType()
+export class AdminAdTargetItem {
+  @Field(() => String) id: string;
+  @Field(() => String) title: string;
+  @Field(() => String) advertiser: string;
+  /** BANNER | SPONSORED_JOB */
+  @Field(() => String) type: string;
+  /** ACTIVE | PAUSED | ENDED | PENDING */
+  @Field(() => String) status: string;
+  @Field(() => Int) impressions: number;
+  @Field(() => Int) clicks: number;
+  @Field(() => String, { nullable: true }) targetUrl?: string;
+  /** job | announcement */
+  @Field(() => String) sourceKind: string;
+  @Field(() => String, { nullable: true }) sourceId?: string;
+  @Field(() => String, { nullable: true }) boostPlan?: string;
+  @Field(() => String, { nullable: true }) createdAt?: string;
+  @Field(() => Boolean) manageable: boolean;
+  /** O'chirish: boost bekor / reklama e'loni o'chirish */
+  @Field(() => Boolean) deletable: boolean;
+}
+
 // ─── Object: User detail for visitor stats drill-down ────────────────────────
 @ObjectType()
 export class VisitorUserDetail {

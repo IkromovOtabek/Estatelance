@@ -4,7 +4,7 @@ import { JobService } from './job.service';
 import { Job } from '../../schemas/Job.model';
 import { ActiveUserGuard, AuthGuard, OptionalAuthGuard } from '../auth/auth.guard';
 import { AuthUser } from '../auth/auth-user.decorator';
-import { CreateJobInput, GetJobsInput, LeaveReviewInput, UpdateJobInput } from '../../libs/dto/job.dto';
+import { BoostPaymentInfo, CreateJobInput, GetJobsInput, LeaveReviewInput, UpdateJobInput } from '../../libs/dto/job.dto';
 import { Float } from '@nestjs/graphql';
 
 @Resolver()
@@ -57,14 +57,32 @@ export class JobResolver {
     return this.jobService.deleteJob(agentId, jobId);
   }
 
+  @UseGuards(AuthGuard)
+  @Query(() => BoostPaymentInfo)
+  getBoostPaymentInfo(): BoostPaymentInfo {
+    return this.jobService.getBoostPaymentInfo();
+  }
+
+  @UseGuards(ActiveUserGuard)
+  @Mutation(() => Job)
+  async submitBoostPayment(
+    @AuthUser('_id') agentId: string,
+    @Args('jobId') jobId: string,
+    @Args('plan') plan: string,
+    @Args('receiptUrl') receiptUrl: string,
+  ): Promise<Job> {
+    return this.jobService.submitBoostPayment(agentId, jobId, plan, receiptUrl);
+  }
+
   @UseGuards(ActiveUserGuard)
   @Mutation(() => Job)
   async boostJob(
     @AuthUser('_id') agentId: string,
     @Args('jobId') jobId: string,
     @Args('plan') plan: string,
+    @Args('paymentConfirmed') paymentConfirmed: boolean,
   ): Promise<Job> {
-    return this.jobService.boostJob(agentId, jobId, plan);
+    return this.jobService.boostJob(agentId, jobId, plan, paymentConfirmed);
   }
 
   @UseGuards(AuthGuard)
@@ -81,8 +99,47 @@ export class JobResolver {
   async completeJob(
     @AuthUser('_id') agentId: string,
     @Args('jobId') jobId: string,
+    @Args('hiredFreelancerId', { nullable: true }) hiredFreelancerId?: string,
   ): Promise<Job> {
-    return this.jobService.completeJob(agentId, jobId);
+    return this.jobService.completeJob(agentId, jobId, hiredFreelancerId);
+  }
+
+  @UseGuards(ActiveUserGuard)
+  @Mutation(() => Job)
+  async cancelJob(
+    @AuthUser('_id') agentId: string,
+    @Args('jobId') jobId: string,
+    @Args('reason') reason: string,
+  ): Promise<Job> {
+    return this.jobService.cancelJob(agentId, jobId, reason);
+  }
+
+  @UseGuards(ActiveUserGuard)
+  @Mutation(() => Job)
+  async markJobActive(
+    @AuthUser('_id') agentId: string,
+    @Args('jobId') jobId: string,
+  ): Promise<Job> {
+    return this.jobService.markJobActive(agentId, jobId);
+  }
+
+  @UseGuards(ActiveUserGuard)
+  @Mutation(() => Job)
+  async markJobPaid(
+    @AuthUser('_id') agentId: string,
+    @Args('jobId') jobId: string,
+  ): Promise<Job> {
+    return this.jobService.markJobPaid(agentId, jobId);
+  }
+
+  @UseGuards(ActiveUserGuard)
+  @Mutation(() => Job)
+  async assignHiredFreelancer(
+    @AuthUser('_id') agentId: string,
+    @Args('jobId') jobId: string,
+    @Args('hiredFreelancerId') hiredFreelancerId: string,
+  ): Promise<Job> {
+    return this.jobService.assignHiredFreelancer(agentId, jobId, hiredFreelancerId);
   }
 
   @UseGuards(ActiveUserGuard)

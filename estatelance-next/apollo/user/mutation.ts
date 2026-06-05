@@ -68,6 +68,7 @@ export const UPDATE_PROFILE = gql`
       needsOnboarding
       resumeUrl
       phoneNumber
+      cardNumber
       accessToken
       portfolio {
         title
@@ -112,10 +113,50 @@ export const CREATE_JOB = gql`
 `;
 
 export const COMPLETE_JOB = gql`
-  mutation CompleteJob($jobId: String!) {
-    completeJob(jobId: $jobId) {
+  mutation CompleteJob($jobId: String!, $hiredFreelancerId: String) {
+    completeJob(jobId: $jobId, hiredFreelancerId: $hiredFreelancerId) {
       _id
       status
+      hiredFreelancerId
+    }
+  }
+`;
+
+export const CANCEL_JOB = gql`
+  mutation CancelJob($jobId: String!, $reason: String!) {
+    cancelJob(jobId: $jobId, reason: $reason) {
+      _id
+      status
+      cancelReason
+    }
+  }
+`;
+
+export const MARK_JOB_ACTIVE = gql`
+  mutation MarkJobActive($jobId: String!) {
+    markJobActive(jobId: $jobId) {
+      _id
+      status
+    }
+  }
+`;
+
+export const MARK_JOB_PAID = gql`
+  mutation MarkJobPaid($jobId: String!) {
+    markJobPaid(jobId: $jobId) {
+      _id
+      paymentDone
+      paymentDoneAt
+    }
+  }
+`;
+
+export const ASSIGN_HIRED_FREELANCER = gql`
+  mutation AssignHiredFreelancer($jobId: String!, $hiredFreelancerId: String!) {
+    assignHiredFreelancer(jobId: $jobId, hiredFreelancerId: $hiredFreelancerId) {
+      _id
+      status
+      hiredFreelancerId
     }
   }
 `;
@@ -150,13 +191,57 @@ export const DELETE_JOB = gql`
   }
 `;
 
+export const SUBMIT_PROFILE_BOOST_PAYMENT = gql`
+  mutation SubmitProfileBoostPayment($plan: String!, $receiptUrl: String!) {
+    submitProfileBoostPayment(plan: $plan, receiptUrl: $receiptUrl) {
+      _id
+      boostPaymentStatus
+      boostRequestedPlan
+      boostReceiptUrl
+      boostPaymentSubmittedAt
+      boostPaymentReviewedAt
+      boostPaymentRejectReason
+      bumpedAt
+      boostExpiresAt
+      boostPlan
+      boostPaidAt
+      boostViewsAtStart
+      profileViewCount
+      followerCount
+    }
+  }
+`;
+
+export const SUBMIT_BOOST_PAYMENT = gql`
+  mutation SubmitBoostPayment($jobId: String!, $plan: String!, $receiptUrl: String!) {
+    submitBoostPayment(jobId: $jobId, plan: $plan, receiptUrl: $receiptUrl) {
+      _id
+      boostPaymentStatus
+      boostRequestedPlan
+      boostReceiptUrl
+      boostPaymentSubmittedAt
+      boostPaymentReviewedAt
+      boostPaymentRejectReason
+      bumpedAt
+      boostExpiresAt
+      boostPlan
+      boostPaidAt
+      boostViewsAtStart
+      boostBidsAtStart
+      viewCount
+      bidCount
+    }
+  }
+`;
+
 export const BOOST_JOB = gql`
-  mutation BoostJob($jobId: String!, $plan: String!) {
-    boostJob(jobId: $jobId, plan: $plan) {
+  mutation BoostJob($jobId: String!, $plan: String!, $paymentConfirmed: Boolean!) {
+    boostJob(jobId: $jobId, plan: $plan, paymentConfirmed: $paymentConfirmed) {
       _id
       bumpedAt
       boostExpiresAt
       boostPlan
+      boostPaidAt
     }
   }
 `;
@@ -257,6 +342,12 @@ export const INCREMENT_JOB_VIEW = gql`
 
 // ─── Notification Mutations ───────────────────────────────────────────────────
 
+export const MARK_NOTIFICATION_READ = gql`
+  mutation MarkNotificationRead($notificationId: String!) {
+    markNotificationRead(notificationId: $notificationId)
+  }
+`;
+
 export const MARK_ALL_NOTIFICATIONS_READ = gql`
   mutation MarkAllNotificationsRead {
     markAllNotificationsRead
@@ -329,6 +420,40 @@ export const RESOLVE_DISPUTE = gql`
       status
       decision
       adminNote
+    }
+  }
+`;
+
+// ─── AI Resume Generator ──────────────────────────────────────────────────────
+
+export const GENERATE_RESUME = gql`
+  mutation GenerateResume($input: GenerateResumeInput!) {
+    generateResume(input: $input) {
+      fullName
+      headline
+      profileImage
+      location
+      email
+      phone
+      summary
+      skills
+      highlights
+      experience {
+        role
+        company
+        period
+        bullets
+      }
+      education {
+        degree
+        institution
+        period
+      }
+      languages
+      githubUrl
+      linkedinUrl
+      behanceUrl
+      language
     }
   }
 `;

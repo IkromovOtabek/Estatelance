@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaTypes } from 'mongoose';
 import { Field, Float, Int, ObjectType } from '@nestjs/graphql';
-import { EscrowStatus, JobCategory, JobStatus, PropertyType } from '../libs/enums/common.enums';
+import { BoostPaymentStatus, EscrowStatus, JobCategory, JobStatus, PropertyType } from '../libs/enums/common.enums';
 
 @Schema({ timestamps: true })
 @ObjectType()
@@ -148,6 +148,68 @@ export class Job extends Document {
   @Prop({ default: null })
   @Field(() => String, { nullable: true })
   boostPlan?: string; // BASIC | PRO | VIP
+
+  // Bevosita to'lov: agent boost uchun platformaga pul o'tkazganini tasdiqlaydi
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostPaidAt?: Date;
+
+  // Boost to'lov cheki — admin tasdiqlaguncha
+  @Prop({ type: String, enum: BoostPaymentStatus, default: BoostPaymentStatus.NONE })
+  @Field(() => BoostPaymentStatus, { nullable: true })
+  boostPaymentStatus?: BoostPaymentStatus;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostRequestedPlan?: string;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostReceiptUrl?: string;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostPaymentSubmittedAt?: Date;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostPaymentReviewedAt?: Date;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostPaymentRejectReason?: string;
+
+  // Boost boshlanganda snapshot (statistika uchun)
+  @Prop({ default: null })
+  @Field(() => Number, { nullable: true })
+  boostViewsAtStart?: number;
+
+  @Prop({ default: null })
+  @Field(() => Number, { nullable: true })
+  boostBidsAtStart?: number;
+
+  /** Admin Targetlar bo'limida boost vaqtincha to'xtatilgan */
+  @Prop({ default: false })
+  @Field(() => Boolean, { nullable: true })
+  boostPausedByAdmin?: boolean;
+
+  // Set by agent when job is cancelled — reason is visible to admin
+  @Prop({ trim: true, default: null })
+  @Field(() => String, { nullable: true })
+  cancelReason?: string;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  cancelledAt?: Date;
+
+  // Bevosita (direct) payment: agent marks that money was sent directly to the freelancer
+  @Prop({ default: false })
+  @Field(() => Boolean, { nullable: true })
+  paymentDone?: boolean;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  paymentDoneAt?: Date;
 
   // Auto-set by Mongoose timestamps
   @Field(() => String, { nullable: true })

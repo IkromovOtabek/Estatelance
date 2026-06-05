@@ -27,6 +27,10 @@ export class Bid extends Document {
   @Field(() => String, { nullable: true })
   freelancerTitle?: string;
 
+  @Prop({ trim: true })
+  @Field(() => String, { nullable: true })
+  freelancerAvatar?: string;
+
   // The price the freelancer is offering to do the job for
   @Prop({ required: true })
   @Field(() => Float)

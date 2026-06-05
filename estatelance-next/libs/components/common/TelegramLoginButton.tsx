@@ -27,13 +27,19 @@ const TelegramLoginButton = ({
 }: TelegramLoginButtonProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // onAuth ni ref'da saqlaymiz — shunda callback identifikatori o'zgarganda
+  // (parent har render'da yangi funksiya bersa) widget qayta yuklanmaydi.
+  // Aks holda har tugma bosishda widget destroy/reload bo'lib, sahifa sakraydi.
+  const onAuthRef = useRef(onAuth);
+  useEffect(() => { onAuthRef.current = onAuth; }, [onAuth]);
+
   useEffect(() => {
     if (!containerRef.current || !botName) return;
 
     // Popup yoki redirect dan kelgan auth data ni tinglash
     const handleMessage = (e: MessageEvent) => {
       if (e.data?.type === 'telegram_auth' && e.data?.data) {
-        onAuth(e.data.data as TelegramAuthData);
+        onAuthRef.current(e.data.data as TelegramAuthData);
       }
     };
     window.addEventListener('message', handleMessage);
@@ -58,7 +64,7 @@ const TelegramLoginButton = ({
       if (containerRef.current) containerRef.current.innerHTML = '';
       window.removeEventListener('message', handleMessage);
     };
-  }, [botName, buttonSize, cornerRadius, requestAccess, onAuth]);
+  }, [botName, buttonSize, cornerRadius, requestAccess]);
 
   if (!botName) return null;
   return <div ref={containerRef} />;

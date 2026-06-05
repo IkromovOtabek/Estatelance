@@ -52,6 +52,10 @@ export class SignupInput {
 
   @IsOptional()
   @Field(() => String, { nullable: true })
+  cardNumber?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
   bio?: string;
 
   @IsOptional()
@@ -183,6 +187,10 @@ export class UpdateProfileInput {
   @IsOptional()
   @Field(() => String, { nullable: true })
   phoneNumber?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
+  cardNumber?: string;
 
   @IsOptional()
   @Field(() => Boolean, { nullable: true })

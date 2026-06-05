@@ -42,7 +42,12 @@ function getNotifMeta(type: string) {
 }
 
 // ─── Route to follow on click ─────────────────────────────────────────────────
-function getNotifRoute(type: string, relatedItemId?: string): string | null {
+function getNotifRoute(
+  type: string,
+  relatedItemId?: string,
+  linkPath?: string,
+): string | null {
+  if (linkPath?.startsWith('/_admin')) return linkPath;
   if (!relatedItemId) return null;
   if (type === 'BID')     return `/jobs/${relatedItemId}`;
   if (type === 'MESSAGE') return `/messages?userId=${relatedItemId}`;
@@ -95,7 +100,7 @@ const NotificationsPage = () => {
   };
 
   const handleNotifClick = (n: Notification) => {
-    const route = getNotifRoute(n.notificationType, n.relatedItemId);
+    const route = getNotifRoute(n.notificationType, n.relatedItemId, n.linkPath);
     if (route) router.push(route);
   };
 
@@ -189,7 +194,7 @@ const NotificationsPage = () => {
             <Box sx={{ borderRadius: 3, border: '1px solid #c7d2fe', overflow: 'hidden', bgcolor: 'white' }}>
               {unread.map((n, idx) => {
                 const meta = getNotifMeta(n.notificationType);
-                const clickable = !!getNotifRoute(n.notificationType, n.relatedItemId);
+                const clickable = !!getNotifRoute(n.notificationType, n.relatedItemId, n.linkPath);
                 return (
                   <Box
                     key={n._id}
@@ -258,7 +263,7 @@ const NotificationsPage = () => {
             <Box sx={{ borderRadius: 3, border: '1px solid #e2e8f0', overflow: 'hidden', bgcolor: 'white' }}>
               {read.map((n, idx) => {
                 const meta = getNotifMeta(n.notificationType);
-                const clickable = !!getNotifRoute(n.notificationType, n.relatedItemId);
+                const clickable = !!getNotifRoute(n.notificationType, n.relatedItemId, n.linkPath);
                 return (
                   <Box
                     key={n._id}

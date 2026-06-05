@@ -230,7 +230,7 @@ const JobDetailPage = () => {
   const [bidSuccess, setBidSuccess]       = useState(false);
   const [locationCopied, setLocationCopied] = useState(false);
 
-  const { data: jobData, loading: jobLoading } = useQuery(GET_JOB_BY_ID, {
+  const { data: jobData, loading: jobLoading, refetch: refetchJob } = useQuery(GET_JOB_BY_ID, {
     variables: { jobId },
     skip: !jobId,
   });
@@ -559,24 +559,6 @@ const JobDetailPage = () => {
                       <CheckCircleIcon size={17} />
                       {completing ? 'Saqlanmoqda...' : 'Yakunlandi'}
                     </button>
-
-                    {/* Escrow */}
-                    {(job as any).escrowStatus === 'HELD' ? (
-                      <button
-                        onClick={handleReleaseEscrow}
-                        disabled={releasing}
-                        className="inline-flex items-center gap-2 border border-indigo-400 text-indigo-700 hover:bg-indigo-50 font-semibold text-sm px-4 py-2 rounded-xl transition-all disabled:opacity-60"
-                      >
-                        💸 {releasing ? '...' : "To'lov chiqarish"}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setShowEscrowModal(true)}
-                        className="inline-flex items-center gap-2 border border-slate-300 text-slate-600 hover:bg-slate-50 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
-                      >
-                        🔒 Escrow to'ldirish
-                      </button>
-                    )}
 
                     {/* Dispute */}
                     <button

@@ -152,14 +152,14 @@ const Footer = () => {
                 <DeviceMobile size={18} color={subtle} />
                 <Box>
                   <Typography fontSize={12} color={body}>Telegram</Typography>
-                  <Typography fontSize={13} color={subtle}>@bufu_uz</Typography>
+                  <Typography fontSize={13} color={subtle}>@otabek_ikromovv</Typography>
                 </Box>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">
                 <Envelope size={18} color={subtle} />
                 <Box>
                   <Typography fontSize={12} color={body}>Email</Typography>
-                  <Typography fontSize={13} color={subtle}>info@bufu.uz</Typography>
+                  <Typography fontSize={13} color={subtle}>otabekikromov32@gmail.com</Typography>
                 </Box>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">

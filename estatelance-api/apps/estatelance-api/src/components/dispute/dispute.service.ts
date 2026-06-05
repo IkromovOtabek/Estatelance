@@ -7,6 +7,7 @@ import { User } from '../../schemas/User.model';
 import { CreateDisputeInput, ResolveDisputeInput } from '../../libs/dto/dispute.dto';
 import { DisputeDecision, DisputeStatus, EscrowStatus, JobStatus, NotificationType } from '../../libs/enums/common.enums';
 import { NotificationService } from '../notification/notification.service';
+import { AdminLinkPaths } from '../../libs/constants/admin-link-paths';
 
 @Injectable()
 export class DisputeService {
@@ -59,13 +60,19 @@ export class DisputeService {
     // Freeze escrow
     await this.jobModel.findByIdAndUpdate(input.jobId, { escrowStatus: EscrowStatus.DISPUTED });
 
-    // Notify the other party
     await this.notificationService.createNotification(
       againstId,
       NotificationType.SYSTEM,
       'Yangi nizo ochildi',
       `"${job.title}" ishi bo'yicha siz haqingizda nizo ochildi`,
       String(job._id),
+    );
+
+    await this.notificationService.notifyAllAdmins(
+      'Yangi nizo',
+      `${filer?.fullName ?? filer?.username ?? 'Foydalanuvchi'} "${job.title}" bo'yicha nizo ochdi.`,
+      String(dispute._id),
+      AdminLinkPaths.targetsModeration({ disputeId: String(dispute._id) }),
     );
 
     return dispute;

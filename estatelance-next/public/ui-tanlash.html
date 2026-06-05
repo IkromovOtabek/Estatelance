@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BuFu — UI tanlash galereyasi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --brand: #3525cd;
+      --brand-2: #6366f1;
+      --brand-3: #a855f7;
+      --bg: #f6f5fc;
+      --bg-2: #eceaf8;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: rgba(53, 37, 205, 0.1);
+      --radius: 20px;
+      --shadow: 0 20px 50px -16px rgba(53, 37, 205, 0.2);
+      --grad: linear-gradient(125deg, #3525cd 0%, #6366f1 45%, #a855f7 100%);
+      --font-display: 'Syne', sans-serif;
+      --font: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, rgba(99, 102, 241, 0.14), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 90% 0%, rgba(168, 85, 247, 0.1), transparent 50%),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    }
+
+    .shell { position: relative; z-index: 1; max-width: 1320px; margin: 0 auto; padding: 0 clamp(18px, 4vw, 36px); }
+
+    .top-bar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(246, 245, 252, 0.88);
+      backdrop-filter: blur(16px) saturate(1.2);
+      border-bottom: 1px solid var(--border);
+      margin: 0 calc(-1 * clamp(18px, 4vw, 36px));
+      padding: 12px clamp(18px, 4vw, 36px);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .top-bar .logo {
+      font-family: var(--font-display);
+      font-weight: 800; font-size: 18px; letter-spacing: -0.03em;
+      background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .top-bar .hint { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+    .hero {
+      padding: 48px 0 32px;
+      animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+    .kicker {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--brand-2); margin-bottom: 14px;
+    }
+    .kicker::before { content: ''; width: 28px; height: 2px; background: var(--grad); border-radius: 2px; }
+
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 800; letter-spacing: -0.04em; line-height: 1.05;
+      max-width: 720px;
+    }
+    .hero p {
+      margin-top: 14px; font-size: 15px; line-height: 1.65; color: var(--muted);
+      max-width: 640px;
+    }
+    .hero p strong { color: var(--text); }
+
+    .filters {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin: 28px 0 8px;
+      animation: rise 0.7s 0.08s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    }
+    .filter-btn {
+      font: inherit; font-size: 12px; font-weight: 700;
+      padding: 9px 16px; border-radius: 100px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .filter-btn:hover { border-color: var(--brand-2); color: var(--brand); }
+    .filter-btn.active {
+      background: var(--grad); border-color: transparent; color: #fff;
+      box-shadow: 0 8px 24px -8px rgba(53, 37, 205, 0.45);
+    }
+
+    .section-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+      margin: 36px 0 18px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    .section-head:first-of-type { border-top: none; margin-top: 24px; }
+    .section-head h2 {
+      font-family: var(--font-display);
+      font-size: 20px; font-weight: 800; letter-spacing: -0.03em;
+    }
+    .section-head span { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+      gap: 22px;
+    }
+
+    .ui-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: flex; flex-direction: column;
+      transition: transform 0.25s, box-shadow 0.25s;
+      animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    }
+    .ui-card:hover { transform: translateY(-3px); box-shadow: 0 28px 60px -18px rgba(53, 37, 205, 0.28); }
+    .ui-card.is-picked { outline: 3px solid var(--brand-2); outline-offset: 2px; }
+    .ui-card.is-picked .pick-btn { background: #16a34a; border-color: #16a34a; }
+
+    .preview-wrap {
+      position: relative;
+      height: 240px;
+      background: var(--bg-2);
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+    }
+    .preview-wrap .loading {
+      position: absolute; inset: 0; display: grid; place-items: center;
+      font-size: 12px; font-weight: 700; color: var(--muted);
+    }
+    .preview-wrap iframe {
+      position: absolute; top: 0; left: 0;
+      width: 200%; height: 200%;
+      border: none;
+      transform: scale(0.5);
+      transform-origin: top left;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.35s;
+    }
+    .preview-wrap iframe.loaded { opacity: 1; }
+    .preview-wrap .badge-live {
+      position: absolute; top: 10px; right: 10px; z-index: 2;
+      font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 5px 10px; border-radius: 100px;
+      background: rgba(34, 197, 94, 0.15); color: #15803d;
+      border: 1px solid rgba(34, 197, 94, 0.25);
+    }
+    .preview-wrap .badge-static {
+      position: absolute; top: 10px; right: 10px; z-index: 2;
+      font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 5px 10px; border-radius: 100px;
+      background: rgba(99, 102, 241, 0.12); color: var(--brand);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .card-body { padding: 18px 20px 20px; flex: 1; display: flex; flex-direction: column; }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .tag {
+      font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 4px 9px; border-radius: 6px;
+      background: rgba(99, 102, 241, 0.08); color: var(--brand-2);
+    }
+    .tag.cat-hero { background: rgba(168, 85, 247, 0.1); color: #7c3aed; }
+    .tag.cat-live { background: rgba(34, 197, 94, 0.1); color: #15803d; }
+    .tag.cat-dir { background: rgba(53, 37, 205, 0.08); color: var(--brand); }
+    .tag.cat-new { background: linear-gradient(125deg, rgba(53,37,205,0.12), rgba(168,85,247,0.12)); color: #6d28d9; border: 1px solid rgba(99,102,241,0.2); }
+
+    .hero-banner {
+      margin-top: 20px; padding: 18px 22px; border-radius: 16px;
+      background: linear-gradient(125deg, rgba(53,37,205,0.08), rgba(168,85,247,0.06));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    .hero-banner p { font-size: 13px; color: var(--muted); margin: 0; max-width: 520px; line-height: 1.55; }
+    .hero-banner a {
+      font-size: 12px; font-weight: 800; text-decoration: none; color: #fff;
+      padding: 11px 20px; border-radius: 10px; background: var(--grad);
+      white-space: nowrap;
+    }
+
+    .card-body h3 { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px; }
+    .card-body p { font-size: 13px; color: var(--muted); line-height: 1.55; flex: 1; margin-bottom: 16px; }
+
+    .card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      font: inherit; font-size: 12px; font-weight: 800;
+      padding: 10px 16px; border-radius: 10px;
+      text-decoration: none; cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      transition: 0.2s;
+    }
+    .btn:hover { border-color: var(--brand-2); color: var(--brand); }
+    .btn-primary {
+      background: var(--grad); color: #fff; border-color: transparent;
+      box-shadow: 0 6px 20px -8px rgba(53, 37, 205, 0.5);
+    }
+    .btn-primary:hover { color: #fff; filter: brightness(1.05); }
+    .pick-btn { margin-left: auto; }
+
+    .picker-dock {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(20px);
+      color: #e2e8f0;
+      padding: 14px clamp(18px, 4vw, 36px);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .picker-dock.visible { transform: translateY(0); }
+    .picker-dock .picked-list { font-size: 13px; font-weight: 600; flex: 1; min-width: 200px; }
+    .picker-dock .picked-list em { color: #a5b4fc; font-style: normal; font-weight: 800; }
+    .picker-dock .copy-btn {
+      font: inherit; font-size: 12px; font-weight: 800;
+      padding: 10px 18px; border-radius: 10px;
+      background: var(--grad); color: #fff; border: none; cursor: pointer;
+    }
+    .picker-dock .clear-btn {
+      font: inherit; font-size: 12px; font-weight: 700;
+      padding: 10px 14px; border-radius: 10px;
+      background: transparent; color: #94a3b8;
+      border: 1px solid #334155; cursor: pointer;
+    }
+
+    .skills-note {
+      margin-top: 40px; padding: 20px 22px;
+      border-radius: 16px;
+      background: rgba(53, 37, 205, 0.06);
+      border: 1px dashed rgba(99, 102, 241, 0.25);
+      font-size: 13px; color: var(--muted); line-height: 1.6;
+    }
+    .skills-note code { font-size: 12px; background: rgba(99,102,241,0.1); padding: 2px 6px; border-radius: 4px; color: var(--brand); }
+
+    @media (max-width: 640px) {
+      .preview-wrap { height: 200px; }
+      .pick-btn { margin-left: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="top-bar">
+      <div class="logo">BuFu UI Galereya</div>
+      <div class="hint">localhost:3001 · tanlang va menga yozing</div>
+    </header>
+
+    <section class="hero">
+      <div class="kicker">frontend-design · find-skills</div>
+      <h1>UI tanlash — eski previewlar + skills yangilari</h1>
+      <p>
+        <strong>Yangi (skills):</strong> terminalda <code>npx skills find</code> + <code>frontend-design</code> skill yo‘riqnomasi bilan yaratilgan 6 ta boshqacha estetika.
+        Eski bo‘limlar — avval ko‘rsatilgan previewlar.
+      </p>
+      <div class="hero-banner">
+        <p>6 ta yangi yo‘nalishni ketma-ket scroll qilib ko‘ring (Editorial, Brutalist, Luxury, Terminal, Art Deco, Organic).</p>
+        <a href="/bufu-skills-yangi-ui.html">Yangi UI — to‘liq scroll →</a>
+      </div>
+    </section>
+
+    <nav class="filters" aria-label="Filtrlash">
+      <button type="button" class="filter-btn active" data-filter="all">Hammasi</button>
+      <button type="button" class="filter-btn" data-filter="skills-new">★ Yangi (skills)</button>
+      <button type="button" class="filter-btn" data-filter="full">To‘liq sahifa</button>
+      <button type="button" class="filter-btn" data-filter="hero">Hero</button>
+      <button type="button" class="filter-btn" data-filter="directions">Yo‘nalishlar</button>
+      <button type="button" class="filter-btn" data-filter="live">Live (loyiha)</button>
+    </nav>
+
+    <!-- SKILLS NEW -->
+    <div class="section-head" data-section="skills-new">
+      <h2>★ Skills orqali YANGI (boshqacha)</h2>
+      <span>find-skills + frontend-design · 2026-06</span>
+    </div>
+    <div class="grid" id="grid-skills-new"></div>
+
+    <!-- LIVE -->
+    <div class="section-head" data-section="live">
+      <h2>Hozirgi loyiha (Next.js)</h2>
+      <span>API + auth kerak bo‘lishi mumkin</span>
+    </div>
+    <div class="grid" id="grid-live"></div>
+
+    <!-- FULL PAGE PREVIEWS -->
+    <div class="section-head" data-section="full">
+      <h2>To‘liq sahifa previewlari</h2>
+      <span>public/*.html — statik HTML</span>
+    </div>
+    <div class="grid" id="grid-full"></div>
+
+    <!-- HERO -->
+    <div class="section-head" data-section="hero">
+      <h2>Hero va bosh qism</h2>
+      <span>Asosan yuqori blok</span>
+    </div>
+    <div class="grid" id="grid-hero"></div>
+
+    <!-- DIRECTIONS -->
+    <div class="section-head" data-section="directions">
+      <h2>Dizayn yo‘nalishlari (katalog)</h2>
+      <span>Bir faylda ko‘p variant</span>
+    </div>
+    <div class="grid" id="grid-directions"></div>
+
+    <p class="skills-note">
+      <strong>Yangi blok:</strong> <code>npx skills find frontend design</code> (ecosystem) + loyihadagi
+      <code>.agents/skills/frontend-design</code> yo‘riqnomasi — 6 ta boshqacha estetika (<code>bufu-skills-yangi-ui.html</code>).
+      Eski previewlar (Petoria hero, shablon, soft-friendly…) alohida bo‘limlarda. Tanlov: raqam yoki nom — <code>index.tsx</code> ga ko‘chiramiz.
+    </p>
+  </div>
+
+  <footer class="picker-dock" id="dock" aria-live="polite">
+    <div class="picked-list" id="pickedText">Hech narsa tanlanmagan</div>
+    <button type="button" class="clear-btn" id="clearPick">Tozalash</button>
+    <button type="button" class="copy-btn" id="copyPick">Ro‘yxatni nusxalash</button>
+  </footer>
+
+  <script>
+    const STORAGE_KEY = 'bufu-ui-picks-v1';
+    const BASE = window.location.origin;
+
+    const ITEMS = [
+      /* ——— SKILLS YANGI (frontend-design skill) ——— */
+      { id: 'skills-hub', title: '6 yo‘nalish — bitta scroll', desc: 'Barcha yangi estetikalar ketma-ket: Editorial → Brutalist → Luxury → Terminal → Art Deco → Organic.', href: '/bufu-skills-yangi-ui.html', cats: ['skills-new', 'full'], featured: true },
+      { id: 'skills-01', title: '01 Editorial Trust', desc: 'Fraunces + terracotta, jurnal uslubi, issiq qog‘oz fon — indigo gradient emas.', href: '/bufu-skills-yangi-ui.html#d1', cats: ['skills-new', 'hero'] },
+      { id: 'skills-02', title: '02 Neo-Brutalist', desc: 'Bricolage, qattiq grid, #c8ff00 accent, 8px shadow box — marketplace hero emas.', href: '/bufu-skills-yangi-ui.html#d2', cats: ['skills-new', 'hero'] },
+      { id: 'skills-03', title: '03 Luxury Noir', desc: 'Cormorant + oltin, markaziy premium ko‘rinish — qora fon.', href: '/bufu-skills-yangi-ui.html#d3', cats: ['skills-new', 'hero'] },
+      { id: 'skills-04', title: '04 Retro Terminal', desc: 'IBM Plex Mono, yashil fosfor, CRT scanline — industrial.', href: '/bufu-skills-yangi-ui.html#d4', cats: ['skills-new', 'hero'] },
+      { id: 'skills-05', title: '05 Art Deco', desc: 'Poiret One, geometrik oltin naqsh, 1920 uslub.', href: '/bufu-skills-yangi-ui.html#d5', cats: ['skills-new', 'hero'] },
+      { id: 'skills-06', title: '06 Organic Natural', desc: 'Literata + yashil palitra, blob shakllar — tabiiy ishonch.', href: '/bufu-skills-yangi-ui.html#d6', cats: ['skills-new', 'hero'] },
+
+      /* ——— LIVE ——— */
+      { id: 'live-home', title: 'Bosh sahifa (hozirgi)', desc: 'pages/index.tsx — bufu-hero, bo‘limlar, FAQ, pricing.', href: '/', cats: ['live', 'full'], live: true },
+      { id: 'live-jobs', title: 'Ishlar ro‘yxati', desc: 'Filtrlar, kartalar, pagination — jobs/index.tsx.', href: '/jobs', cats: ['live'] },
+      { id: 'live-browse', title: 'Frilanserlar', desc: 'browse/index.tsx — mutaxassislar katalogi.', href: '/browse', cats: ['live'] },
+      { id: 'live-pricing', title: 'Narxlar', desc: 'pricing/index.tsx — tariflar va boost.', href: '/pricing', cats: ['live'] },
+      { id: 'live-register', title: 'Ro‘yxatdan o‘tish', desc: 'register/index.tsx — signup formasi.', href: '/register', cats: ['live'] },
+      { id: 'live-account', title: 'Hisob', desc: 'account/index.tsx — profil sozlamalari.', href: '/account', cats: ['live'] },
+      { id: 'live-myworks', title: 'Mening ishlarim', desc: 'my-works/index.tsx — frilanser paneli.', href: '/my-works', cats: ['live'] },
+      { id: 'live-messages', title: 'Xabarlar', desc: 'messages/index.tsx — chat interfeysi.', href: '/messages', cats: ['live'] },
+
+      /* ——— FULL HTML ——— */
+      { id: 'bufu-ready', title: 'Tayyor UI v2', desc: 'index.tsx ga yaqin yangilangan to‘liq bosh sahifa (static).', href: '/bufu-ready-ui-preview.html', cats: ['full'] },
+      { id: 'bufu-shablon', title: 'Shablon (pro uslub)', desc: 'Pro dizayn, barcha bo‘limlar, index.tsx blok xaritasi.', href: '/bufu-shablon-preview.html', cats: ['full'] },
+      { id: 'bufu-pro', title: 'Premium UI', desc: 'Premium marketplace home — ekotizim, pricing, FAQ.', href: '/bufu-home-preview-pro.html', cats: ['full'] },
+      { id: 'soft-friendly', title: 'Soft Friendly (indigo)', desc: 'Barcha sahifalar bir faylda — hero PNG light/dark.', href: '/soft-friendly-pages-preview.html', cats: ['full'] },
+
+      /* ——— HERO ——— */
+      { id: 'marketplace-hero', title: 'Marketplace Hero (ideal)', desc: 'Petoria uslubi, freelance foto, border + shadow melt, light/dark.', href: '/bufu-marketplace-hero-preview.html', cats: ['hero', 'full'], featured: true },
+      { id: 'design-4', title: '4 ta hero variant', desc: 'Minimal, Dark Premium, SaaS, Earthy — inline taqqoslash.', href: '/design-preview.html', cats: ['hero', 'directions'] },
+
+      /* ——— DIRECTIONS ——— */
+      { id: 'home-ui', title: 'Bosh sahifa yo‘nalishlari', desc: 'Bir nechta home UI konseptlari (UzJob nomi bilan).', href: '/home-ui-preview.html', cats: ['directions'] },
+      { id: 'frontend-design', title: 'Dizayn yo‘nalishlari A–H', desc: 'Turli shrift va estetika (editorial, brutal, luxury…).', href: '/frontend-design-preview.html', cats: ['directions'] },
+      { id: 'brand-ui', title: 'Brend ranglari', desc: 'BuFu indigo/purple palitrasi bo‘yicha komponentlar.', href: '/brand-ui-preview.html', cats: ['directions'] },
+      { id: 'roles-ui', title: 'Rollar bo‘yicha UI', desc: 'Agent va frilanser interfeys namunalari.', href: '/roles-ui-preview.html', cats: ['directions'] },
+    ];
+
+    const picks = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
+
+    function tagLabel(cat) {
+      const m = { full: 'To‘liq', hero: 'Hero', directions: 'Yo‘nalish', live: 'Live', 'skills-new': 'Yangi' };
+      const cls = cat === 'skills-new' ? 'cat-new' : cat === 'hero' ? 'cat-hero' : cat === 'live' ? 'cat-live' : cat === 'directions' ? 'cat-dir' : '';
+      return `<span class="tag ${cls}">${m[cat] || cat}</span>`;
+    }
+
+    function cardHtml(item) {
+      const url = item.href.startsWith('http') ? item.href : BASE + item.href;
+      const cats = item.cats.join(' ');
+      const badge = item.live
+        ? '<span class="badge-live">Live</span>'
+        : '<span class="badge-static">Preview</span>';
+      const tags = [...new Set(item.cats)].map(tagLabel).join('');
+      const picked = picks.has(item.id);
+      return `
+        <article class="ui-card ${picked ? 'is-picked' : ''}" data-id="${item.id}" data-cats="${cats}" ${item.featured ? 'data-featured="1"' : ''}>
+          <div class="preview-wrap">
+            ${badge}
+            <div class="loading">Yuklanmoqda…</div>
+            <iframe data-src="${url}" title="${item.title}"></iframe>
+          </div>
+          <div class="card-body">
+            <div class="card-tags">${tags}</div>
+            <h3>${item.title}</h3>
+            <p>${item.desc}</p>
+            <div class="card-actions">
+              <a class="btn btn-primary" href="${item.href}" target="_blank" rel="noopener">To‘liq ochish</a>
+              <button type="button" class="btn pick-btn" data-pick="${item.id}">${picked ? '✓ Tanlandi' : 'Tanladim'}</button>
+            </div>
+          </div>
+        </article>`;
+    }
+
+    function renderGrids() {
+      const grids = {
+        'skills-new': document.getElementById('grid-skills-new'),
+        live: document.getElementById('grid-live'),
+        full: document.getElementById('grid-full'),
+        hero: document.getElementById('grid-hero'),
+        directions: document.getElementById('grid-directions'),
+      };
+      ITEMS.forEach((item, i) => {
+        const html = cardHtml(item);
+        const delay = Math.min(i * 0.04, 0.4);
+        if (item.cats.includes('skills-new')) grids['skills-new'].insertAdjacentHTML('beforeend', html.replace('ui-card "', `ui-card " style="animation-delay:${delay}s"`));
+        if (item.cats.includes('live')) grids.live.insertAdjacentHTML('beforeend', html.replace('ui-card "', `ui-card " style="animation-delay:${delay}s"`));
+        if (item.cats.includes('full') && !item.cats.includes('live') && !item.cats.includes('skills-new')) grids.full.insertAdjacentHTML('beforeend', html.replace('ui-card "', `ui-card " style="animation-delay:${delay}s"`));
+        if (item.cats.includes('hero') && !item.cats.includes('skills-new') && item.id !== 'design-4') {
+          if (item.id === 'marketplace-hero' || (item.cats.length === 2 && item.cats.includes('hero')))
+            grids.hero.insertAdjacentHTML('beforeend', html.replace('ui-card "', `ui-card " style="animation-delay:${delay}s"`));
+        }
+        if (item.id === 'design-4') grids.hero.insertAdjacentHTML('beforeend', html.replace('ui-card "', `ui-card " style="animation-delay:${delay}s"`));
+        if (item.cats.includes('directions') && item.id !== 'design-4')
+          grids.directions.insertAdjacentHTML('beforeend', html.replace('ui-card "', `ui-card " style="animation-delay:${delay}s"`));
+      });
+      bindCards();
+      lazyIframes();
+    }
+
+    function updateDock() {
+      const dock = document.getElementById('dock');
+      const text = document.getElementById('pickedText');
+      const names = ITEMS.filter(i => picks.has(i.id)).map(i => i.title);
+      if (!names.length) {
+        dock.classList.remove('visible');
+        text.textContent = 'Hech narsa tanlanmagan';
+        return;
+      }
+      dock.classList.add('visible');
+      text.innerHTML = 'Tanlangan: <em>' + names.join(' · ') + '</em>';
+    }
+
+    function bindCards() {
+      document.querySelectorAll('[data-pick]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.pick;
+          const card = btn.closest('.ui-card');
+          if (picks.has(id)) {
+            picks.delete(id);
+            card.classList.remove('is-picked');
+            btn.textContent = 'Tanladim';
+          } else {
+            picks.add(id);
+            card.classList.add('is-picked');
+            btn.textContent = '✓ Tanlandi';
+          }
+          localStorage.setItem(STORAGE_KEY, JSON.stringify([...picks]));
+          updateDock();
+        });
+      });
+    }
+
+    function lazyIframes() {
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const wrap = entry.target;
+          const iframe = wrap.querySelector('iframe');
+          if (!iframe || iframe.dataset.loaded) return;
+          iframe.src = iframe.dataset.src;
+          iframe.addEventListener('load', () => {
+            iframe.classList.add('loaded');
+            wrap.querySelector('.loading')?.remove();
+          }, { once: true });
+          iframe.dataset.loaded = '1';
+          obs.unobserve(wrap);
+        });
+      }, { rootMargin: '120px' });
+      document.querySelectorAll('.preview-wrap').forEach(w => obs.observe(w));
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const f = btn.dataset.filter;
+        document.querySelectorAll('.ui-card').forEach(card => {
+          if (f === 'all') { card.style.display = ''; return; }
+          card.style.display = card.dataset.cats.includes(f) ? '' : 'none';
+        });
+        document.querySelectorAll('.section-head').forEach(sh => {
+          const sec = sh.dataset.section;
+          const grid = document.getElementById('grid-' + sec);
+          if (!grid) return;
+          const any = [...grid.querySelectorAll('.ui-card')].some(c => c.style.display !== 'none');
+          sh.style.display = any ? '' : 'none';
+          grid.style.display = any ? '' : 'none';
+        });
+      });
+    });
+
+    document.getElementById('clearPick').addEventListener('click', () => {
+      picks.clear();
+      localStorage.removeItem(STORAGE_KEY);
+      document.querySelectorAll('.ui-card').forEach(c => c.classList.remove('is-picked'));
+      document.querySelectorAll('[data-pick]').forEach(b => { b.textContent = 'Tanladim'; });
+      updateDock();
+    });
+
+    document.getElementById('copyPick').addEventListener('click', () => {
+      const lines = ITEMS.filter(i => picks.has(i.id)).map((i, n) => `${n + 1}. ${i.title} — ${BASE + i.href}`);
+      const text = lines.length ? 'BuFu UI tanlovim:\n' + lines.join('\n') : 'Hech narsa tanlanmagan';
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copyPick');
+        const old = btn.textContent;
+        btn.textContent = 'Nusxalandi ✓';
+        setTimeout(() => { btn.textContent = old; }, 2000);
+      });
+    });
+
+    renderGrids();
+    updateDock();
+  </script>
+</body>
+</html>

@@ -27,9 +27,19 @@ import {
   TrackPageInput,
   EndSessionInput,
   VisitorSessionObject,
+  AdminAdTargetItem,
 } from '../../libs/dto/admin.dto';
-import { NotificationType, UserStatus, UserType } from '../../libs/enums/common.enums';
+import {
+  AnnouncementType,
+  BoostPaymentStatus,
+  JobStatus,
+  NotificationType,
+  UserStatus,
+  UserType,
+} from '../../libs/enums/common.enums';
 import { DEFAULT_AVATAR_URL } from '../../libs/config';
+import { JobService } from '../job/job.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AdminService {
@@ -42,7 +52,19 @@ export class AdminService {
     @InjectModel('SiteVisit') private readonly siteVisitModel: Model<SiteVisit>,
     @InjectModel('VisitorSession') private readonly visitorSessionModel: Model<VisitorSession>,
     private readonly authService: AuthService,
+    private readonly jobService: JobService,
+    private readonly userService: UserService,
   ) {}
+
+  private frontendJobUrl(jobId: string): string {
+    const base = (process.env.FRONTEND_URL ?? 'http://localhost:3001').replace(/\/$/, '');
+    return `${base}/jobs/${jobId}`;
+  }
+
+  private frontendProfileUrl(userId: string): string {
+    const base = (process.env.FRONTEND_URL ?? 'http://localhost:3001').replace(/\/$/, '');
+    return `${base}/profile/${userId}`;
+  }
 
   // ─── Admin Login (username + password) ───────────────────────────────────────
   // This is separate from the regular login — it only allows ADMIN accounts in.
@@ -246,6 +268,342 @@ export class AdminService {
     return this.announcementModel.find().sort({ createdAt: -1 }).limit(100);
   }
 
+  // ─── Reklama targetlari (boost ishlar + ADVERTISEMENT e'lonlar) ─────────────
+  async getAdTargets(): Promise<AdminAdTargetItem[]> {
+    const now = new Date();
+    const targets: AdminAdTargetItem[] = [];
+
+    const boostJobs = await this.jobModel
+      .find({
+        $or: [
+          { boostPaymentStatus: { $in: [BoostPaymentStatus.PENDING, BoostPaymentStatus.APPROVED, BoostPaymentStatus.REJECTED] } },
+          { boostExpiresAt: { $ne: null } },
+          { boostPaidAt: { $ne: null } },
+        ],
+      })
+      .sort({ updatedAt: -1 })
+      .limit(200)
+      .exec();
+
+    for (const job of boostJobs) {
+      const boostNotExpired =
+        !!job.boostExpiresAt && new Date(job.boostExpiresAt) > now;
+      const boostPaused = !!job.boostPausedByAdmin;
+
+      let status: string;
+      if (job.boostPaymentStatus === BoostPaymentStatus.PENDING) {
+        status = 'PENDING';
+      } else if (boostNotExpired && !boostPaused) {
+        status = 'ACTIVE';
+      } else if (boostNotExpired && boostPaused) {
+        status = 'PAUSED';
+      } else if (job.boostExpiresAt) {
+        status = 'ENDED';
+      } else if (job.boostPaymentStatus === BoostPaymentStatus.REJECTED) {
+        status = 'ENDED';
+      } else {
+        status = 'ENDED';
+      }
+
+      const manageable = status === 'ACTIVE' || status === 'PAUSED';
+      const deletable =
+        status === 'ACTIVE' ||
+        status === 'PAUSED' ||
+        status === 'PENDING' ||
+        status === 'ENDED';
+
+      targets.push({
+        id: `job-${job._id}`,
+        title: job.title,
+        advertiser: job.agentName ?? 'Agent',
+        type: 'SPONSORED_JOB',
+        status,
+        impressions: job.viewCount ?? 0,
+        clicks: job.bidCount ?? 0,
+        targetUrl: this.frontendJobUrl(String(job._id)),
+        sourceKind: 'job',
+        sourceId: String(job._id),
+        boostPlan: job.boostPlan ?? job.boostRequestedPlan ?? undefined,
+        createdAt: job.createdAt ? new Date(job.createdAt).toISOString() : undefined,
+        manageable,
+        deletable,
+      });
+    }
+
+    const boostProfiles = await this.userModel
+      .find({
+        userType: { $in: [UserType.FREELANCER, UserType.AGENT] },
+        $or: [
+          {
+            boostPaymentStatus: {
+              $in: [
+                BoostPaymentStatus.PENDING,
+                BoostPaymentStatus.APPROVED,
+                BoostPaymentStatus.REJECTED,
+              ],
+            },
+          },
+          { boostExpiresAt: { $ne: null } },
+          { boostPaidAt: { $ne: null } },
+        ],
+      })
+      .sort({ updatedAt: -1 })
+      .limit(200)
+      .exec();
+
+    for (const profile of boostProfiles) {
+      const boostNotExpired =
+        !!profile.boostExpiresAt && new Date(profile.boostExpiresAt) > now;
+      const boostPaused = !!profile.boostPausedByAdmin;
+
+      let status: string;
+      if (profile.boostPaymentStatus === BoostPaymentStatus.PENDING) {
+        status = 'PENDING';
+      } else if (boostNotExpired && !boostPaused) {
+        status = 'ACTIVE';
+      } else if (boostNotExpired && boostPaused) {
+        status = 'PAUSED';
+      } else if (profile.boostExpiresAt) {
+        status = 'ENDED';
+      } else if (profile.boostPaymentStatus === BoostPaymentStatus.REJECTED) {
+        status = 'ENDED';
+      } else {
+        status = 'ENDED';
+      }
+
+      const manageable = status === 'ACTIVE' || status === 'PAUSED';
+      const deletable =
+        status === 'ACTIVE' ||
+        status === 'PAUSED' ||
+        status === 'PENDING' ||
+        status === 'ENDED';
+
+      const roleLabel =
+        profile.userType === UserType.FREELANCER ? 'Frilanser' : 'Agent';
+
+      targets.push({
+        id: `user-${profile._id}`,
+        title: profile.fullName ?? profile.username ?? 'Profil',
+        advertiser: `${roleLabel} · @${profile.username}`,
+        type: 'FEATURED_FREELANCER',
+        status,
+        impressions: profile.profileViewCount ?? 0,
+        clicks: profile.followerCount ?? 0,
+        targetUrl: this.frontendProfileUrl(String(profile._id)),
+        sourceKind: 'user',
+        sourceId: String(profile._id),
+        boostPlan: profile.boostPlan ?? profile.boostRequestedPlan ?? undefined,
+        createdAt: profile.createdAt
+          ? new Date(profile.createdAt).toISOString()
+          : undefined,
+        manageable,
+        deletable,
+      });
+    }
+
+    const adAnnouncements = await this.announcementModel
+      .find({ announcementType: AnnouncementType.ADVERTISEMENT })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .exec();
+
+    for (const ann of adAnnouncements) {
+      const annActive = !!ann.isActive;
+      targets.push({
+        id: `ann-${ann._id}`,
+        title: ann.title,
+        advertiser: 'Platforma reklama',
+        type: 'BANNER',
+        status: annActive ? 'ACTIVE' : 'PAUSED',
+        impressions: 0,
+        clicks: 0,
+        targetUrl: undefined,
+        sourceKind: 'announcement',
+        sourceId: String(ann._id),
+        createdAt: ann.createdAt ? new Date(ann.createdAt).toISOString() : undefined,
+        manageable: true,
+        deletable: true,
+      });
+    }
+
+    const statusOrder: Record<string, number> = {
+      ACTIVE: 0,
+      PENDING: 1,
+      PAUSED: 2,
+      ENDED: 3,
+    };
+
+    return targets.sort((a, b) => {
+      const sa = statusOrder[a.status] ?? 9;
+      const sb = statusOrder[b.status] ?? 9;
+      if (sa !== sb) return sa - sb;
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return tb - ta;
+    });
+  }
+
+  // ─── Admin: target Pauza / Start ─────────────────────────────────────────────
+  async setAdTargetStatus(
+    sourceKind: string,
+    sourceId: string,
+    active: boolean,
+  ): Promise<AdminAdTargetItem> {
+    if (sourceKind === 'announcement') {
+      const ann = await this.announcementModel.findById(sourceId);
+      if (!ann) throw new NotFoundException('Reklama e\'loni topilmadi');
+      if (ann.announcementType !== AnnouncementType.ADVERTISEMENT) {
+        throw new BadRequestException('Faqat reklama turidagi e\'lonlar boshqariladi');
+      }
+      ann.isActive = active;
+      await ann.save();
+      return {
+        id: `ann-${ann._id}`,
+        title: ann.title,
+        advertiser: 'Platforma reklama',
+        type: 'BANNER',
+        status: active ? 'ACTIVE' : 'PAUSED',
+        impressions: 0,
+        clicks: 0,
+        targetUrl: undefined,
+        sourceKind: 'announcement',
+        sourceId: String(ann._id),
+        createdAt: ann.createdAt ? new Date(ann.createdAt).toISOString() : undefined,
+        manageable: true,
+        deletable: true,
+      };
+    }
+
+    if (sourceKind === 'job') {
+      const job = await this.jobModel.findById(sourceId);
+      if (!job) throw new NotFoundException('Ish topilmadi');
+
+      const now = new Date();
+      const boostNotExpired =
+        !!job.boostExpiresAt && new Date(job.boostExpiresAt) > now;
+
+      if (active) {
+        if (!boostNotExpired) {
+          throw new BadRequestException('Boost muddati tugagan — Start mumkin emas');
+        }
+        job.boostPausedByAdmin = false;
+        if (!job.bumpedAt) {
+          job.bumpedAt = now;
+        }
+      } else {
+        if (!boostNotExpired) {
+          throw new BadRequestException('Faol boost yo\'q — pauza qilish mumkin emas');
+        }
+        if (job.boostPausedByAdmin) {
+          throw new BadRequestException('Boost allaqachon pauzada');
+        }
+        job.boostPausedByAdmin = true;
+        job.bumpedAt = null;
+      }
+
+      await job.save();
+
+      const stillValid =
+        !!job.boostExpiresAt && new Date(job.boostExpiresAt) > new Date();
+      const boostPaused = !!job.boostPausedByAdmin;
+      const status =
+        stillValid && !boostPaused ? 'ACTIVE' : stillValid ? 'PAUSED' : 'ENDED';
+
+      return {
+        id: `job-${job._id}`,
+        title: job.title,
+        advertiser: job.agentName ?? 'Agent',
+        type: 'SPONSORED_JOB',
+        status,
+        impressions: job.viewCount ?? 0,
+        clicks: job.bidCount ?? 0,
+        targetUrl: this.frontendJobUrl(String(job._id)),
+        sourceKind: 'job',
+        sourceId: String(job._id),
+        boostPlan: job.boostPlan ?? job.boostRequestedPlan ?? undefined,
+        createdAt: job.createdAt ? new Date(job.createdAt).toISOString() : undefined,
+        manageable: true,
+        deletable: true,
+      };
+    }
+
+    if (sourceKind === 'user') {
+      const profile = await this.userModel.findById(sourceId);
+      if (!profile) throw new NotFoundException('Profil topilmadi');
+
+      const now = new Date();
+      const boostNotExpired =
+        !!profile.boostExpiresAt && new Date(profile.boostExpiresAt) > now;
+
+      if (active) {
+        if (!boostNotExpired) {
+          throw new BadRequestException('Boost muddati tugagan — Start mumkin emas');
+        }
+        profile.boostPausedByAdmin = false;
+        if (!profile.bumpedAt) {
+          profile.bumpedAt = now;
+        }
+      } else {
+        if (!boostNotExpired) {
+          throw new BadRequestException('Faol boost yo\'q — pauza qilish mumkin emas');
+        }
+        if (profile.boostPausedByAdmin) {
+          throw new BadRequestException('Boost allaqachon pauzada');
+        }
+        profile.boostPausedByAdmin = true;
+        profile.bumpedAt = null;
+      }
+
+      await profile.save();
+
+      const stillValid =
+        !!profile.boostExpiresAt && new Date(profile.boostExpiresAt) > new Date();
+      const boostPaused = !!profile.boostPausedByAdmin;
+      const status =
+        stillValid && !boostPaused ? 'ACTIVE' : stillValid ? 'PAUSED' : 'ENDED';
+
+      const roleLabel =
+        profile.userType === UserType.FREELANCER ? 'Frilanser' : 'Agent';
+
+      return {
+        id: `user-${profile._id}`,
+        title: profile.fullName ?? profile.username ?? 'Profil',
+        advertiser: `${roleLabel} · @${profile.username}`,
+        type: 'FEATURED_FREELANCER',
+        status,
+        impressions: profile.profileViewCount ?? 0,
+        clicks: profile.followerCount ?? 0,
+        targetUrl: this.frontendProfileUrl(String(profile._id)),
+        sourceKind: 'user',
+        sourceId: String(profile._id),
+        boostPlan: profile.boostPlan ?? profile.boostRequestedPlan ?? undefined,
+        createdAt: profile.createdAt
+          ? new Date(profile.createdAt).toISOString()
+          : undefined,
+        manageable: true,
+        deletable: true,
+      };
+    }
+
+    throw new BadRequestException('Noto\'g\'ri target turi');
+  }
+
+  // ─── Admin: targetni o'chirish (boost bekor / reklama o'chirish) ─────────────
+  async removeAdTarget(sourceKind: string, sourceId: string): Promise<boolean> {
+    if (sourceKind === 'announcement') {
+      return this.deleteAnnouncement(sourceId);
+    }
+    if (sourceKind === 'job') {
+      await this.jobService.adminCancelBoost(sourceId);
+      return true;
+    }
+    if (sourceKind === 'user') {
+      await this.userService.adminCancelProfileBoost(sourceId);
+      return true;
+    }
+    throw new BadRequestException('Noto\'g\'ri target turi');
+  }
+
   // ─── Get Active Announcements (public) ───────────────────────────────────────
   async getActiveAnnouncements(): Promise<Announcement[]> {
     return this.announcementModel.find({ isActive: true }).sort({ createdAt: -1 }).limit(20);
@@ -261,6 +619,18 @@ export class AdminService {
   async getAllJobs(page: number = 1, limit: number = 20): Promise<Job[]> {
     const skip = (page - 1) * limit;
     return this.jobModel.find().sort({ createdAt: -1 }).skip(skip).limit(limit);
+  }
+
+  /** Moderatsiya: agent bekor qilgan ishlar */
+  async getModerationCancelledJobs(limit: number = 100): Promise<Job[]> {
+    return this.jobModel
+      .find({
+        status: JobStatus.CANCELLED,
+        cancelReason: { $exists: true, $nin: [null, ''] },
+      })
+      .sort({ cancelledAt: -1, updatedAt: -1 })
+      .limit(limit)
+      .exec();
   }
 
   // ─── Get All Posts (admin view) ───────────────────────────────────────────────

@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import BoostModal from '../../libs/components/common/BoostModal';
+import BoostAgentStats from '../../libs/components/common/BoostAgentStats';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useQuery, useMutation, useReactiveVar } from '@apollo/client';
-import { GET_MY_JOBS } from '../../apollo/user/query';
-import { COMPLETE_JOB, DELETE_JOB, UPDATE_JOB, BOOST_JOB } from '../../apollo/user/mutation';
+import { GET_MY_JOBS, GET_BIDS_FOR_AGENT, GET_JOB_BIDDERS, GET_FREELANCERS } from '../../apollo/user/query';
+import { COMPLETE_JOB, DELETE_JOB, UPDATE_JOB, SUBMIT_BOOST_PAYMENT, CANCEL_JOB, MARK_JOB_ACTIVE, ACCEPT_BID } from '../../apollo/user/mutation';
 import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { userVar } from '../../apollo/store';
 import { Job } from '../../libs/types';
 import { JobCategory, JOB_CATEGORY_LABELS, JobStatus } from '../../libs/enums';
-import { getCatIcon } from '../../libs/utils/jobCategoryIcons';
+// ── Initials helper (avatar fallback) ─────────────────────────────────────────
+function initials(name?: string): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
 
 // ── Status config ─────────────────────────────────────────────────────────────
 type StatusCfg = {
@@ -146,6 +153,204 @@ function EditModal({
   );
 }
 
+// ── Complete Job Modal (pick hired freelancer) ────────────────────────────────
+interface Candidate {
+  _id: string;
+  fullName?: string;
+  username?: string;
+  profileImage?: string;
+  averageRating?: number;
+  completedJobCount?: number;
+  freelancerCategory?: string;
+}
+
+interface CompleteModalProps {
+  open: boolean;
+  saving: boolean;
+  loading: boolean;
+  jobTitle: string;
+  title: string;
+  subtitle: string;
+  confirmLabel: string;
+  candidates: Candidate[];
+  fromBidders: boolean;
+  search: string;
+  selectedId: string;
+  onSearch: (v: string) => void;
+  onSelect: (id: string) => void;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+function CompleteModal({
+  open, saving, loading, jobTitle, title, subtitle, confirmLabel,
+  candidates, fromBidders, search,
+  selectedId, onSearch, onSelect, onClose, onConfirm,
+}: CompleteModalProps) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => !saving && onClose()} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 flex flex-col max-h-[85vh]">
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">{title}</h2>
+            <p className="text-xs text-slate-500 mt-0.5 truncate max-w-[18rem]">{jobTitle}</p>
+          </div>
+          <button onClick={onClose} disabled={saving} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 disabled:opacity-50">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-6 py-4 overflow-y-auto">
+          <p className="text-sm font-semibold text-slate-700 mb-1">{subtitle}</p>
+          <p className="text-xs text-slate-400 mb-3">
+            {fromBidders
+              ? 'Bu ishga taklif yuborgan frilanserlardan birini tanlang.'
+              : 'Bu ishga taklif kelmagan — aktiv frilanserlardan birini tanlang.'}
+          </p>
+
+          {!fromBidders && (
+            <input
+              className="w-full px-3 py-2 mb-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+              value={search}
+              onChange={(e) => onSearch(e.target.value)}
+              placeholder="Frilanser ismi bo'yicha qidirish..."
+            />
+          )}
+
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <svg className="w-6 h-6 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            </div>
+          ) : candidates.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-8">Mos frilanser topilmadi.</p>
+          ) : (
+            <div className="space-y-2">
+              {candidates.map((c) => {
+                const name = c.fullName || c.username || 'Frilanser';
+                const selected = selectedId === c._id;
+                return (
+                  <button
+                    key={c._id}
+                    onClick={() => onSelect(c._id)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                      selected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    {c.profileImage ? (
+                      <img src={c.profileImage} alt={name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                        {initials(name)}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-900 truncate">{name}</p>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        {c.averageRating != null && <span>⭐ {c.averageRating.toFixed(1)}</span>}
+                        {c.completedJobCount != null && <span>· {c.completedJobCount} ish</span>}
+                      </div>
+                    </div>
+                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      selected ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'
+                    }`}>
+                      {selected && (
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100">
+          <button onClick={onClose} disabled={saving} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg disabled:opacity-50">
+            Bekor
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={saving || !selectedId}
+            className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? 'Saqlanmoqda...' : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Cancel Job Modal (reason) ─────────────────────────────────────────────────
+interface CancelModalProps {
+  open: boolean;
+  saving: boolean;
+  jobTitle: string;
+  reason: string;
+  onReason: (v: string) => void;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+function CancelModal({ open, saving, jobTitle, reason, onReason, onClose, onConfirm }: CancelModalProps) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => !saving && onClose()} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10">
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Ishni bekor qilish</h2>
+            <p className="text-xs text-slate-500 mt-0.5 truncate max-w-[18rem]">{jobTitle}</p>
+          </div>
+          <button onClick={onClose} disabled={saving} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 disabled:opacity-50">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="px-6 py-5 space-y-3">
+          <label className="block text-xs font-semibold text-slate-500">Bekor qilish sababi</label>
+          <textarea
+            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-400 resize-none"
+            rows={4}
+            value={reason}
+            onChange={(e) => onReason(e.target.value)}
+            placeholder="Nima uchun bekor qilyapsiz? (kamida 5 belgi)"
+          />
+          <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+            <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Bekor qilish sababi administratorga yuboriladi va u tomonidan ko&apos;rib chiqiladi.</span>
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-6 pb-5">
+          <button onClick={onClose} disabled={saving} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg disabled:opacity-50">
+            Yopish
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={saving || reason.trim().length < 5}
+            className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? 'Bekor qilinmoqda...' : 'Bekor qilish'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 const MyWorksPage = () => {
   const router = useRouter();
@@ -163,18 +368,71 @@ const MyWorksPage = () => {
   const [editBudget, setEditBudget] = useState('');
   const [editSaving, setEditSaving] = useState(false);
 
+  // Status dropdown (which job's menu is open)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  // Complete / payment-assign modal state
+  const [completeJobItem, setCompleteJobItem] = useState<Job | null>(null);
+  const [completeSelectedId, setCompleteSelectedId] = useState('');
+  const [completeSearch, setCompleteSearch] = useState('');
+  const [completeSaving, setCompleteSaving] = useState(false);
+
+  // Cancel modal state
+  const [cancelJobItem, setCancelJobItem] = useState<Job | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelSaving, setCancelSaving] = useState(false);
+
+  // "Status tanlang" warning before deleting a non-terminal job
+  const [deleteBlockedJob, setDeleteBlockedJob] = useState<Job | null>(null);
+
   const { data, loading, refetch } = useQuery(GET_MY_JOBS, {
     skip: !user._id,
     fetchPolicy: 'cache-and-network',
   });
 
+  // All bids on the agent's jobs — for the "Takliflar" tab
+  const { data: agentBidsData, loading: agentBidsLoading, refetch: refetchAgentBids } = useQuery(GET_BIDS_FOR_AGENT, {
+    skip: !user._id,
+    fetchPolicy: 'cache-and-network',
+  });
+
+  // Bidders for the job being completed
+  const { data: biddersData, loading: biddersLoading } = useQuery(GET_JOB_BIDDERS, {
+    variables: { jobId: completeJobItem?._id },
+    skip: !completeJobItem?._id,
+    fetchPolicy: 'cache-and-network',
+  });
+  const bidders: Candidate[] = biddersData?.getJobBidders ?? [];
+
+  // Fallback: active freelancers when nobody bid on the job
+  const needFreelancerFallback = !!completeJobItem && !biddersLoading && bidders.length === 0;
+  const { data: freelancersData, loading: freelancersLoading } = useQuery(GET_FREELANCERS, {
+    variables: { input: { page: 1, limit: 50 } },
+    skip: !needFreelancerFallback,
+    fetchPolicy: 'cache-and-network',
+  });
+  const fallbackFreelancers: Candidate[] = (freelancersData?.getFreelancers ?? [])
+    .filter((f: any) => f.availability === 'AVAILABLE')
+    .filter((f: any) => {
+      const q = completeSearch.trim().toLowerCase();
+      if (!q) return true;
+      return (f.fullName || f.username || '').toLowerCase().includes(q);
+    });
+
   const [completeJob] = useMutation(COMPLETE_JOB);
   const [deleteJob] = useMutation(DELETE_JOB);
   const [updateJob] = useMutation(UPDATE_JOB);
-  const [boostJob] = useMutation(BOOST_JOB);
+  const [submitBoostPayment] = useMutation(SUBMIT_BOOST_PAYMENT);
+  const [cancelJobMut] = useMutation(CANCEL_JOB);
+  const [markJobActive] = useMutation(MARK_JOB_ACTIVE);
+  const [acceptBid] = useMutation(ACCEPT_BID);
 
   const allJobs: Job[] = data?.getMyJobs ?? [];
-  const jobs = filterStatus ? allJobs.filter(j => j.status === filterStatus) : allJobs;
+  const agentBids: any[] = agentBidsData?.getBidsForAgent ?? [];
+  const pendingBidsCount = agentBids.filter((b) => b.status === 'PENDING').length;
+  const jobs = filterStatus && filterStatus !== 'BIDS'
+    ? allJobs.filter(j => j.status === filterStatus)
+    : allJobs;
 
   // Stats
   const stats = {
@@ -187,9 +445,78 @@ const MyWorksPage = () => {
     totalBids:  allJobs.reduce((s, j) => s + (j.bidCount ?? 0), 0),
   };
 
-  const handleComplete = async (jobId: string) => {
-    if (!window.confirm('Ishni bajarilgan deb belgilaysizmi?')) return;
-    try { await completeJob({ variables: { jobId } }); refetch(); } catch {}
+  // ── Status: Faol (manual) ──────────────────────────────────────────────────
+  const handleSetActive = async (job: Job) => {
+    setOpenMenuId(null);
+    try {
+      await markJobActive({ variables: { jobId: job._id } });
+      refetch();
+    } catch (err: any) {
+      alert(err?.graphQLErrors?.[0]?.message ?? 'Statusni o\'zgartirishda xato');
+    }
+  };
+
+  // ── Status: Tugadi → open complete modal ───────────────────────────────────
+  const openComplete = (job: Job) => {
+    setOpenMenuId(null);
+    setCompleteJobItem(job);
+    setCompleteSelectedId('');
+    setCompleteSearch('');
+  };
+
+  const confirmComplete = async () => {
+    if (!completeJobItem || !completeSelectedId) return;
+    setCompleteSaving(true);
+    try {
+      await completeJob({ variables: { jobId: completeJobItem._id, hiredFreelancerId: completeSelectedId } });
+      await refetch();
+      setCompleteJobItem(null);
+    } catch (err: any) {
+      alert(err?.graphQLErrors?.[0]?.message ?? 'Yakunlashda xato');
+    } finally {
+      setCompleteSaving(false);
+    }
+  };
+
+  // ── Status: Bekor → open cancel modal ──────────────────────────────────────
+  const openCancel = (job: Job) => {
+    setOpenMenuId(null);
+    setCancelJobItem(job);
+    setCancelReason('');
+  };
+
+  const confirmCancel = async () => {
+    if (!cancelJobItem || cancelReason.trim().length < 5) return;
+    setCancelSaving(true);
+    try {
+      await cancelJobMut({ variables: { jobId: cancelJobItem._id, reason: cancelReason.trim() } });
+      await refetch();
+      setCancelJobItem(null);
+    } catch (err: any) {
+      alert(err?.graphQLErrors?.[0]?.message ?? 'Bekor qilishda xato');
+    } finally {
+      setCancelSaving(false);
+    }
+  };
+
+  // ── Takliflar: accept a bid ────────────────────────────────────────────────
+  const handleAcceptBid = async (bidId: string) => {
+    if (!window.confirm('Bu taklifni qabul qilasizmi? Ish "Faol" holatiga o\'tadi.')) return;
+    try {
+      await acceptBid({ variables: { bidId } });
+      await Promise.all([refetch(), refetchAgentBids()]);
+    } catch (err: any) {
+      alert(err?.graphQLErrors?.[0]?.message ?? 'Taklifni qabul qilishda xato');
+    }
+  };
+
+  // Delete clicked: non-terminal jobs must first get a status (Tugadi/Bekor)
+  const requestDelete = (job: Job) => {
+    if (job.status === JobStatus.OPEN || job.status === JobStatus.ACTIVE) {
+      setDeleteBlockedJob(job);
+      return;
+    }
+    handleDelete(job);
   };
 
   const handleDelete = async (job: Job) => {
@@ -204,11 +531,12 @@ const MyWorksPage = () => {
 
   const handleBoost = (job: Job) => setBoostJob2(job);
 
-  const handleBoostConfirm = async (plan: string) => {
+  const handleBoostSubmitReceipt = async (plan: string, receiptUrl: string) => {
     if (!boostJob2) return;
     try {
-      await boostJob({ variables: { jobId: boostJob2._id, plan } });
-      refetch();
+      await submitBoostPayment({ variables: { jobId: boostJob2._id, plan, receiptUrl } });
+      await refetch();
+      alert('Chek yuborildi. Admin tasdiqlagach boost yoqiladi.');
     } catch (err: any) {
       alert(err?.graphQLErrors?.[0]?.message ?? 'Boost da xato');
       throw err;
@@ -269,7 +597,7 @@ const MyWorksPage = () => {
   const TABS = [
     { value: '',           label: 'Barchasi',   count: stats.total },
     { value: 'ACTIVE',     label: 'Faol',       count: stats.active },
-    { value: 'OPEN',       label: 'Kutilmoqda', count: stats.open },
+    { value: 'BIDS',       label: 'Takliflar',  count: pendingBidsCount },
     { value: 'COMPLETED',  label: 'Tugagan',    count: stats.completed },
     { value: 'CANCELLED',  label: 'Bekor',      count: stats.cancelled },
   ];
@@ -281,9 +609,10 @@ const MyWorksPage = () => {
       {/* ── Boost Modal ───────────────────────────────────────────────── */}
       <BoostModal
         open={!!boostJob2}
-        jobTitle={boostJob2?.title ?? ''}
+        subjectTitle={boostJob2?.title ?? ''}
+        subjectKind="job"
         onClose={() => setBoostJob2(null)}
-        onConfirm={handleBoostConfirm}
+        onSubmitReceipt={handleBoostSubmitReceipt}
       />
 
       {/* ── Edit Modal ────────────────────────────────────────────────── */}
@@ -299,6 +628,82 @@ const MyWorksPage = () => {
         onClose={() => !editSaving && setEditJob(null)}
         onSave={handleEditSave}
       />
+
+      {/* ── Complete (hire picker) Modal ──────────────────────────────── */}
+      <CompleteModal
+        open={!!completeJobItem}
+        saving={completeSaving}
+        loading={biddersLoading || (needFreelancerFallback && freelancersLoading)}
+        jobTitle={completeJobItem?.title ?? ''}
+        title="Ishni yakunlash"
+        subtitle="Ishni kim bajardi?"
+        confirmLabel="Yakunlash"
+        candidates={bidders.length > 0 ? bidders : fallbackFreelancers}
+        fromBidders={bidders.length > 0}
+        search={completeSearch}
+        selectedId={completeSelectedId}
+        onSearch={setCompleteSearch}
+        onSelect={setCompleteSelectedId}
+        onClose={() => !completeSaving && setCompleteJobItem(null)}
+        onConfirm={confirmComplete}
+      />
+
+      {/* ── Cancel (reason) Modal ─────────────────────────────────────── */}
+      <CancelModal
+        open={!!cancelJobItem}
+        saving={cancelSaving}
+        jobTitle={cancelJobItem?.title ?? ''}
+        reason={cancelReason}
+        onReason={setCancelReason}
+        onClose={() => !cancelSaving && setCancelJobItem(null)}
+        onConfirm={confirmCancel}
+      />
+
+      {/* ── "Status tanlang" warning before delete ────────────────────── */}
+      {deleteBlockedJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeleteBlockedJob(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10">
+            <div className="px-6 pt-6 pb-2 text-center">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-50 flex items-center justify-center mb-4">
+                <svg className="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-base font-bold text-slate-900 mb-1">Avval statusni tanlang</h2>
+              <p className="text-sm text-slate-500">
+                Bu ishni o&apos;chirishdan oldin uning statusini belgilang: ish <span className="font-semibold">tugaganmi</span> yoki <span className="font-semibold">bekor</span> qilinganmi?
+              </p>
+            </div>
+            <div className="px-6 py-5 space-y-2">
+              <button
+                onClick={() => { const j = deleteBlockedJob; setDeleteBlockedJob(null); openComplete(j); }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Tugadi (yakunlash)
+              </button>
+              <button
+                onClick={() => { const j = deleteBlockedJob; setDeleteBlockedJob(null); openCancel(j); }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Bekor qilish
+              </button>
+              <button
+                onClick={() => setDeleteBlockedJob(null)}
+                className="w-full px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                Yopish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Page Header ───────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -389,7 +794,82 @@ const MyWorksPage = () => {
       </div>
 
       {/* ── Content ───────────────────────────────────────────────────── */}
-      {loading ? (
+      {filterStatus === 'BIDS' ? (
+        /* ── Takliflar (bids on agent's jobs) ── */
+        agentBidsLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <svg className="w-8 h-8 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+          </div>
+        ) : agentBids.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-200 text-center px-6">
+            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <h3 className="text-base font-bold text-slate-700">Hozircha takliflar yo&apos;q</h3>
+            <p className="text-sm text-slate-400 mt-1 max-w-xs">Frilanserlar ishlaringizga taklif yuborganda shu yerda ko&apos;rinadi.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {[...agentBids]
+              .sort((a, b) => (a.status === 'PENDING' ? -1 : 1) - (b.status === 'PENDING' ? -1 : 1))
+              .map((bid) => {
+                const jobTitle = allJobs.find((j) => String(j._id) === String(bid.jobId))?.title ?? 'Ish';
+                const name = bid.freelancerName || 'Frilanser';
+                const isPending = bid.status === 'PENDING';
+                const statusBadge =
+                  bid.status === 'ACCEPTED' ? 'bg-green-100 text-green-700'
+                  : bid.status === 'DECLINED' ? 'bg-slate-100 text-slate-500'
+                  : 'bg-amber-100 text-amber-700';
+                const statusLabel =
+                  bid.status === 'ACCEPTED' ? 'Qabul qilingan'
+                  : bid.status === 'DECLINED' ? 'Rad etilgan'
+                  : 'Yangi';
+                return (
+                  <div key={bid._id} className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-lg transition-all flex flex-col md:flex-row md:items-center gap-4">
+                    <Link href={`/profile/${bid.freelancerId}`}>
+                      {bid.freelancerAvatar ? (
+                        <img src={bid.freelancerAvatar} alt={name} className="w-12 h-12 rounded-full object-cover flex-shrink-0 cursor-pointer" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-bold flex-shrink-0 cursor-pointer">
+                          {initials(name)}
+                        </div>
+                      )}
+                    </Link>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span className="text-sm font-bold text-slate-900">{name}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusBadge}`}>{statusLabel}</span>
+                      </div>
+                      <p className="text-xs text-slate-500 mb-1">
+                        Ish: <span className="font-semibold text-slate-700">{jobTitle}</span>
+                      </p>
+                      {bid.coverLetter && <p className="text-sm text-slate-500 line-clamp-2">{bid.coverLetter}</p>}
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="text-right">
+                        <p className="text-[10px] text-slate-400 uppercase">Taklif</p>
+                        <p className="text-base font-black text-indigo-700">${bid.bidAmount}</p>
+                      </div>
+                      {isPending && (
+                        <button
+                          onClick={() => handleAcceptBid(bid._id)}
+                          className="px-4 py-2 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors active:scale-95"
+                        >
+                          Qabul qilish
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        )
+      ) : loading ? (
         <div className="flex items-center justify-center py-20">
           <svg className="w-8 h-8 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -429,10 +909,14 @@ const MyWorksPage = () => {
         <div className="space-y-4">
           {jobs.map(job => {
             const cfg = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.OPEN;
-            const isBoosted = !!job.boostExpiresAt && new Date(job.boostExpiresAt).getTime() > Date.now();
+            const isBoosted =
+              !!job.boostExpiresAt &&
+              new Date(job.boostExpiresAt).getTime() > Date.now() &&
+              !(job as Job).boostPausedByAdmin;
             const canEdit   = job.status === JobStatus.OPEN;
-            const canDelete = job.status !== JobStatus.ACTIVE;
-            const canBoost  = job.status === JobStatus.OPEN;
+            const boostPending = (job as Job).boostPaymentStatus === 'PENDING';
+            const canBoost  =
+              (job.status === JobStatus.OPEN || job.status === JobStatus.ACTIVE) && !boostPending;
 
             const boostBorderClass = job.boostPlan === 'VIP'
               ? 'border-amber-400'
@@ -459,6 +943,12 @@ const MyWorksPage = () => {
                     {job.category && (
                       <span className="text-[11px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
                         {JOB_CATEGORY_LABELS[job.category as JobCategory] ?? job.category}
+                      </span>
+                    )}
+
+                    {boostPending && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                        ⏳ Admin kutilmoqda
                       </span>
                     )}
 
@@ -526,6 +1016,18 @@ const MyWorksPage = () => {
                       <span className="text-sm">{job.bidCount ?? 0} ta taklif</span>
                     </div>
                   </div>
+
+                  <BoostAgentStats job={job} />
+
+                  {/* Cancel reason (cancelled jobs) */}
+                  {job.status === JobStatus.CANCELLED && (job as any).cancelReason && (
+                    <div className="mt-3 flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                      <svg className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span><span className="font-bold">Bekor sababi:</span> {(job as any).cancelReason}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right: action buttons */}
@@ -544,7 +1046,7 @@ const MyWorksPage = () => {
                   {canBoost && (
                     <button
                       onClick={() => handleBoost(job)}
-                      title="Top ga chiqazish"
+                      title="Top ga chiqarish (bevosita to'lov)"
                       className="p-2.5 text-violet-600 bg-violet-50 hover:bg-violet-100 rounded-xl transition-all active:scale-90"
                     >
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -566,23 +1068,56 @@ const MyWorksPage = () => {
                     </button>
                   )}
 
-                  {/* Mark complete */}
-                  {job.status === JobStatus.ACTIVE && (
-                    <button
-                      onClick={() => handleComplete(job._id)}
-                      title="Bajarildi deb belgilash"
-                      className="p-2.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-all active:scale-90"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </button>
+                  {/* Status dropdown (only for non-terminal jobs) */}
+                  {(job.status === JobStatus.OPEN || job.status === JobStatus.ACTIVE) && (
+                    <div className="relative">
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === job._id ? null : job._id)}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all active:scale-95"
+                      >
+                        Status
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {openMenuId === job._id && (
+                        <>
+                          <div className="fixed inset-0 z-20" onClick={() => setOpenMenuId(null)} />
+                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 py-1.5 z-30">
+                            {job.status === JobStatus.OPEN && (
+                              <button
+                                onClick={() => handleSetActive(job)}
+                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                              >
+                                <span className="w-2 h-2 rounded-full bg-green-500" />
+                                Faol (jarayonda)
+                              </button>
+                            )}
+                            <button
+                              onClick={() => openComplete(job)}
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                            >
+                              <span className="w-2 h-2 rounded-full bg-slate-400" />
+                              Tugadi
+                            </button>
+                            <button
+                              onClick={() => openCancel(job)}
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                              <span className="w-2 h-2 rounded-full bg-red-500" />
+                              Bekor qilish
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
 
                   {/* Delete */}
-                  {canDelete && (
+                  {(
                     <button
-                      onClick={() => handleDelete(job)}
+                      onClick={() => requestDelete(job)}
                       title="O'chirish"
                       className="p-2.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-all active:scale-90"
                     >

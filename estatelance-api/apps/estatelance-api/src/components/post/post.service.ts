@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Post } from '../../schemas/Post.model';
 import { User } from '../../schemas/User.model';
 import { AddCommentInput, CreatePostInput } from '../../libs/dto/post.dto';
@@ -80,14 +80,15 @@ export class PostService {
     if (!user) throw new NotFoundException('User not found');
 
     const newComment = {
-      _id: String(Date.now()),
+      _id: new Types.ObjectId().toHexString(),
       authorId: userId,
       authorName: user.fullName ?? user.username,
       authorAvatar: user.profileImage,
-      text: input.text,
+      text: input.text.trim(),
       createdAt: new Date().toISOString(),
     };
 
+    if (!Array.isArray(post.comments)) post.comments = [];
     post.comments.push(newComment as any);
     return post.save();
   }

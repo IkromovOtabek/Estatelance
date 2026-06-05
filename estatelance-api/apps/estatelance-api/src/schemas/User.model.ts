@@ -1,7 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { Field, Float, Int, ObjectType } from '@nestjs/graphql';
-import { AuthProvider, FreelancerAvailability, UserStatus, UserType } from '../libs/enums/common.enums';
+import {
+  AuthProvider,
+  BoostPaymentStatus,
+  FreelancerAvailability,
+  UserStatus,
+  UserType,
+} from '../libs/enums/common.enums';
 import { JobCategory } from '../libs/enums/common.enums';
 
 // ─── Address ──────────────────────────────────────────────────────────────────
@@ -109,6 +115,59 @@ export class User extends Document {
   @Field(() => Int)
   profileViewCount: number;
 
+  // Profil boost — frilanser/agent ro'yxat tepasida
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  bumpedAt?: Date;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostExpiresAt?: Date;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostPlan?: string;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostPaidAt?: Date;
+
+  @Prop({ type: String, enum: BoostPaymentStatus, default: BoostPaymentStatus.NONE })
+  @Field(() => BoostPaymentStatus, { nullable: true })
+  boostPaymentStatus?: BoostPaymentStatus;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostRequestedPlan?: string;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostReceiptUrl?: string;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostPaymentSubmittedAt?: Date;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostPaymentReviewedAt?: Date;
+
+  @Prop({ default: null })
+  @Field(() => String, { nullable: true })
+  boostPaymentRejectReason?: string;
+
+  @Prop({ default: null })
+  @Field(() => Number, { nullable: true })
+  boostViewsAtStart?: number;
+
+  @Prop({ default: null })
+  @Field(() => Number, { nullable: true })
+  boostFollowersAtStart?: number;
+
+  @Prop({ default: false })
+  @Field(() => Boolean, { nullable: true })
+  boostPausedByAdmin?: boolean;
+
   @Prop({ default: 0 })
   @Field(() => Int)
   likeCount: number;
@@ -174,6 +233,11 @@ export class User extends Document {
   @Field(() => String, { nullable: true })
   phoneNumber?: string;
 
+  // Card / wallet number used for direct (bevosita) payments between agent and freelancer
+  @Prop()
+  @Field(() => String, { nullable: true })
+  cardNumber?: string;
+
   // Spam / block reason (filled by admin when blocking a user)
   @Prop({ default: '' })
   @Field(() => String, { nullable: true })
@@ -219,7 +283,7 @@ export const UserSchema = SchemaFactory.createForClass(User);
 UserSchema.index({ username: 'text', bio: 'text' });
 
 // Tez-tez ishlatiladigan filtr/sort/auth-lookup uchun indekslar
-UserSchema.index({ userType: 1, averageRating: -1 }); // getFreelancers (saralash)
+UserSchema.index({ userType: 1, bumpedAt: -1, averageRating: -1 }); // getFreelancers + boost
 UserSchema.index({ userType: 1, freelancerCategory: 1 });
 UserSchema.index({ userStatus: 1 });
 UserSchema.index({ email: 1 });

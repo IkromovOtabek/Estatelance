@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "estatelance-next",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd estatelance-next && npx next dev -p $PORT"],
+      "autoPort": true,
+      "port": 3020
+    }
+  ]
+}

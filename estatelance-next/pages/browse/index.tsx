@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useQuery } from '@apollo/client';
@@ -8,6 +8,7 @@ import withLayoutBasic from '../../libs/components/layout/LayoutBasic';
 import { User } from '../../libs/types';
 import { JobCategory, JOB_CATEGORY_LABELS } from '../../libs/enums';
 import { getCatIcon } from '../../libs/utils/jobCategoryIcons';
+import { compareBoostFirst, isJobBoostActive } from '../../libs/utils/boost';
 
 // ─── Category sidebar item ────────────────────────────────────────────────────
 const CatItem = ({
@@ -28,6 +29,7 @@ const CatItem = ({
 
 // ─── Freelancer Card ──────────────────────────────────────────────────────────
 const FreelancerListCard = ({ freelancer }: { freelancer: User }) => {
+  const boosted = isJobBoostActive(freelancer);
   const catKey = freelancer.freelancerCategory ?? 'OTHER';
   const catLabel = freelancer.freelancerCategory
     ? JOB_CATEGORY_LABELS[freelancer.freelancerCategory as JobCategory]
@@ -37,7 +39,13 @@ const FreelancerListCard = ({ freelancer }: { freelancer: User }) => {
 
   return (
     <Link href={`/profile/${freelancer._id}`} className="block no-underline group">
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 flex gap-4 items-start cursor-pointer transition-all duration-200 hover:border-indigo-200 hover:shadow-lg hover:-translate-y-0.5">
+      <div
+        className={`bg-white border rounded-2xl p-5 flex gap-4 items-start cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
+          boosted
+            ? 'border-indigo-300 ring-1 ring-indigo-200/80 hover:border-indigo-400'
+            : 'border-slate-200 hover:border-indigo-200'
+        }`}
+      >
 
         {/* Avatar with online indicator */}
         <div className="relative flex-shrink-0">
@@ -62,7 +70,12 @@ const FreelancerListCard = ({ freelancer }: { freelancer: User }) => {
               </p>
               <p className="text-xs text-slate-400 mt-0.5">@{freelancer.username}</p>
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="flex items-center gap-1 flex-shrink-0 flex-wrap justify-end">
+              {boosted && (
+                <span className="text-[10px] font-black px-2 py-0.5 rounded tracking-widest bg-indigo-100 text-indigo-700">
+                  {freelancer.boostPlan === 'VIP' ? 'VIP' : freelancer.boostPlan === 'PRO' ? 'PRO' : 'TOP'}
+                </span>
+              )}
               <StarIcon size={14} color="#f59e0b" weight="fill" />
               <span className="text-sm font-bold text-slate-900">
                 {freelancer.averageRating?.toFixed(1) ?? '5.0'}
@@ -158,7 +171,12 @@ const BrowsePage = () => {
     fetchPolicy: 'cache-and-network',
   });
 
-  const freelancers: User[] = data?.getFreelancers ?? [];
+  const freelancers: User[] = useMemo(() => {
+    const raw: User[] = data?.getFreelancers ?? [];
+    return [...raw].sort((a, b) =>
+      compareBoostFirst(a, b, (x, y) => (y.averageRating ?? 0) - (x.averageRating ?? 0)),
+    );
+  }, [data]);
 
   return (
     <>

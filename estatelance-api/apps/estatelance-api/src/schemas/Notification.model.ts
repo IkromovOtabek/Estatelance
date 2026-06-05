@@ -35,6 +35,11 @@ export class Notification extends Document {
   @Field(() => String, { nullable: true })
   relatedItemId?: string;
 
+  /** Admin yoki maxsus yo‘naltirish (masalan /_admin?section=targets&tab=moderation) */
+  @Prop({ trim: true })
+  @Field(() => String, { nullable: true })
+  linkPath?: string;
+
   @Field(() => String, { nullable: true })
   createdAt?: Date;
 }

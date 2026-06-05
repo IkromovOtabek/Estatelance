@@ -1,6 +1,9 @@
 import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
+import { JobService } from '../job/job.service';
+import { UserService } from '../user/user.service';
+import { BoostPaymentPendingItem } from '../../libs/dto/job.dto';
 import { User } from '../../schemas/User.model';
 import { Job } from '../../schemas/Job.model';
 import { Post } from '../../schemas/Post.model';
@@ -23,11 +26,32 @@ import {
   TrackPageInput,
   EndSessionInput,
   VisitorSessionObject,
+  AdminAdTargetItem,
 } from '../../libs/dto/admin.dto';
 
 @Resolver()
 export class AdminResolver {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly jobService: JobService,
+    private readonly userService: UserService,
+  ) {}
+
+  private submittedAtMs(item: BoostPaymentPendingItem): number {
+    const raw =
+      item.job?.boostPaymentSubmittedAt ?? item.profile?.boostPaymentSubmittedAt;
+    if (!raw) return 0;
+    const t = new Date(raw).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  }
+
+  private reviewedAtMs(item: BoostPaymentPendingItem): number {
+    const raw =
+      item.job?.boostPaymentReviewedAt ?? item.profile?.boostPaymentReviewedAt;
+    if (!raw) return 0;
+    const t = new Date(raw).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  }
 
   // ─── Admin Login ──────────────────────────────────────────────────────────────
   // Public endpoint — no guard needed. The service checks userType === ADMIN.
@@ -124,6 +148,132 @@ export class AdminResolver {
     return this.adminService.getAllAnnouncements();
   }
 
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Query(() => [AdminAdTargetItem])
+  async adminGetAdTargets(): Promise<AdminAdTargetItem[]> {
+    return this.adminService.getAdTargets();
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Mutation(() => AdminAdTargetItem)
+  async adminSetAdTargetStatus(
+    @Args('sourceKind') sourceKind: string,
+    @Args('sourceId') sourceId: string,
+    @Args('active') active: boolean,
+  ): Promise<AdminAdTargetItem> {
+    return this.adminService.setAdTargetStatus(sourceKind, sourceId, active);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Mutation(() => Boolean)
+  async adminRemoveAdTarget(
+    @Args('sourceKind') sourceKind: string,
+    @Args('sourceId') sourceId: string,
+  ): Promise<boolean> {
+    return this.adminService.removeAdTarget(sourceKind, sourceId);
+  }
+
+  // ─── Boost to'lov cheklari ───────────────────────────────────────────────────
+
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Query(() => [BoostPaymentPendingItem])
+  async adminGetPendingBoostPayments(): Promise<BoostPaymentPendingItem[]> {
+    const [jobs, profiles] = await Promise.all([
+      this.jobService.getPendingBoostPayments(),
+      this.userService.getPendingProfileBoostPayments(),
+    ]);
+    const rows: BoostPaymentPendingItem[] = [
+      ...jobs.map((r) => ({
+        boostKind: 'JOB',
+        job: r.job,
+        agentName: r.agentName,
+        agentUsername: r.agentUsername,
+      })),
+      ...profiles.map((r) => ({
+        boostKind: 'PROFILE',
+        profile: r.profile,
+        agentName: r.agentName,
+        agentUsername: r.agentUsername,
+      })),
+    ];
+    return rows.sort((a, b) => this.submittedAtMs(b) - this.submittedAtMs(a));
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Query(() => [BoostPaymentPendingItem])
+  async adminGetBoostPaymentHistory(
+    @Args('limit', { type: () => Int, defaultValue: 50 }) limit: number,
+  ): Promise<BoostPaymentPendingItem[]> {
+    const [jobs, profiles] = await Promise.all([
+      this.jobService.getBoostPaymentHistory(limit),
+      this.userService.getProfileBoostPaymentHistory(limit),
+    ]);
+    const rows: BoostPaymentPendingItem[] = [
+      ...jobs.map((r) => ({
+        boostKind: 'JOB',
+        job: r.job,
+        agentName: r.agentName,
+        agentUsername: r.agentUsername,
+      })),
+      ...profiles.map((r) => ({
+        boostKind: 'PROFILE',
+        profile: r.profile,
+        agentName: r.agentName,
+        agentUsername: r.agentUsername,
+      })),
+    ];
+    return rows
+      .sort((a, b) => this.reviewedAtMs(b) - this.reviewedAtMs(a))
+      .slice(0, limit);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Mutation(() => Job)
+  async adminApproveBoostPayment(
+    @AuthUser('_id') adminId: string,
+    @Args('jobId') jobId: string,
+  ): Promise<Job> {
+    return this.jobService.approveBoostPayment(adminId, jobId);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Mutation(() => User)
+  async adminApproveProfileBoostPayment(
+    @AuthUser('_id') adminId: string,
+    @Args('userId') userId: string,
+  ): Promise<User> {
+    return this.userService.approveProfileBoostPayment(adminId, userId);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Mutation(() => Job)
+  async adminRejectBoostPayment(
+    @AuthUser('_id') adminId: string,
+    @Args('jobId') jobId: string,
+    @Args('reason') reason: string,
+  ): Promise<Job> {
+    return this.jobService.rejectBoostPayment(adminId, jobId, reason);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Mutation(() => User)
+  async adminRejectProfileBoostPayment(
+    @AuthUser('_id') adminId: string,
+    @Args('userId') userId: string,
+    @Args('reason') reason: string,
+  ): Promise<User> {
+    return this.userService.rejectProfileBoostPayment(adminId, userId, reason);
+  }
+
   // ─── Custom Notifications ─────────────────────────────────────────────────────
 
   @UseGuards(RolesGuard)
@@ -167,6 +317,15 @@ export class AdminResolver {
     @Args('limit', { type: () => Int, defaultValue: 50 }) limit: number,
   ): Promise<Job[]> {
     return this.adminService.getAllJobs(page, limit);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserType.ADMIN)
+  @Query(() => [Job])
+  async adminGetModerationCancelledJobs(
+    @Args('limit', { type: () => Int, defaultValue: 100 }) limit: number,
+  ): Promise<Job[]> {
+    return this.adminService.getModerationCancelledJobs(limit);
   }
 
   @UseGuards(RolesGuard)

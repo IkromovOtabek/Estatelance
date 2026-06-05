@@ -95,7 +95,7 @@ const FAQS = [
   {
     question: 'Boost sotib olsam qayerdan boshlanadi?',
     answer:
-      '"Mening ishlarim" sahifasiga o\'ting, boost bermoqchi bo\'lgan ishingizni tanlang va "Boost" tugmasini bosing. To\'lov tasdiqlanganidan so\'ng boost darhol faollashadi.',
+      '"Mening ishlarim" sahifasiga o\'ting, boost bermoqchi bo\'lgan ishingizni tanlang, to\'lov qiling va chek rasmini yuklang. Admin tasdiqlagach boost yoqiladi va statistika ko\'rinadi.',
   },
 ];
 

@@ -29,6 +29,7 @@ import {
   Buildings,
 } from '@phosphor-icons/react';
 import { GET_JOBS, GET_FREELANCERS } from '../apollo/user/query';
+import { compareBoostFirst } from '../libs/utils/boost';
 import { userVar } from '../apollo/store';
 import withLayoutBasic from '../libs/components/layout/LayoutBasic';
 import { Job, User } from '../libs/types';
@@ -309,7 +310,7 @@ const HomePage = () => {
   const isAgent = isLoggedIn && user.userType === UserType.AGENT;
 
   const { data: jobsData, loading: jobsLoading } = useQuery(GET_JOBS, {
-    variables: { input: { page: 1, limit: 20, status: JobStatus.OPEN } },
+    variables: { input: { page: 1, limit: 50 } },
     fetchPolicy: 'cache-and-network',
   });
 
@@ -318,14 +319,28 @@ const HomePage = () => {
     fetchPolicy: 'cache-and-network',
   });
 
-  const allJobs: Job[] = jobsData?.getJobs ?? [];
-  const latestJobs = allJobs.slice(0, 6);
+  const allJobs: Job[] = (jobsData?.getJobs ?? []).filter(
+    (j) => j.status === JobStatus.OPEN || j.status === JobStatus.ACTIVE,
+  );
+  const latestJobs = [...allJobs]
+    .sort((a, b) =>
+      compareBoostFirst(a, b, (x, y) => {
+        const cx = x.createdAt ? new Date(x.createdAt).getTime() : 0;
+        const cy = y.createdAt ? new Date(y.createdAt).getTime() : 0;
+        return cy - cx;
+      }),
+    )
+    .slice(0, 6);
   const popularJobs = [...allJobs]
-    .sort((a, b) => (b.bidCount ?? 0) - (a.bidCount ?? 0))
+    .sort((a, b) =>
+      compareBoostFirst(a, b, (x, y) => (y.bidCount ?? 0) - (x.bidCount ?? 0)),
+    )
     .slice(0, 6);
   const allFreelancers: User[] = freelancersData?.getFreelancers ?? [];
   const topFreelancers: User[] = [...allFreelancers]
-    .sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0))
+    .sort((a, b) =>
+      compareBoostFirst(a, b, (x, y) => (y.averageRating ?? 0) - (x.averageRating ?? 0)),
+    )
     .slice(0, 5);
 
   // Hero "trust" bloki uchun: rasmi borlarni oldinga qo'yib, 5 ta avatar

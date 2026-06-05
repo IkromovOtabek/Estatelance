@@ -64,6 +64,7 @@ const EditProfilePage = () => {
   const [location, setLocation] = useState('');
   const [profileImage, setProfileImage] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
   const [availability, setAvailability] = useState<FreelancerAvailability>(FreelancerAvailability.AVAILABLE);
   const [freelancerCategory, setFreelancerCategory] = useState('');
   const [hourlyRate, setHourlyRate] = useState('');
@@ -95,6 +96,7 @@ const EditProfilePage = () => {
       setLocation(profile.location ?? '');
       setProfileImage(profile.profileImage ?? '');
       setPhoneNumber(profile.phoneNumber ?? '');
+      setCardNumber(profile.cardNumber ?? '');
       setAvailability(profile.availability ?? FreelancerAvailability.AVAILABLE);
       setFreelancerCategory(profile.freelancerCategory ?? '');
       setHourlyRate(profile.hourlyRate ? String(profile.hourlyRate) : '');
@@ -157,6 +159,7 @@ const EditProfilePage = () => {
     if (location.trim()) input.location = location.trim();
     if (profileImage.trim()) input.profileImage = profileImage.trim();
     if (phoneNumber.trim()) input.phoneNumber = phoneNumber.trim();
+    if (cardNumber.trim()) input.cardNumber = cardNumber.trim();
     if (githubUrl.trim()) input.githubUrl = githubUrl.trim();
     if (behanceUrl.trim()) input.behanceUrl = behanceUrl.trim();
     if (linkedinUrl.trim()) input.linkedinUrl = linkedinUrl.trim();
@@ -337,6 +340,16 @@ const EditProfilePage = () => {
                     placeholder="+998 90 123 45 67"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth size="small"
+                    label="Karta raqami (bevosita to'lov uchun)"
+                    placeholder="8600 1234 5678 9012"
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(e.target.value)}
+                    helperText="Ish beruvchi to'lovni shu kartaga yuboradi"
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>

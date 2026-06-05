@@ -51,6 +51,7 @@ import { GET_MY_NOTIFICATIONS, GET_UNREAD_NOTIFICATION_COUNT, GET_UNREAD_MESSAGE
 import { GET_ACTIVE_ANNOUNCEMENTS } from '../../../apollo/admin/query';
 import { MARK_ALL_NOTIFICATIONS_READ } from '../../../apollo/user/mutation';
 import { Announcement, Notification } from '../../types';
+import { fixAvatarUrl } from '../../utils/imgUrl';
 import { AnnouncementType } from '../../enums';
 
 const NAV_LINKS = [
@@ -169,7 +170,7 @@ const Top = () => {
 
   // ── Mobile Drawer content ─────────────────────────────────────────────────
   const mobileDrawer = (
-    <Box sx={{ width: 280, height: '100%', display: 'flex', flexDirection: 'column', bgcolor: isDark ? '#09090B' : '#ffffff' }}>
+    <Box sx={{ width: 280, height: '100%', display: 'flex', flexDirection: 'column', bgcolor: isDark ? '#0F172A' : '#ffffff' }}>
       {/* Drawer header */}
       <Box sx={{
         px: 2.5, py: 2,
@@ -206,10 +207,10 @@ const Top = () => {
 
       {/* User info (if logged in) */}
       {isLoggedIn && (
-        <Box sx={{ px: 2.5, py: 2, bgcolor: isDark ? '#111111' : '#f8fafc', borderBottom: `1px solid ${isDark ? '#27272A' : '#e2e8f0'}` }}>
+        <Box sx={{ px: 2.5, py: 2, bgcolor: isDark ? '#1E293B' : '#f8fafc', borderBottom: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
-              src={user.profileImage || undefined}
+              src={fixAvatarUrl(user.profileImage)}
               sx={{ width: 40, height: 40, bgcolor: '#6366F1', fontSize: 16 }}
             >
               {getInitials(user.fullName, user.username)}
@@ -277,7 +278,7 @@ const Top = () => {
       </List>
 
       {/* Bottom actions */}
-      <Box sx={{ p: 2, borderTop: `1px solid ${isDark ? '#111111' : '#e2e8f0'}` }}>
+      <Box sx={{ p: 2, borderTop: `1px solid ${isDark ? '#1E293B' : '#e2e8f0'}` }}>
         {isLoggedIn ? (
           <Stack spacing={1}>
             <Button
@@ -320,9 +321,9 @@ const Top = () => {
         position="sticky"
         elevation={0}
         sx={{
-          bgcolor: isDark ? 'rgba(9,9,11,0.92)' : 'rgba(255,255,255,0.92)',
+          bgcolor: isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.92)',
           backdropFilter: 'blur(16px)',
-          borderBottom: `1px solid ${isDark ? '#27272A' : '#E4E4E7'}`,
+          borderBottom: `1px solid ${isDark ? '#334155' : '#E4E4E7'}`,
           color: isDark ? '#FAFAFA' : '#18181B',
           transition: 'background-color 0.2s ease, border-color 0.2s ease',
         }}
@@ -336,10 +337,10 @@ const Top = () => {
               display: { xs: 'flex', lg: 'none' },
               mr: 1,
               color: isDark ? '#71717A' : '#374151',
-              border: `1px solid ${isDark ? '#27272A' : '#e2e8f0'}`,
+              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
               borderRadius: 2,
               width: 36, height: 36,
-              '&:hover': { bgcolor: isDark ? '#111111' : '#FAFAFA' },
+              '&:hover': { bgcolor: isDark ? '#1E293B' : '#FAFAFA' },
             }}
           >
             <MenuIcon size={20} />
@@ -406,7 +407,7 @@ const Top = () => {
                       bgcolor: isActive ? (isDark ? 'rgba(129,140,248,0.15)' : '#eef2ff') : 'transparent',
                       fontWeight: isActive ? 700 : 500,
                       fontSize: 13, px: 1.5, borderRadius: 2,
-                      '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.07)' : '#FAFAFA', color: isDark ? '#FAFAFA' : '#09090B' },
+                      '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.07)' : '#FAFAFA', color: isDark ? '#FAFAFA' : '#0F172A' },
                       transition: 'all 0.15s',
                     }}>
                       {link.label}
@@ -462,11 +463,11 @@ const Top = () => {
                     color: notifOpen ? '#6366F1' : unreadCount > 0 ? '#6366F1' : '#64748b',
                     bgcolor: notifOpen ? '#eef2ff' : unreadCount > 0 ? '#eef2ff' : 'transparent',
                     border: '1px solid',
-                    borderColor: notifOpen ? '#c7d2fe' : unreadCount > 0 ? '#c7d2fe' : (isDark ? '#27272A' : '#e2e8f0'),
+                    borderColor: notifOpen ? '#c7d2fe' : unreadCount > 0 ? '#c7d2fe' : (isDark ? '#334155' : '#e2e8f0'),
                     borderRadius: 2,
                     width: 36, height: 36,
                     transition: 'all 0.2s',
-                    '&:hover': { bgcolor: isDark ? '#111111' : '#FAFAFA', color: isDark ? '#C084FC' : '#6366F1', borderColor: '#c7d2fe' },
+                    '&:hover': { bgcolor: isDark ? '#1E293B' : '#FAFAFA', color: isDark ? '#C084FC' : '#6366F1', borderColor: '#c7d2fe' },
                   }}
                 >
                   <NotificationsNoneIcon
@@ -490,7 +491,7 @@ const Top = () => {
                         borderRadius: 9,
                         bgcolor: '#ef4444',
                         color: 'white',
-                        border: '2px solid #fff',
+                        border: `2px solid ${isDark ? '#0F172A' : '#fff'}`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -519,8 +520,8 @@ const Top = () => {
                     width: 380, maxHeight: '80vh',
                     borderRadius: 3,
                     boxShadow: isDark ? '0 20px 60px rgba(0,0,0,0.5)' : '0 20px 60px rgba(0,0,0,0.15)',
-                    border: `1px solid ${isDark ? '#27272A' : '#e2e8f0'}`,
-                    bgcolor: isDark ? '#111111' : '#ffffff',
+                    border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                    bgcolor: isDark ? '#1E293B' : '#ffffff',
                     overflow: 'hidden', mt: 1,
                   },
                 }}
@@ -554,7 +555,7 @@ const Top = () => {
                 </Box>
 
                 {/* Scrollable content */}
-                <Box sx={{ overflowY: 'auto', maxHeight: 'calc(80vh - 56px)', bgcolor: isDark ? '#111111' : '#ffffff' }}>
+                <Box sx={{ overflowY: 'auto', maxHeight: 'calc(80vh - 56px)', bgcolor: isDark ? '#1E293B' : '#ffffff' }}>
                   {notifications.length === 0 && announcements.length === 0 ? (
                     <Box sx={{ py: 6, textAlign: 'center' }}>
                       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
@@ -573,7 +574,7 @@ const Top = () => {
                                 px: 2.5, py: 1.75,
                                 bgcolor: n.isRead ? 'transparent' : (isDark ? 'rgba(99,102,241,0.08)' : '#f8f7ff'),
                                 borderLeft: n.isRead ? '3px solid transparent' : '3px solid #6366f1',
-                                borderBottom: `1px solid ${isDark ? '#27272A' : '#FAFAFA'}`,
+                                borderBottom: `1px solid ${isDark ? '#334155' : '#FAFAFA'}`,
                                 transition: 'background 0.2s',
                                 '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc' },
                               }}
@@ -581,7 +582,7 @@ const Top = () => {
                               <Stack direction="row" spacing={1.5} alignItems="flex-start">
                                 <Box sx={{
                                   width: 36, height: 36, borderRadius: '50%',
-                                  bgcolor: n.isRead ? (isDark ? '#27272A' : '#FAFAFA') : (isDark ? 'rgba(99,102,241,0.2)' : '#eef2ff'),
+                                  bgcolor: n.isRead ? (isDark ? '#334155' : '#FAFAFA') : (isDark ? 'rgba(99,102,241,0.2)' : '#eef2ff'),
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                                   flexShrink: 0,
                                 }}>
@@ -591,7 +592,7 @@ const Top = () => {
                                   <Stack direction="row" justifyContent="space-between" alignItems="center">
                                     <Typography
                                       fontSize={13} fontWeight={n.isRead ? 500 : 700}
-                                      color={n.isRead ? (isDark ? '#71717A' : '#475569') : (isDark ? '#FAFAFA' : '#09090B')} noWrap
+                                      color={n.isRead ? (isDark ? '#71717A' : '#475569') : (isDark ? '#FAFAFA' : '#0F172A')} noWrap
                                     >
                                       {n.title}
                                     </Typography>
@@ -618,7 +619,7 @@ const Top = () => {
                           <Box sx={{
                             px: 2.5, py: 1,
                             bgcolor: isDark ? 'rgba(217,119,6,0.1)' : '#fffbeb',
-                            borderTop: notifications.length > 0 ? `1px solid ${isDark ? '#27272A' : '#e2e8f0'}` : 'none',
+                            borderTop: notifications.length > 0 ? `1px solid ${isDark ? '#334155' : '#e2e8f0'}` : 'none',
                             borderBottom: `1px solid ${isDark ? 'rgba(217,119,6,0.3)' : '#fde68a'}`,
                           }}>
                             <Stack direction="row" spacing={1} alignItems="center">
@@ -633,7 +634,7 @@ const Top = () => {
                             return (
                               <Box key={ann._id} sx={{
                                 px: 2.5, py: 1.75,
-                                borderBottom: idx < announcements.length - 1 ? `1px solid ${isDark ? '#27272A' : '#FAFAFA'}` : 'none',
+                                borderBottom: idx < announcements.length - 1 ? `1px solid ${isDark ? '#334155' : '#FAFAFA'}` : 'none',
                                 '&:hover': { bgcolor: isDark ? 'rgba(217,119,6,0.06)' : '#fffbeb' },
                               }}>
                                 <Stack direction="row" spacing={1.5} alignItems="flex-start">
@@ -660,7 +661,7 @@ const Top = () => {
                                       />
                                       <Typography fontSize={11} color={isDark ? '#475569' : '#71717A'}>{timeAgo(ann.createdAt)}</Typography>
                                     </Stack>
-                                    <Typography fontSize={13} fontWeight={600} color={isDark ? '#FAFAFA' : '#09090B'} noWrap>{ann.title}</Typography>
+                                    <Typography fontSize={13} fontWeight={600} color={isDark ? '#FAFAFA' : '#0F172A'} noWrap>{ann.title}</Typography>
                                     <Typography fontSize={12} color={isDark ? '#71717A' : '#64748b'} sx={{
                                       display: '-webkit-box', WebkitLineClamp: 2,
                                       WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.5,
@@ -681,8 +682,8 @@ const Top = () => {
                 {/* Footer */}
                 <Box sx={{
                   px: 2.5, py: 1.5,
-                  borderTop: `1px solid ${isDark ? '#27272A' : '#FAFAFA'}`,
-                  bgcolor: isDark ? '#09090B' : '#fafafa',
+                  borderTop: `1px solid ${isDark ? '#334155' : '#FAFAFA'}`,
+                  bgcolor: isDark ? '#0F172A' : '#fafafa',
                   display: 'flex', gap: 1,
                 }}>
                   <Button
@@ -705,7 +706,7 @@ const Top = () => {
               {/* ── Profile Avatar ── */}
               <Tooltip title={user.fullName ?? user.username ?? 'Profil'}>
                 <Avatar
-                  src={user.profileImage || undefined}
+                  src={fixAvatarUrl(user.profileImage)}
                   sx={{
                     width: 36, height: 36, cursor: 'pointer',
                     bgcolor: '#6366F1', fontSize: 14,
@@ -728,11 +729,11 @@ const Top = () => {
                     minWidth: 200, mt: 1,
                     borderRadius: 2.5,
                     boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',
-                    border: `1px solid ${isDark ? '#27272A' : '#e2e8f0'}`,
+                    border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
                   },
                 }}
               >
-                <Box sx={{ px: 2, py: 1.5, bgcolor: isDark ? '#09090B' : '#f8fafc' }}>
+                <Box sx={{ px: 2, py: 1.5, bgcolor: isDark ? '#0F172A' : '#f8fafc' }}>
                   {user.fullName && (
                     <Typography fontSize={13} fontWeight={700} color="#0f172a">{user.fullName}</Typography>
                   )}
@@ -747,6 +748,9 @@ const Top = () => {
                 </MenuItem>
                 <MenuItem onClick={() => { router.push('/dashboard'); setProfileMenuAnchor(null); }} sx={{ fontSize: 13, py: 1.2, gap: 1.25 }}>
                   <JobsMenuIcon size={16} color="#64748b" /> Dashboard
+                </MenuItem>
+                <MenuItem onClick={() => { router.push('/resume'); setProfileMenuAnchor(null); }} sx={{ fontSize: 13, py: 1.2, gap: 1.25 }}>
+                  <span>✨</span> AI Resume
                 </MenuItem>
                 <MenuItem onClick={() => { router.push('/disputes'); setProfileMenuAnchor(null); }} sx={{ fontSize: 13, py: 1.2, gap: 1.25, color: '#dc2626' }}>
                   <span>⚠️</span> Nizolar

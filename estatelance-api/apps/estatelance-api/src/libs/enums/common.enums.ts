@@ -66,6 +66,15 @@ export enum BidStatus {
 }
 registerEnumType(BidStatus, { name: 'BidStatus' });
 
+// ─── Boost to'lov (chek) holati ───────────────────────────────────────────────
+export enum BoostPaymentStatus {
+  NONE = 'NONE',
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+registerEnumType(BoostPaymentStatus, { name: 'BoostPaymentStatus' });
+
 // ─── Freelancer Availability ─────────────────────────────────────────────────
 export enum FreelancerAvailability {
   AVAILABLE = 'AVAILABLE', // Can take new jobs

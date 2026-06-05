@@ -42,14 +42,37 @@
   --shadow-xl: 0 20px 56px rgba(0,0,0,0.10);
 
   // Radii — slightly tighter than before
-  --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  14px;
-  --radius-xl:  20px;
+  --radius-sm:  10px;
+  --radius-md:  16px;
+  --radius-lg:  22px;
+  --radius-xl:  32px;
   --radius-full: 999px;
 
-  --transition: 0.15s ease;
-  --transition-slow: 0.25s ease;
+  // Easing — professional, springy micro-interactions
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition:      0.18s var(--ease-out);
+  --transition-slow: 0.28s var(--ease-out);
+
+  // Focus ring — derived from primary so it tracks the theme
+  --ring: 0 0 0 3px rgba(99, 102, 241, 0.28);
+
+  // Autofill fon rangi (transition emas — inset shadow, qaltirishsiz)
+  --autofill-bg: #ffffff;
+}
+
+// ─── Browser autofill (LIGHT + umumiy) ───────────────────────────────────────
+// transition:9999s parol yozganda brauzer autofill holatini o'zgartirganda
+// butun formani qaltiratadi. inset shadow barqaror, animatsiyasiz.
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--autofill-bg) inset !important;
+  -webkit-text-fill-color: var(--text-1) !important;
+  caret-color: var(--text-1);
 }
 
 // ─── Reset & Base ─────────────────────────────────────────────────────────────
@@ -201,42 +224,45 @@ body {
   --primary-bg:     rgba(168,85,247,0.12);
   --primary-border: rgba(168,85,247,0.25);
 
-  --text-1:    #FAFAFA;               // zinc-50
-  --text-2:    #D4D4D8;               // zinc-300
-  --text-3:    #71717A;               // zinc-500
-  --text-4:    #52525B;               // zinc-600
+  --text-1:    #F1F5F9;               // slate-100
+  --text-2:    #CBD5E1;               // slate-300
+  --text-3:    #94A3B8;               // slate-400
+  --text-4:    #64748B;               // slate-500
 
-  --surface:    #111111;              // card background
-  --surface-2:  #09090B;              // page background (zinc-950)
-  --surface-3:  #18181B;              // elevated card (zinc-900)
+  --surface:    #1E293B;              // slate-800 — card
+  --surface-2:  #0F172A;              // slate-900 — page bg
+  --surface-3:  #293548;              // elevated card
 
-  --border:     #27272A;              // zinc-800
-  --border-2:   #1C1C1E;              // even more subtle
+  --border:     #334155;              // slate-700
+  --border-2:   #1E293B;              // subtle border
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
-  --shadow-md: 0 4px 20px rgba(0,0,0,0.6);
-  --shadow-lg: 0 12px 48px rgba(0,0,0,0.7);
-  --shadow-xl: 0 20px 64px rgba(0,0,0,0.8);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.5);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,0.6);
+  --shadow-xl: 0 20px 64px rgba(0,0,0,0.7);
+
+  --autofill-bg: #0f172a;
+  --ring: 0 0 0 3px rgba(168, 85, 247, 0.32);
 
   // ── Page background ───────────────────────────────────────────────────────────
   body {
-    background-color: #09090B;
-    color: #FAFAFA;
+    background-color: #0F172A;
+    color: #F1F5F9;
   }
 
   // ── Scrollbar ─────────────────────────────────────────────────────────────────
-  ::-webkit-scrollbar-track  { background: #09090B; }
-  ::-webkit-scrollbar-thumb  { background: #27272A; &:hover { background: #3F3F46; } }
+  ::-webkit-scrollbar-track  { background: #0F172A; }
+  ::-webkit-scrollbar-thumb  { background: #334155; &:hover { background: #475569; } }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // TAILWIND BACKGROUND CLASSES → Dark Premium remap
   // ─────────────────────────────────────────────────────────────────────────────
-  .bg-white          { background-color: #111111  !important; }
-  .bg-slate-50       { background-color: #09090B  !important; }
-  .bg-slate-100      { background-color: #18181B  !important; }
-  .bg-slate-200      { background-color: #27272A  !important; }
-  .bg-gray-50        { background-color: #09090B  !important; }
-  .bg-gray-100       { background-color: #18181B  !important; }
+  .bg-white          { background-color: #1E293B  !important; }
+  .bg-slate-50       { background-color: #0F172A  !important; }
+  .bg-slate-100      { background-color: #1E293B  !important; }
+  .bg-slate-200      { background-color: #293548  !important; }
+  .bg-gray-50        { background-color: #0F172A  !important; }
+  .bg-gray-100       { background-color: #1E293B  !important; }
 
   // Badge / chip ranglari — purple glow
   .bg-indigo-50      { background-color: rgba(168,85,247,0.12)  !important; }
@@ -281,24 +307,20 @@ body {
   // ─────────────────────────────────────────────────────────────────────────────
   // TAILWIND BORDER CLASSES
   // ─────────────────────────────────────────────────────────────────────────────
-  .border-slate-200  { border-color: #27272A !important; }
-  .border-slate-100  { border-color: #1C1C1E !important; }
-  .border-gray-200   { border-color: #27272A !important; }
-  .divide-slate-100  > * + * { border-color: #1C1C1E !important; }
-  .divide-slate-200  > * + * { border-color: #27272A !important; }
-  hr { border-color: #27272A !important; }
+  .border-slate-200  { border-color: #334155 !important; }
+  .border-slate-100  { border-color: #1E293B !important; }
+  .border-gray-200   { border-color: #334155 !important; }
+  .divide-slate-100  > * + * { border-color: #1E293B !important; }
+  .divide-slate-200  > * + * { border-color: #334155 !important; }
+  hr { border-color: #334155 !important; }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // HOVER STATES
   // ─────────────────────────────────────────────────────────────────────────────
-  .hover\:bg-slate-50:hover   { background-color: rgba(255,255,255,0.04)  !important; }
-  .hover\:bg-slate-100:hover  { background-color: #18181B                 !important; }
-  .hover\:bg-white:hover      { background-color: #18181B                 !important; }
-  .hover\:shadow-md:hover     { box-shadow: 0 4px 24px rgba(0,0,0,0.7)   !important; }
-
-  // Button hover — purple glow
-  .hover\:bg-indigo-700:hover { background-color: #9333EA !important; }
-  .hover\:bg-indigo-50:hover  { background-color: rgba(168,85,247,0.15) !important; }
+  .hover\:bg-slate-50:hover   { background-color: rgba(255,255,255,0.05)  !important; }
+  .hover\:bg-slate-100:hover  { background-color: #1E293B                 !important; }
+  .hover\:bg-white:hover      { background-color: #1E293B                 !important; }
+  .hover\:shadow-md:hover     { box-shadow: 0 4px 24px rgba(0,0,0,0.5)   !important; }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // NATIVE INPUTS
@@ -306,60 +328,67 @@ body {
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
   textarea,
   select {
-    background-color: #111111 !important;
-    color: #FAFAFA !important;
-    border-color: #27272A !important;
+    // Fon shaffof — input o'zi turgan karta/forma foniga singib ketadi
+    // (qora #111 dog'lar to'q-ko'k formalarda ko'rinmasligi uchun)
+    background-color: transparent !important;
+    color: #F1F5F9 !important;
+    border-color: #334155 !important;
     color-scheme: dark;
-    &::placeholder { color: #52525B !important; }
+    &::placeholder { color: #64748B !important; }
     &:focus, &:focus-visible {
       border-color: rgba(168,85,247,0.5) !important;
       outline: none !important;
-      box-shadow: 0 0 0 3px rgba(168,85,247,0.15) !important;
+      box-shadow: 0 0 0 3px rgba(168,85,247,0.12) !important;
     }
     &:-webkit-autofill,
     &:-webkit-autofill:hover,
     &:-webkit-autofill:focus,
     &:-webkit-autofill:active {
-      -webkit-box-shadow: 0 0 0 1000px #111111 inset !important;
-      -webkit-text-fill-color: #FAFAFA !important;
-      caret-color: #FAFAFA !important;
-      transition: background-color 9999s ease-in-out 0s;
+      // Login/forma maydonlari fonsiz (transparent) bo'lib, sahifa foniga
+      // (--autofill-bg = #0f172a) singadi. Avval #1E293B (karta rangi) edi —
+      // u sahifa fonidan ochroq bo'lib, autofill'da ochiq "yamoq" ko'rinardi.
+      -webkit-box-shadow: 0 0 0 1000px var(--autofill-bg) inset !important;
+      -webkit-text-fill-color: #F1F5F9 !important;
+      caret-color: #F1F5F9 !important;
     }
+  }
+
+  // MUI ichki <input> (.MuiInputBase-input) radiussiz — fokusdagi 3px glow
+  // burchaklarda kvadrat bo'lib ko'rinadi. MUI fokus ramkasi notchedOutline
+  // orqali ishlaydi, shuning uchun bu yerda box-shadow ni butunlay o'chiramiz.
+  // Yuqori specificity native input qoidasini bosib o'tishi uchun :not zanjiri.
+  input.MuiInputBase-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):focus,
+  input.MuiInputBase-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):focus-visible {
+    box-shadow: none !important;
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // CARD CLASSES
   // ─────────────────────────────────────────────────────────────────────────────
   .card-base {
-    background-color: #111111 !important;
-    border-color: #27272A !important;
+    background-color: #1E293B !important;
+    border-color: #334155 !important;
     &:hover {
       border-color: rgba(168,85,247,0.35) !important;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(168,85,247,0.15) !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(168,85,247,0.12) !important;
     }
   }
-  .card-flat     { background-color: #111111  !important; border-color: #27272A !important; }
+  .card-flat     { background-color: #1E293B !important; border-color: #334155 !important; }
   .card-glass    {
-    background: rgba(17,17,17,0.85) !important;
+    background: rgba(15,23,42,0.85) !important;
     border-color: rgba(168,85,247,0.15) !important;
     backdrop-filter: blur(20px);
   }
-  .card-elevated { background-color: #18181B !important; }
+  .card-elevated { background-color: #293548 !important; }
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // ROUNDED-2XL bordered cards — most common pattern in the codebase
-  // ─────────────────────────────────────────────────────────────────────────────
   .rounded-2xl.border.border-slate-200,
   .rounded-2xl.border.border-slate-100 {
-    background-color: #111111 !important;
-    border-color: #27272A !important;
+    background-color: #1E293B !important;
+    border-color: #334155 !important;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // SKELETON
-  // ─────────────────────────────────────────────────────────────────────────────
   .skeleton, .skeleton-text, .skeleton-title, .skeleton-card {
-    background: linear-gradient(90deg, #18181B 25%, #27272A 50%, #18181B 75%) !important;
+    background: linear-gradient(90deg, #1E293B 25%, #293548 50%, #1E293B 75%) !important;
     background-size: 200% 100% !important;
     animation: shimmer 1.5s infinite;
   }
@@ -422,7 +451,7 @@ button, [type='button'], [type='reset'], [type='submit'] {
   background: transparent;
   cursor: pointer;
   &:focus { outline: none !important; }
-  &:focus-visible { outline: none !important; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25); }
+  &:focus-visible { outline: none !important; box-shadow: var(--ring); }
 }
 
 // ─── Input / Select / Textarea ────────────────────────────────────────────────
@@ -643,7 +672,7 @@ input, select, textarea {
     transform: translateY(-1px);
     box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
   }
-  &:active { transform: translateY(0); }
+  &:active { transform: translateY(0) scale(0.98); box-shadow: 0 1px 4px rgba(79, 70, 229, 0.3); }
 }
 
 .btn-outline {
@@ -664,6 +693,7 @@ input, select, textarea {
     background: var(--primary-bg);
     border-color: var(--primary);
   }
+  &:active { transform: scale(0.98); }
 }
 
 .btn-ghost {
@@ -749,7 +779,7 @@ input, select, textarea {
 :focus { outline: none; }
 :focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+  box-shadow: var(--ring);
 }
 
 // ─── MUI Input — tashqi to'rtburchak outline/box-shadow ni olib tashlash ─────
@@ -789,7 +819,7 @@ input, select, textarea {
 
   &:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    box-shadow: var(--ring);
   }
 
   &:disabled {
@@ -853,7 +883,7 @@ input, select, textarea {
   width: 10px;
   height: 10px;
   background: var(--success);
-  border: 2px solid white;
+  border: 2px solid var(--surface);
   border-radius: 50%;
 }
 

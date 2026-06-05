@@ -3,6 +3,7 @@ import { IsEnum, IsNotEmpty, IsOptional, Min, Max } from 'class-validator';
 import { JobCategory, JobStatus, PropertyType } from '../enums/common.enums';
 import { PaginationInput, PaginationInfo } from '../types/common.types';
 import { Job } from '../../schemas/Job.model';
+import { User } from '../../schemas/User.model';
 
 // ─── Input: Post a new Job ────────────────────────────────────────────────────
 @InputType()
@@ -193,6 +194,41 @@ export class LeaveReviewInput {
   @IsNotEmpty()
   @Field(() => String)
   reviewText: string;
+}
+
+// ─── Admin: kutilayotgan boost to'lovlari ────────────────────────────────────
+@ObjectType()
+export class BoostPaymentPendingItem {
+  @Field(() => String)
+  boostKind: string;
+
+  @Field(() => Job, { nullable: true })
+  job?: Job;
+
+  @Field(() => User, { nullable: true })
+  profile?: User;
+
+  @Field(() => String)
+  agentName: string;
+
+  @Field(() => String, { nullable: true })
+  agentUsername?: string;
+}
+
+// ─── Boost bevosita to'lov — platforma rekvizitlari ─────────────────────────
+@ObjectType()
+export class BoostPaymentInfo {
+  @Field(() => String, { nullable: true })
+  cardNumber?: string;
+
+  @Field(() => String, { nullable: true })
+  phoneNumber?: string;
+
+  @Field(() => String, { nullable: true })
+  holderName?: string;
+
+  @Field(() => String, { nullable: true })
+  paymentNote?: string;
 }
 
 // ─── Response: Paginated job list ────────────────────────────────────────────

@@ -43,6 +43,7 @@ export class BidService {
       freelancerId,
       freelancerName: freelancer.fullName ?? freelancer.username,
       freelancerTitle: freelancer.bio ?? 'Professional Freelancer',
+      freelancerAvatar: freelancer.profileImage ?? '',
       status: BidStatus.PENDING,
     });
 
@@ -69,6 +70,30 @@ export class BidService {
   // ─── Get All Bids by a Freelancer ─────────────────────────────────────────
   async getMyBids(freelancerId: string): Promise<Bid[]> {
     return this.bidModel.find({ freelancerId }).sort({ createdAt: -1 });
+  }
+
+  // ─── Get All Bids across an Agent's Jobs (for the "Takliflar" tab) ─────────
+  async getBidsForAgent(agentId: string): Promise<Bid[]> {
+    const jobs = await this.jobModel.find({ agentId }).select('_id');
+    const jobIds = jobs.map((j) => j._id);
+    if (jobIds.length === 0) return [];
+    return this.bidModel.find({ jobId: { $in: jobIds } }).sort({ createdAt: -1 });
+  }
+
+  // ─── Get the Freelancers who bid on a specific job ─────────────────────────
+  // Used by the agent when marking a job completed (to pick who was hired).
+  async getJobBidders(agentId: string, jobId: string): Promise<User[]> {
+    const job = await this.jobModel.findOne({ _id: jobId, agentId });
+    if (!job) throw new NotFoundException('Ish topilmadi yoki siz egasi emassiz');
+
+    const bids = await this.bidModel.find({ jobId }).sort({ createdAt: -1 });
+    const freelancerIds = bids.map((b) => String(b.freelancerId));
+    if (freelancerIds.length === 0) return [];
+
+    const users = await this.userModel.find({ _id: { $in: freelancerIds } });
+    // Preserve bid order (most recent first)
+    const byId = new Map(users.map((u) => [String(u._id), u]));
+    return freelancerIds.map((id) => byId.get(id)).filter(Boolean) as User[];
   }
 
   // ─── Accept a Bid ─────────────────────────────────────────────────────────
