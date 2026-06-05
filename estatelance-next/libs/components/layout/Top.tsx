@@ -121,6 +121,10 @@ const Top = () => {
     setMobileOpen(false);
   }, [router.pathname]);
 
+  // ── Navbar: barcha sahifalarda har doim glass (blur + shaffof), burchakli ──
+  const overlay = false;     // overlay rejimi o'chirildi — nav doim glass
+  const effDark = isDark;    // ranglar oddiy temaga qarab
+
   const handleLogout = () => {
     logout();
     router.push('/');
@@ -321,11 +325,14 @@ const Top = () => {
         position="sticky"
         elevation={0}
         sx={{
-          bgcolor: isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.92)',
-          backdropFilter: 'blur(16px)',
-          borderBottom: `1px solid ${isDark ? '#334155' : '#E4E4E7'}`,
+          bgcolor: 'transparent',
+          backgroundImage: 'none',
+          backdropFilter: 'blur(5px) saturate(120%)',
+          WebkitBackdropFilter: 'blur(5px) saturate(120%)',
+          boxShadow: isDark ? '0 8px 28px rgba(0,0,0,0.38)' : '0 8px 24px rgba(15,23,42,0.08)',
+          borderRadius: 0,
+          borderBottom: 'none',
           color: isDark ? '#FAFAFA' : '#18181B',
-          transition: 'background-color 0.2s ease, border-color 0.2s ease',
         }}
       >
         <Toolbar sx={{ maxWidth: 1280, width: '100%', mx: 'auto', px: { xs: 2, lg: 4 }, minHeight: { xs: 56, sm: 64 } }}>
@@ -336,11 +343,11 @@ const Top = () => {
             sx={{
               display: { xs: 'flex', lg: 'none' },
               mr: 1,
-              color: isDark ? '#71717A' : '#374151',
-              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+              color: effDark ? '#e2e8f0' : '#374151',
+              border: `1px solid ${overlay ? 'rgba(255,255,255,0.25)' : (isDark ? '#334155' : '#e2e8f0')}`,
               borderRadius: 2,
               width: 36, height: 36,
-              '&:hover': { bgcolor: isDark ? '#1E293B' : '#FAFAFA' },
+              '&:hover': { bgcolor: effDark ? 'rgba(255,255,255,0.1)' : '#FAFAFA' },
             }}
           >
             <MenuIcon size={20} />
@@ -369,14 +376,14 @@ const Top = () => {
               {/* Wordmark */}
               <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
                 <Typography sx={{ fontWeight: 800, fontSize: 17, lineHeight: 1, letterSpacing: -0.5 }}>
-                  <span style={{ color: isDark ? '#e0e7ff' : '#1e1b4b' }}>Bu</span><span style={{ color: isDark ? '#C084FC' : '#6366f1' }}>Fu</span>
+                  <span style={{ color: effDark ? '#e0e7ff' : '#1e1b4b' }}>Bu</span><span style={{ color: effDark ? '#C084FC' : '#6366f1' }}>Fu</span>
                 </Typography>
                 <Typography sx={{ fontSize: 9, color: '#8b5cf6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>
                   Build Future
                 </Typography>
               </Box>
               <Typography sx={{ display: { xs: 'block', sm: 'none' }, fontWeight: 800, fontSize: 17, letterSpacing: -0.5 }}>
-                <span style={{ color: isDark ? '#e0e7ff' : '#1e1b4b' }}>Bu</span><span style={{ color: isDark ? '#C084FC' : '#6366f1' }}>Fu</span>
+                <span style={{ color: effDark ? '#e0e7ff' : '#1e1b4b' }}>Bu</span><span style={{ color: effDark ? '#C084FC' : '#6366f1' }}>Fu</span>
               </Typography>
             </Stack>
           </Link>
@@ -403,11 +410,11 @@ const Top = () => {
                     }}
                   >
                     <Button size="small" sx={{
-                      color: isActive ? (isDark ? '#C084FC' : '#6366F1') : (isDark ? '#71717A' : '#64748b'),
-                      bgcolor: isActive ? (isDark ? 'rgba(129,140,248,0.15)' : '#eef2ff') : 'transparent',
+                      color: isActive ? (effDark ? '#C084FC' : '#6366F1') : (effDark ? '#cbd5e1' : '#64748b'),
+                      bgcolor: isActive ? (effDark ? 'rgba(129,140,248,0.15)' : '#eef2ff') : 'transparent',
                       fontWeight: isActive ? 700 : 500,
                       fontSize: 13, px: 1.5, borderRadius: 2,
-                      '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.07)' : '#FAFAFA', color: isDark ? '#FAFAFA' : '#0F172A' },
+                      '&:hover': { bgcolor: effDark ? 'rgba(255,255,255,0.07)' : '#FAFAFA', color: effDark ? '#FAFAFA' : '#0F172A' },
                       transition: 'all 0.15s',
                     }}>
                       {link.label}
@@ -441,9 +448,9 @@ const Top = () => {
                   size="small"
                   onClick={() => setTheme(isDark ? 'light' : 'dark')}
                   sx={{
-                    color: isDark ? '#facc15' : '#64748b',
-                    bgcolor: isDark ? 'rgba(250,204,21,0.1)' : 'rgba(100,116,139,0.08)',
-                    '&:hover': { bgcolor: isDark ? 'rgba(250,204,21,0.2)' : 'rgba(100,116,139,0.15)' },
+                    color: overlay ? '#e2e8f0' : (isDark ? '#facc15' : '#64748b'),
+                    bgcolor: overlay ? 'rgba(255,255,255,0.1)' : (isDark ? 'rgba(250,204,21,0.1)' : 'rgba(100,116,139,0.08)'),
+                    '&:hover': { bgcolor: overlay ? 'rgba(255,255,255,0.18)' : (isDark ? 'rgba(250,204,21,0.2)' : 'rgba(100,116,139,0.15)') },
                     width: 34, height: 34,
                   }}
                 >
@@ -769,9 +776,9 @@ const Top = () => {
                   size="small"
                   onClick={() => setTheme(isDark ? 'light' : 'dark')}
                   sx={{
-                    color: isDark ? '#facc15' : '#64748b',
-                    bgcolor: isDark ? 'rgba(250,204,21,0.1)' : 'rgba(100,116,139,0.08)',
-                    '&:hover': { bgcolor: isDark ? 'rgba(250,204,21,0.2)' : 'rgba(100,116,139,0.15)' },
+                    color: overlay ? '#e2e8f0' : (isDark ? '#facc15' : '#64748b'),
+                    bgcolor: overlay ? 'rgba(255,255,255,0.1)' : (isDark ? 'rgba(250,204,21,0.1)' : 'rgba(100,116,139,0.08)'),
+                    '&:hover': { bgcolor: overlay ? 'rgba(255,255,255,0.18)' : (isDark ? 'rgba(250,204,21,0.2)' : 'rgba(100,116,139,0.15)') },
                     width: 34, height: 34,
                   }}
                 >

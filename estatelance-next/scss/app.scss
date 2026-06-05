@@ -85,6 +85,9 @@ select:-webkit-autofill {
 html {
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
+  // Gorizontal (chap-o'ng) scroll'ni o'chiramiz — hero `100vw` scrollbar kengligi
+  // tufayli ortiqcha kenglik berib, pastda gorizontal scroll chiqarardi.
+  overflow-x: hidden;
 }
 
 // ─── Bosh sahifa: keng kontent (ikki yonda 100px) ─────────────────────────────

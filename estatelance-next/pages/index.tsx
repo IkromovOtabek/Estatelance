@@ -373,265 +373,178 @@ const HomePage = () => {
         <link rel="canonical" href="https://bufu.uz" />
       </Head>
 
-      {/* ─── HERO (kod bilan · light/dark) ────────────────────────────────── */}
+      {/* ─── HERO — Aurora to'liq-ekran rasm swiper (har 5s almashadi) ─────── */}
       <section
         className="bufu-hero relative w-screen overflow-hidden"
         style={{
-          backgroundColor: isDark ? '#0B0B14' : '#F2F1FB',
           marginLeft: 'calc(-50vw + 50%)',
           marginRight: 'calc(-50vw + 50%)',
-          marginTop: '-32px',
-          transition: 'background-color 0.25s ease',
+          marginTop: '-112px', // nav + main pt + zaxira — tepada oq bo'shliq HECH QANDAY brauzerda qolmaydi (rasm overflow:hidden bilan kesiladi)
         }}
       >
-        {/* Decorative blobs */}
+        {/* Rasm foni (statik) */}
+        <div className="hero-slides">
+          <div
+            className="hero-slide"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1600&q=80&auto=format&fit=crop')" }}
+          />
+        </div>
+        {/* To'q qoplama (matn o'qilishi uchun) */}
+        <div className="hero-ov" />
+        {/* Pastki fade — keyingi bo'lim rangiga silliq ulanadi */}
         <div
-          className="absolute -top-24 -right-16 w-[420px] h-[420px] rounded-full pointer-events-none"
-          style={{ background: isDark ? 'radial-gradient(circle, rgba(99,102,241,0.30), transparent 70%)' : 'radial-gradient(circle, rgba(99,102,241,0.16), transparent 70%)', filter: 'blur(20px)' }}
+          className="hero-fade-b"
+          style={{ background: `linear-gradient(180deg, transparent 0%, ${isDark ? '#0b0f1d' : '#ffffff'} 100%)` }}
         />
-        <div
-          className="absolute top-20 -left-24 w-[360px] h-[360px] rounded-full pointer-events-none"
-          style={{ background: isDark ? 'radial-gradient(circle, rgba(168,85,247,0.26), transparent 70%)' : 'radial-gradient(circle, rgba(168,85,247,0.18), transparent 70%)', filter: 'blur(20px)' }}
-        />
-        {/* Confetti */}
-        <div className="confetti-wrap pointer-events-none absolute inset-0 overflow-hidden">
-          {[
-            { l: '8%',  t: '14%', c: '#6366F1', d: '0s' },
-            { l: '20%', t: '8%',  c: '#A855F7', d: '.4s' },
-            { l: '33%', t: '20%', c: '#F59E0B', d: '.8s' },
-            { l: '46%', t: '10%', c: '#22C55E', d: '.2s' },
-            { l: '60%', t: '16%', c: '#EF4444', d: '.6s' },
-            { l: '74%', t: '9%',  c: '#6366F1', d: '1s' },
-            { l: '88%', t: '22%', c: '#A855F7', d: '.3s' },
-          ].map((p, i) => (
-            <span key={i} className="confetti" style={{ left: p.l, top: p.t, backgroundColor: p.c, animationDelay: p.d }} />
-          ))}
+
+        {/* Scroll indikatori (pastki shadow ustida) */}
+        <div className="hero-scroll" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
+          <span className="hero-scroll-txt">Scroll</span>
+          <CaretDown size={18} weight="bold" />
         </div>
 
-        <div className="relative hw py-14 lg:py-20 grid lg:grid-cols-2 gap-12 items-center">
-          {/* ── Left ── */}
-          <div className="hero-left">
-            <h1 className={`text-4xl sm:text-5xl lg:text-[3.4rem] font-black leading-[1.05] tracking-tight mb-5 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              Orzuingizdagi ishni{' '}
-              <span style={{ background: 'linear-gradient(120deg, #6366F1, #A855F7)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                BuFu
-              </span>
-              da toping
-            </h1>
+        {/* Kontent (markazda) */}
+        <div className="relative z-10 hw text-center flex flex-col items-center" style={{ paddingTop: 48, paddingBottom: 64 }}>
+          <div className="hero-eyebrow">✦ O'zbekistonning №1 frilanser platformasi</div>
 
-            <p className={`text-lg leading-relaxed mb-8 max-w-xl ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-              O'zbekistonning eng ishonchli freelancer platformasi. Mutaxassis yollang yoki o'z mahoratingiz bilan daromad olishni bugundan boshlang.
-            </p>
+          <h1 className="text-4xl sm:text-5xl lg:text-[3.7rem] font-black leading-[1.04] tracking-tight mt-6 mb-4 text-white max-w-3xl">
+            Orzuingizdagi ishni{' '}
+            <span style={{ background: 'linear-gradient(120deg, #818CF8, #C084FC)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              BuFu
+            </span>
+            da toping
+          </h1>
 
-            {/* CTA buttons — auth holati va rolga qarab */}
-            <div className="flex flex-wrap items-center gap-3 mb-9">
-              {isFreelancer ? (
-                /* Frilanser: ish topish */
+          <p className="text-lg leading-relaxed mb-8 max-w-2xl text-slate-300">
+            O'zbekistonning eng ishonchli freelancer platformasi. Mutaxassis yollang yoki o'z mahoratingiz bilan daromad olishni bugundan boshlang.
+          </p>
+
+          {/* CTA — auth holati va rolga qarab (saqlangan) */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-9">
+            {isFreelancer ? (
+              <Link
+                href="/jobs"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all no-underline shadow-lg shadow-indigo-500/30"
+              >
+                <MagnifyingGlass size={18} weight="bold" /> Ish topish
+              </Link>
+            ) : isAgent ? (
+              <>
                 <Link
-                  href="/jobs"
+                  href="/my-works/create"
                   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all no-underline shadow-lg shadow-indigo-500/30"
                 >
-                  <MagnifyingGlass size={18} weight="bold" /> Ish topish
+                  <Briefcase size={18} weight="bold" /> Ish e'lon joylash
                 </Link>
-              ) : isAgent ? (
-                /* Ish beruvchi (agent): ish e'lon joylash + ishchi izlash */
-                <>
-                  <Link
-                    href="/my-works/create"
-                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all no-underline shadow-lg shadow-indigo-500/30"
-                  >
-                    <Briefcase size={18} weight="bold" /> Ish e'lon joylash
-                  </Link>
-                  <Link
-                    href="/browse"
-                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm transition-all no-underline"
-                    style={{ backgroundColor: '#A855F7', boxShadow: '0 10px 24px rgba(168,85,247,0.32)' }}
-                  >
-                    <MagnifyingGlass size={18} weight="bold" /> Ishchi izlash
-                  </Link>
-                </>
-              ) : (
-                /* Signup bo'lmagan (mehmon) foydalanuvchi */
-                <>
-                  <Link
-                    href="/browse"
-                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all no-underline shadow-lg shadow-indigo-500/30"
-                  >
-                    <MagnifyingGlass size={18} weight="bold" /> Mutaxassis topish
-                  </Link>
-                  <Link
-                    href="/account"
-                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm transition-all no-underline"
-                    style={{ backgroundColor: '#A855F7', boxShadow: '0 10px 24px rgba(168,85,247,0.32)' }}
-                  >
-                    <Briefcase size={18} weight="bold" /> Ishchi izlayapman
-                  </Link>
-                </>
-              )}
-            </div>
-
-            {/* Trust — real frilanserlar (avatar stack) */}
-            {heroAvatars.length > 0 && (
-              <div className="flex items-center gap-4">
-                <div className="flex -space-x-3">
-                  {heroAvatars.map((f, i) => {
-                    const name = f.fullName ?? f.username ?? 'U';
-                    return (
-                      <div
-                        key={f._id}
-                        className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold"
-                        style={{
-                          zIndex: heroAvatars.length - i,
-                          background: 'linear-gradient(135deg,#6366F1,#A855F7)',
-                          border: `2px solid ${isDark ? '#0B0B14' : '#F2F1FB'}`,
-                        }}
-                        title={name}
-                      >
-                        {f.profileImage ? (
-                          <img src={f.profileImage} alt={name} className="w-full h-full object-cover" />
-                        ) : (
-                          name[0]?.toUpperCase()
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                <div>
-                  <div className={`text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-                    <span className="font-black" style={{ color: '#6366F1' }}>{freelancerCount}+</span> frilanser bizga ishonadi
-                  </div>
-                  {heroAvgRating && (
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <span className="flex items-center gap-0.5">
-                        {[0, 1, 2, 3, 4].map((n) => (
-                          <Star key={n} size={13} weight="fill" color="#F59E0B" />
-                        ))}
-                      </span>
-                      <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{heroAvgRating}</span>
-                      <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>o'rtacha reyting</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+                <Link
+                  href="/browse"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm transition-all no-underline"
+                  style={{ backgroundColor: '#A855F7', boxShadow: '0 10px 24px rgba(168,85,247,0.32)' }}
+                >
+                  <MagnifyingGlass size={18} weight="bold" /> Ishchi izlash
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/browse"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all no-underline shadow-lg shadow-indigo-500/30"
+                >
+                  <MagnifyingGlass size={18} weight="bold" /> Mutaxassis topish
+                </Link>
+                <Link
+                  href="/account"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm transition-all no-underline"
+                  style={{ backgroundColor: '#A855F7', boxShadow: '0 10px 24px rgba(168,85,247,0.32)' }}
+                >
+                  <Briefcase size={18} weight="bold" /> Ishchi izlayapman
+                </Link>
+              </>
             )}
           </div>
 
-          {/* ── Right: live cards ── */}
-          <div className="hero-right relative">
-            {/* Floating "Ish topdingiz!" toast */}
+          {/* Trust — HAQIQIY frilanserlar (glass pill) */}
+          {heroAvatars.length > 0 && (
             <div
-              className="hero-toast absolute -top-5 left-2 z-20 flex items-center gap-2.5 px-4 py-2.5 rounded-xl"
-              style={{
-                backgroundColor: isDark ? '#17172A' : '#FFFFFF',
-                border: `1px solid ${isDark ? '#27272A' : '#ECECF5'}`,
-                boxShadow: isDark ? '0 12px 30px rgba(0,0,0,0.5)' : '0 12px 30px rgba(99,102,241,0.15)',
-              }}
+              className="inline-flex items-center gap-3.5 px-5 py-2.5 rounded-full"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.13)', backdropFilter: 'blur(12px)' }}
             >
-              <span className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(120deg,#6366F1,#A855F7)' }}>
-                <CheckCircle size={16} weight="fill" color="#fff" />
-              </span>
-              <div>
-                <div className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Ish topdingiz! 🎉</div>
-                <div className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Yangi imkoniyat sizni kutmoqda</div>
+              <div className="flex -space-x-3">
+                {heroAvatars.map((f, i) => {
+                  const name = f.fullName ?? f.username ?? 'U';
+                  return (
+                    <div
+                      key={f._id}
+                      className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold"
+                      style={{
+                        zIndex: heroAvatars.length - i,
+                        background: 'linear-gradient(135deg,#6366F1,#A855F7)',
+                        border: '2px solid #0b1020',
+                      }}
+                      title={name}
+                    >
+                      {f.profileImage ? (
+                        <img src={f.profileImage} alt={name} className="w-full h-full object-cover" />
+                      ) : (
+                        name[0]?.toUpperCase()
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="text-left">
+                <div className="text-sm font-semibold text-white">
+                  <span className="font-black" style={{ color: '#C084FC' }}>{freelancerCount}+</span> frilanser bizga ishonadi
+                </div>
+                {heroAvgRating && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="flex items-center gap-0.5">
+                      {[0, 1, 2, 3, 4].map((n) => (
+                        <Star key={n} size={13} weight="fill" color="#F59E0B" />
+                      ))}
+                    </span>
+                    <span className="text-xs font-bold text-slate-200">{heroAvgRating}</span>
+                    <span className="text-xs text-slate-400">o'rtacha reyting</span>
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Card 1: freelancer match */}
-            <div
-              className="hero-card relative z-10 rounded-2xl p-5 mb-4"
-              style={{
-                backgroundColor: isDark ? '#17172A' : '#FFFFFF',
-                border: `1px solid ${isDark ? '#27272A' : '#ECECF5'}`,
-                boxShadow: isDark ? '0 20px 48px rgba(0,0,0,0.5)' : '0 20px 48px rgba(99,102,241,0.12)',
-              }}
-            >
-              <div className={`flex items-center gap-2 text-xs font-bold mb-4 ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
-                <Star size={14} weight="fill" className="text-indigo-500" /> Sizga mos freelancer
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-lg" style={{ background: 'linear-gradient(135deg,#6366F1,#A855F7)' }}>
-                    BR
-                  </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-green-500" style={{ border: `2.5px solid ${isDark ? '#17172A' : '#fff'}` }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Behzod R.</div>
-                  <div className="text-indigo-500 text-xs font-semibold">UI/UX Designer</div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Star size={12} weight="fill" className="text-amber-400" />
-                    <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>5.0</span>
-                    <span className={`text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>(128 ta baho)</span>
-                  </div>
-                </div>
-                <div className="text-center px-3 py-2 rounded-xl" style={{ backgroundColor: isDark ? 'rgba(34,197,94,0.14)' : '#DCFCE7' }}>
-                  <div className="flex items-center gap-1 text-green-600 font-bold text-xs">
-                    <CheckCircle size={14} weight="fill" /> Mos keldi!
-                  </div>
-                  <div className="text-[10px] text-green-600 font-semibold mt-0.5">98% moslik</div>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-4">
-                {['Figma', 'UI/UX', 'Web Design', 'Prototyping'].map((t) => (
-                  <span key={t} className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{t}</span>
-                ))}
-              </div>
-            </div>
-
-            {/* Card 2: matched job */}
-            <div
-              className="hero-card-2 relative z-10 rounded-2xl p-5"
-              style={{
-                backgroundColor: isDark ? '#17172A' : '#FFFFFF',
-                border: `1px solid ${isDark ? '#27272A' : '#ECECF5'}`,
-                boxShadow: isDark ? '0 20px 48px rgba(0,0,0,0.5)' : '0 20px 48px rgba(99,102,241,0.12)',
-              }}
-            >
-              <div className={`flex items-center gap-2 text-xs font-bold mb-3 ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
-                <Briefcase size={14} weight="fill" className="text-indigo-500" /> Siz uchun mos ish
-              </div>
-              <div className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Mobil ilova uchun UI/UX dizayn</div>
-              <div className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>TechNova LLC · Toshkent, O'zbekiston</div>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {['UI/UX', 'Mobile', 'Figma'].map((t) => (
-                  <span key={t} className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>{t}</span>
-                ))}
-              </div>
-              <div className={`flex items-center justify-between mt-4 pt-4 border-t ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
-                <div>
-                  <div className="text-indigo-500 font-black text-lg leading-none">12 000 000 so'm</div>
-                  <div className={`text-[11px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>bir loyiha uchun</div>
-                </div>
-                <Link
-                  href="/jobs"
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-white font-bold text-xs no-underline transition-all hover:opacity-90"
-                  style={{ background: 'linear-gradient(120deg,#6366F1,#A855F7)' }}
-                >
-                  Taklif yuborish <ArrowRight size={14} weight="bold" />
-                </Link>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
         <style jsx>{`
-          .bufu-hero { min-height: calc(100vh - 64px); display: flex; align-items: center; }
-          .hero-left > * { animation: heroUp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-          .hero-left > *:nth-child(1) { animation-delay: 0.05s; }
-          .hero-left > *:nth-child(2) { animation-delay: 0.13s; }
-          .hero-left > *:nth-child(3) { animation-delay: 0.21s; }
-          .hero-left > *:nth-child(4) { animation-delay: 0.29s; }
-          .hero-left > *:nth-child(5) { animation-delay: 0.37s; }
-          .hero-left > *:nth-child(6) { animation-delay: 0.45s; }
-          .hero-toast { animation: heroUp 0.6s ease both, floatY 4s ease-in-out 0.8s infinite; animation-delay: 0.5s; }
-          .hero-card { animation: heroUp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: 0.35s; }
-          .hero-card-2 { animation: heroUp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: 0.5s; }
-          .confetti { position: absolute; width: 9px; height: 9px; border-radius: 2px; opacity: 0.85; animation: confettiFall 5s linear infinite; }
-          @keyframes heroUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-          @keyframes floatY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
-          @keyframes confettiFall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 0; } 15% { opacity: 0.9; } 100% { transform: translateY(120px) rotate(220deg); opacity: 0; } }
+          .bufu-hero { min-height: 100vh; display: flex; align-items: center; background: #0b1020; }
+          .hero-slides { position: absolute; inset: 0; z-index: 0; }
+          .hero-slide {
+            position: absolute; inset: 0; background-size: cover; background-position: center;
+            opacity: 1;
+          }
+          .hero-scroll {
+            position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 11;
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+            animation: heroScrollBounce 1.8s ease-in-out infinite;
+          }
+          @keyframes heroScrollBounce {
+            0%, 100% { transform: translate(-50%, 0); opacity: 0.75; }
+            50% { transform: translate(-50%, 7px); opacity: 1; }
+          }
           @media (prefers-reduced-motion: reduce) {
-            .hero-left > *, .hero-toast, .hero-card, .hero-card-2, .confetti { animation: none !important; }
+            .hero-scroll { animation: none; }
+          }
+          .hero-ov {
+            position: absolute; inset: 0; z-index: 1;
+            background: linear-gradient(180deg, rgba(11,16,32,0.84) 0%, rgba(11,16,32,0.68) 45%, rgba(11,16,32,0.82) 100%);
+          }
+          .hero-fade-b { position: absolute; left: 0; right: 0; bottom: 0; height: 170px; z-index: 2; pointer-events: none; }
+          .hero-eyebrow {
+            display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700;
+            color: #d6c2f5; background: rgba(168,85,247,0.14); border: 1px solid rgba(168,85,247,0.3);
+            padding: 7px 16px; border-radius: 999px;
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .hero-slide { animation: none; opacity: 1; }
+            .hero-slide:not(:first-child) { display: none; }
           }
         `}</style>
       </section>
