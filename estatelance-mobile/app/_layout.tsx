@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Stack } from 'expo-router';
+import { ToastProvider } from '../components/Toast';
+import { useNotifications } from '../hooks/useNotifications';
+import { ThemeProvider } from '../hooks/useThemeContext';
 import { ApolloProvider } from '@apollo/client';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -201,6 +204,11 @@ const splash = StyleSheet.create({
 });
 
 // ─── Root Layout ──────────────────────────────────────────────────────────────
+function NotificationSetup() {
+  useNotifications();
+  return null;
+}
+
 export default function RootLayout() {
   const [user, setUser]         = useState<User | null>(null);
   const [loading, setLoading]   = useState(true);
@@ -239,9 +247,12 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider>
       <SafeAreaProvider>
         <ApolloProvider client={apolloClient}>
           <AuthContext.Provider value={{ user, loading, login, logout }}>
+            <NotificationSetup />
+            <ToastProvider>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)"           options={{ headerShown: false }} />
               <Stack.Screen name="(auth)/login"       options={{ headerShown: false }} />
@@ -249,12 +260,15 @@ export default function RootLayout() {
               <Stack.Screen name="(auth)/onboarding" options={{ headerShown: false, gestureEnabled: false }} />
               <Stack.Screen name="jobs/[id]"        options={{ headerShown: false }} />
               <Stack.Screen name="profile/[id]"     options={{ headerShown: false }} />
-              <Stack.Screen name="messages"         options={{ headerShown: false, animation: 'slide_from_right' }} />
+              <Stack.Screen name="settings"          options={{ headerShown: false, animation: 'slide_from_right' }} />
+              <Stack.Screen name="theme-select"     options={{ headerShown: false, animation: 'slide_from_right' }} />
               <Stack.Screen name="messages/[userId]" options={{ headerShown: false, animation: 'slide_from_right' }} />
             </Stack>
+            </ToastProvider>
           </AuthContext.Provider>
         </ApolloProvider>
       </SafeAreaProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

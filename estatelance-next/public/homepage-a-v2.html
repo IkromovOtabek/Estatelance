@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>BuFu — Kinetic Indigo v2 (Ranglar & Kartalar)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{
+  --primary:#4f46e5;
+  --primary-d:#4338ca;
+  --ink:#0f172a;
+  --sub:#64748b;
+  --muted:#94a3b8;
+  --line:#e2e8f0;
+  --ease:cubic-bezier(0.23,1,0.32,1);
+
+  /* card tokens (changed by JS) */
+  --card-bg:#ffffff;
+  --card-border:1px solid #e2e8f0;
+  --card-radius:16px;
+  --card-shadow:0 1px 3px rgba(0,0,0,.04);
+  --card-shadow-hover:0 8px 24px rgba(0,0,0,.08);
+  --card-blur:none;
+}
+body{font-family:'Plus Jakarta Sans','DM Sans',sans-serif;color:var(--ink);line-height:1.6;background:#f8fafc;}
+
+/* ── CONTROL BAR ── */
+.ctrl{
+  position:sticky;top:0;z-index:200;
+  display:flex;align-items:center;gap:24px;flex-wrap:wrap;
+  padding:12px 28px;background:#0f172a;color:#fff;
+}
+.ctrl-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;}
+.ctrl-group{display:flex;align-items:center;gap:8px;}
+.ctrl-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.4);font-weight:700;}
+.ctrl-btns{display:flex;gap:4px;background:rgba(255,255,255,.08);border-radius:9px;padding:3px;}
+.ctrl-btn{
+  padding:6px 14px;border:none;background:transparent;color:rgba(255,255,255,.55);
+  font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;
+  transition:all 140ms var(--ease);font-family:inherit;
+}
+.ctrl-btn:hover{color:#fff;}
+.ctrl-btn:active{transform:scale(0.95);}
+.ctrl-btn.on{background:#6366f1;color:#fff;box-shadow:0 2px 8px rgba(99,102,241,.4);}
+
+/* ════════════════════════════════════
+   BACKGROUND VARIANTS
+════════════════════════════════════ */
+.stage{position:relative;overflow:hidden;transition:background 400ms ease;}
+
+/* bg-1: Aurora Mesh (default) */
+.bg-aurora{
+  background:
+    radial-gradient(ellipse 70% 55% at 75% 8%, rgba(99,102,241,.22) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 50% at 12% 22%, rgba(168,85,247,.16) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 45% at 50% 95%, rgba(236,72,153,.10) 0%, transparent 55%),
+    #f7f8ff;
+}
+/* bg-2: Soft Grid + Glow */
+.bg-grid{
+  background:#f8fafc;
+}
+.bg-grid::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(99,102,241,.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(99,102,241,.05) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+}
+.bg-grid::after{
+  content:'';position:absolute;top:-160px;left:50%;transform:translateX(-50%);
+  width:760px;height:420px;pointer-events:none;
+  background:radial-gradient(ellipse, rgba(99,102,241,.18) 0%, transparent 70%);
+  filter:blur(20px);
+}
+/* bg-3: Deep Indigo Wash (vivid) */
+.bg-wash{
+  background:linear-gradient(180deg,#eef2ff 0%,#f5f3ff 40%,#fdf4ff 100%);
+}
+.bg-wash::before{
+  content:'';position:absolute;top:0;right:0;width:50%;height:100%;pointer-events:none;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(99,102,241,.20), transparent 45%),
+    radial-gradient(circle at 95% 70%, rgba(168,85,247,.16), transparent 45%);
+}
+/* floating orbs (shared, subtle) */
+.orb{position:absolute;border-radius:50%;pointer-events:none;filter:blur(40px);opacity:.5;animation:float 9s ease-in-out infinite;}
+.orb-1{width:240px;height:240px;background:rgba(99,102,241,.25);top:-40px;right:8%;}
+.orb-2{width:180px;height:180px;background:rgba(168,85,247,.20);bottom:40px;left:6%;animation-delay:-3s;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-22px)}}
+
+/* ── NAV ── */
+.nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 48px;position:relative;z-index:5;
+}
+.logo{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--primary);letter-spacing:-.5px;}
+.nav-links{display:flex;gap:28px;align-items:center;}
+.nav-link{font-size:14px;font-weight:600;color:var(--sub);text-decoration:none;transition:color 120ms;}
+.nav-link:hover{color:var(--primary);}
+.nav-cta{
+  padding:9px 22px;background:var(--primary);color:#fff;border:none;border-radius:11px;
+  font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+  box-shadow:0 4px 14px rgba(79,70,229,.3);
+  transition:transform 140ms var(--ease),background 140ms ease;
+}
+.nav-cta:hover{background:var(--primary-d);transform:translateY(-1px);}
+.nav-cta:active{transform:scale(0.97);}
+
+/* ── HERO ── */
+.hero{padding:64px 48px 80px;position:relative;z-index:5;}
+.pill{
+  display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.7);
+  backdrop-filter:blur(8px);border:1px solid #c7d2fe;color:var(--primary);
+  font-size:12px;font-weight:700;padding:6px 15px;border-radius:30px;margin-bottom:26px;
+  box-shadow:0 2px 8px rgba(99,102,241,.12);
+}
+.pill-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.h1{font-size:clamp(42px,5.2vw,70px);font-weight:800;line-height:1.06;letter-spacing:-2px;margin-bottom:20px;max-width:760px;}
+.h1 .grad{
+  background:linear-gradient(120deg,#4f46e5,#a855f7 60%,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.sub{font-size:18px;color:var(--sub);max-width:520px;margin-bottom:36px;font-weight:400;}
+.search{
+  display:flex;align-items:center;gap:0;background:#fff;border:2px solid var(--line);
+  border-radius:16px;max-width:580px;padding:6px 6px 6px 18px;
+  box-shadow:0 8px 30px rgba(79,70,229,.12);
+  transition:border-color 150ms ease,box-shadow 150ms ease;
+}
+.search:focus-within{border-color:#6366f1;box-shadow:0 0 0 4px rgba(99,102,241,.14);}
+.search input{flex:1;border:none;outline:none;font-size:15px;font-family:inherit;color:var(--ink);background:transparent;}
+.search-btn{
+  background:var(--primary);color:#fff;border:none;padding:12px 26px;border-radius:12px;
+  font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+  transition:transform 130ms var(--ease),background 130ms ease;
+}
+.search-btn:hover{background:var(--primary-d);}
+.search-btn:active{transform:scale(0.96);}
+.stats{display:flex;gap:40px;margin-top:38px;}
+.stat-n{font-size:24px;font-weight:800;}
+.stat-l{font-size:12px;color:var(--muted);font-weight:500;margin-top:1px;}
+
+/* ── SECTION SHELL ── */
+.sec{padding:60px 48px;position:relative;z-index:5;}
+.lbl{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.title{font-size:28px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px;}
+.tsub{font-size:14px;color:var(--sub);margin-bottom:30px;}
+
+/* ════════════════════════════════════
+   CARD BASE (controlled by card tokens)
+════════════════════════════════════ */
+.card{
+  background:var(--card-bg);
+  border:var(--card-border);
+  border-radius:var(--card-radius);
+  box-shadow:var(--card-shadow);
+  backdrop-filter:var(--card-blur);
+  -webkit-backdrop-filter:var(--card-blur);
+  cursor:pointer;
+  transition:transform 160ms var(--ease),box-shadow 160ms var(--ease),border-color 160ms ease;
+}
+.card:hover{transform:translateY(-3px);box-shadow:var(--card-shadow-hover);}
+.card:active{transform:scale(0.98);}
+
+/* Categories */
+.cat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+.cat{padding:20px 14px;text-align:center;}
+.cat-ic{font-size:26px;margin-bottom:8px;}
+.cat-n{font-size:12px;font-weight:700;color:#475569;}
+.cat-c{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* Jobs */
+.job-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.job{padding:20px;}
+.job-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 10px;border-radius:7px;margin-bottom:12px;}
+.job-t{font-size:16px;font-weight:800;margin-bottom:6px;line-height:1.3;}
+.job-c{font-size:13px;color:var(--sub);margin-bottom:14px;font-weight:500;display:flex;align-items:center;gap:5px;}
+.live{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;}
+.job-f{display:flex;align-items:center;justify-content:space-between;}
+.job-p{font-size:15px;font-weight:800;color:#16a34a;}
+.chips{display:flex;gap:6px;}
+.chip{font-size:11px;background:#f1f5f9;color:var(--sub);padding:3px 9px;border-radius:7px;font-weight:600;}
+
+/* Freelancers */
+.fl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.fl{padding:22px 18px;text-align:center;}
+.fl-av{width:64px;height:64px;border-radius:32px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;margin:0 auto 12px;position:relative;border:3px solid #fff;box-shadow:0 0 0 2px #c7d2fe,0 6px 16px rgba(99,102,241,.2);}
+.fl-on{position:absolute;bottom:2px;right:2px;width:14px;height:14px;border-radius:50%;background:#22c55e;border:2.5px solid #fff;}
+.fl-n{font-size:15px;font-weight:800;margin-bottom:3px;}
+.fl-t{font-size:12px;color:var(--sub);margin-bottom:10px;}
+.fl-r{display:inline-block;font-size:12px;font-weight:700;color:var(--primary);background:#eef2ff;padding:3px 11px;border-radius:7px;}
+</style>
+</head>
+<body>
+
+<!-- CONTROL BAR -->
+<div class="ctrl">
+  <div class="ctrl-logo">BuFu · Kinetic Indigo v2</div>
+  <div class="ctrl-group">
+    <span class="ctrl-label">Fon</span>
+    <div class="ctrl-btns">
+      <button class="ctrl-btn on" data-bg="aurora" onclick="setBg(this)">Aurora Mesh</button>
+      <button class="ctrl-btn" data-bg="grid" onclick="setBg(this)">Grid + Glow</button>
+      <button class="ctrl-btn" data-bg="wash" onclick="setBg(this)">Indigo Wash</button>
+    </div>
+  </div>
+  <div class="ctrl-group">
+    <span class="ctrl-label">Kartalar</span>
+    <div class="ctrl-btns">
+      <button class="ctrl-btn on" data-card="soft" onclick="setCard(this)">Soft Elevated</button>
+      <button class="ctrl-btn" data-card="glass" onclick="setCard(this)">Glassmorphism</button>
+      <button class="ctrl-btn" data-card="outline" onclick="setCard(this)">Gradient Outline</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAGE (background applies here) -->
+<div id="stage" class="stage bg-aurora">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <!-- NAV -->
+  <div class="nav">
+    <div class="logo">BuFu</div>
+    <div class="nav-links">
+      <a class="nav-link">Ishlar</a>
+      <a class="nav-link">Frilanserlar</a>
+      <a class="nav-link">Maqolalar</a>
+      <a class="nav-link">AI Resume ✨</a>
+      <button class="nav-cta">Kirish / Ro'yxat</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="pill"><span class="pill-dot"></span> O'zbekiston #1 frilanser platformasi</div>
+    <h1 class="h1">O'zingizga mos <span class="grad">mutaxassisni</span> toping</h1>
+    <p class="sub">Foto, 3D, dizayn, IT, yuridik va ko'plab sohalardagi eng yaxshi frilanserlar bilan ishla. Tez. Ishonchli. O'zbek tilida.</p>
+    <div class="search">
+      <span style="font-size:18px;margin-right:10px;opacity:.4;">🔍</span>
+      <input placeholder="Masalan: 3D vizualizatsiya, foto, rieltorlik..."/>
+      <button class="search-btn">Qidirish</button>
+    </div>
+    <div class="stats">
+      <div><div class="stat-n">2,400+</div><div class="stat-l">Faol frilanser</div></div>
+      <div><div class="stat-n">8,700+</div><div class="stat-l">Bajarilgan ish</div></div>
+      <div><div class="stat-n">15+</div><div class="stat-l">Xizmat kategoriyasi</div></div>
+    </div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <div class="sec">
+    <div class="lbl">Kategoriyalar</div>
+    <div class="title">Nima qidiryapsiz?</div>
+    <div class="tsub">15 ta xizmat sohasida mutaxassislar tayyor</div>
+    <div class="cat-grid">
+      <div class="card cat"><div class="cat-ic">💻</div><div class="cat-n">IT & Dasturlash</div><div class="cat-c">240 ish</div></div>
+      <div class="card cat"><div class="cat-ic">🎨</div><div class="cat-n">Interyer Dizayn</div><div class="cat-c">156 ish</div></div>
+      <div class="card cat"><div class="cat-ic">📸</div><div class="cat-n">Foto & Dron</div><div class="cat-c">198 ish</div></div>
+      <div class="card cat"><div class="cat-ic">🏗️</div><div class="cat-n">3D Vizualizatsiya</div><div class="cat-c">134 ish</div></div>
+      <div class="card cat"><div class="cat-ic">⚖️</div><div class="cat-n">Yuridik & Kadastr</div><div class="cat-c">89 ish</div></div>
+      <div class="card cat"><div class="cat-ic">📱</div><div class="cat-n">SMM & Marketing</div><div class="cat-c">167 ish</div></div>
+      <div class="card cat"><div class="cat-ic">🔨</div><div class="cat-n">Ta'mirlash</div><div class="cat-c">203 ish</div></div>
+      <div class="card cat"><div class="cat-ic">🌍</div><div class="cat-n">Tarjima</div><div class="cat-c">78 ish</div></div>
+      <div class="card cat"><div class="cat-ic">🧹</div><div class="cat-n">Tozalash</div><div class="cat-c">91 ish</div></div>
+      <div class="card cat"><div class="cat-ic">📦</div><div class="cat-n">Ko'chirish</div><div class="cat-c">62 ish</div></div>
+    </div>
+  </div>
+
+  <!-- JOBS -->
+  <div class="sec">
+    <div class="lbl">Eng ko'p ko'rilgan</div>
+    <div class="title">🔥 Qizg'in Ishlar</div>
+    <div class="tsub">Hozir taklif qabul qilayotgan ish e'lonlari</div>
+    <div class="job-grid">
+      <div class="card job">
+        <div class="job-badge" style="background:#eef2ff;color:#4f46e5;">💻 IT</div>
+        <div class="job-t">React Native Dasturchi kerak</div>
+        <div class="job-c"><span class="live"></span>TechStart Toshkent</div>
+        <div class="job-f"><div class="job-p">$800 – $1,200</div><div class="chips"><span class="chip">Senior</span><span class="chip">3 taklif</span></div></div>
+      </div>
+      <div class="card job">
+        <div class="job-badge" style="background:#f0fdf4;color:#16a34a;">📸 Foto</div>
+        <div class="job-t">Kvartira uchun foto va dron surati</div>
+        <div class="job-c"><span class="live"></span>Mega Qurilish MChJ</div>
+        <div class="job-f"><div class="job-p">$150 – $300</div><div class="chips"><span class="chip">Istalgan</span><span class="chip">7 taklif</span></div></div>
+      </div>
+      <div class="card job">
+        <div class="job-badge" style="background:#fce7f3;color:#9d174d;">🎨 Dizayn</div>
+        <div class="job-t">3 xonali kvartira interyer dizayni</div>
+        <div class="job-c">Sardor Toshmatov</div>
+        <div class="job-f"><div class="job-p">$500 – $800</div><div class="chips"><span class="chip">Middle</span><span class="chip">4 taklif</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FREELANCERS -->
+  <div class="sec">
+    <div class="lbl">Top mutaxassislar</div>
+    <div class="title">⭐ Eng yaxshi Frilanserlar</div>
+    <div class="tsub">Ishonchli va tajribali — mijozlar tavsiya qiladi</div>
+    <div class="fl-grid">
+      <div class="card fl">
+        <div class="fl-av" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">A<div class="fl-on"></div></div>
+        <div class="fl-n">Aziz Karimov</div><div class="fl-t">3D & Dron Foto</div><div class="fl-r">$45/soat</div>
+      </div>
+      <div class="card fl">
+        <div class="fl-av" style="background:linear-gradient(135deg,#7c3aed,#db2777);">S</div>
+        <div class="fl-n">Sarvinoz Yusupova</div><div class="fl-t">Interyer Dizayner</div><div class="fl-r">$35/soat</div>
+      </div>
+      <div class="card fl">
+        <div class="fl-av" style="background:linear-gradient(135deg,#0891b2,#16a34a);">B<div class="fl-on"></div></div>
+        <div class="fl-n">Bobur Toshmatov</div><div class="fl-t">Yuridik Maslahatchi</div><div class="fl-r">$60/soat</div>
+      </div>
+      <div class="card fl">
+        <div class="fl-av" style="background:linear-gradient(135deg,#d97706,#dc2626);">M</div>
+        <div class="fl-n">Malika Abdullayeva</div><div class="fl-t">SMM & Marketing</div><div class="fl-r">$25/soat</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:48px;"></div>
+</div>
+
+<script>
+const root = document.documentElement.style;
+const stage = document.getElementById('stage');
+
+function setBg(btn){
+  document.querySelectorAll('[data-bg]').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  stage.className = 'stage bg-' + btn.dataset.bg;
+}
+
+const cardStyles = {
+  soft: {
+    '--card-bg':'#ffffff',
+    '--card-border':'1px solid #e2e8f0',
+    '--card-radius':'18px',
+    '--card-shadow':'0 2px 10px rgba(15,23,42,.05)',
+    '--card-shadow-hover':'0 14px 36px rgba(79,70,229,.16)',
+    '--card-blur':'none',
+  },
+  glass: {
+    '--card-bg':'rgba(255,255,255,.55)',
+    '--card-border':'1px solid rgba(255,255,255,.7)',
+    '--card-radius':'20px',
+    '--card-shadow':'0 4px 24px rgba(99,102,241,.10)',
+    '--card-shadow-hover':'0 16px 44px rgba(99,102,241,.22)',
+    '--card-blur':'blur(14px)',
+  },
+  outline: {
+    '--card-bg':'#ffffff',
+    '--card-border':'1.5px solid transparent',
+    '--card-radius':'16px',
+    '--card-shadow':'0 0 0 1px #e2e8f0',
+    '--card-shadow-hover':'0 0 0 1.5px #6366f1, 0 10px 30px rgba(99,102,241,.18)',
+    '--card-blur':'none',
+  },
+};
+function setCard(btn){
+  document.querySelectorAll('[data-card]').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const s = cardStyles[btn.dataset.card];
+  for(const k in s) root.setProperty(k, s[k]);
+}
+</script>
+</body>
+</html>

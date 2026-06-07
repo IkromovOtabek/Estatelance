@@ -583,6 +583,12 @@ export class UserService {
     return user;
   }
 
+  // ─── Delete own account ───────────────────────────────────────────────────
+  async deleteMyAccount(userId: string): Promise<boolean> {
+    await this.userModel.findByIdAndDelete(userId);
+    return true;
+  }
+
   // ─── Private Helpers ──────────────────────────────────────────────────────
   private async getUniqueUsername(base: string): Promise<string> {
     let username = base.toLowerCase().replace(/[^a-z0-9_]/g, '');

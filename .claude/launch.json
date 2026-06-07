@@ -7,6 +7,13 @@
       "runtimeArgs": ["-c", "cd estatelance-next && npx next dev -p $PORT"],
       "autoPort": true,
       "port": 3020
+    },
+    {
+      "name": "static-preview",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "node -e \"const h=require('http'),fs=require('fs'),p=require('path');h.createServer((q,r)=>{let f=p.join('/Users/otabek/Desktop/Estatelance/estatelance-next/public',q.url==='/'?'index.html':q.url);fs.readFile(f,(e,d)=>{if(e){r.writeHead(404);r.end('Not found')}else{r.writeHead(200);r.end(d)}})}).listen($PORT)\""],
+      "autoPort": true,
+      "port": 3021
     }
   ]
 }

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useTheme } from '../../hooks/useThemeContext';
 import {
   View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput,
   KeyboardAvoidingView, Platform, ActivityIndicator, Image,
@@ -10,6 +11,7 @@ import { useMutation, useQuery } from '@apollo/client';
 import { GET_CONVERSATION } from '../../apollo/queries';
 import { SEND_MESSAGE, MARK_MESSAGES_AS_READ } from '../../apollo/mutations';
 import { Colors } from '../../constants/colors';
+import { safeImageUri } from '../../libs/safeImage';
 import { useAuth } from '../../hooks/useAuth';
 import { Message } from '../../types';
 
@@ -23,6 +25,8 @@ function safeTime(iso?: string): string {
 }
 
 export default function ChatScreen() {
+  const { themeKey } = useTheme();
+  const styles = useMemo(() => createStyles(), [themeKey]);
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const params = useLocalSearchParams<{ name?: string; avatar?: string }>();
   const otherName   = params.name   ? decodeURIComponent(params.name)   : 'Foydalanuvchi';
@@ -83,8 +87,8 @@ export default function ChatScreen() {
           onPress={() => router.push(`/profile/${userId}`)}
           activeOpacity={0.75}
         >
-          {otherAvatar ? (
-            <Image source={{ uri: otherAvatar }} style={styles.headerAvatar} />
+          {safeImageUri(otherAvatar) ? (
+            <Image source={{ uri: safeImageUri(otherAvatar) }} style={styles.headerAvatar} />
           ) : (
             <View style={styles.headerAvatarFallback}>
               <Text style={styles.headerAvatarText}>{initials}</Text>
@@ -103,7 +107,7 @@ export default function ChatScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
       >
         {/* Messages list */}
@@ -135,8 +139,8 @@ export default function ChatScreen() {
                   {!isMine && (
                     <View style={styles.avatarSpace}>
                       {showAvatar && (
-                        otherAvatar ? (
-                          <Image source={{ uri: otherAvatar }} style={styles.msgAvatar} />
+                        safeImageUri(otherAvatar) ? (
+                          <Image source={{ uri: safeImageUri(otherAvatar) }} style={styles.msgAvatar} />
                         ) : (
                           <View style={styles.msgAvatarFallback}>
                             <Text style={styles.msgAvatarText}>{initials[0]}</Text>
@@ -198,16 +202,16 @@ export default function ChatScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe:                { flex: 1, backgroundColor: '#f8fafc' },
+const createStyles = () => StyleSheet.create({
+  safe:                { flex: 1, backgroundColor: Colors.bg },
   header:              { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border, gap: 8 },
   backBtn:             { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
   headerUser:          { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   headerAvatar:        { width: 36, height: 36, borderRadius: 18 },
-  headerAvatarFallback:{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#eef2ff', alignItems: 'center', justifyContent: 'center' },
+  headerAvatarFallback:{ width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.primary + '15', alignItems: 'center', justifyContent: 'center' },
   headerAvatarText:    { fontSize: 13, fontWeight: '900', color: Colors.primary },
   headerName:          { fontSize: 15, fontWeight: '800', color: Colors.text, flex: 1 },
-  profileBtn:          { width: 36, height: 36, borderRadius: 10, backgroundColor: '#eef2ff', alignItems: 'center', justifyContent: 'center' },
+  profileBtn:          { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.primary + '15', alignItems: 'center', justifyContent: 'center' },
   center:              { flex: 1, alignItems: 'center', justifyContent: 'center' },
   msgList:             { paddingHorizontal: 12, paddingVertical: 12, gap: 4 },
   emptyChat:           { alignItems: 'center', paddingTop: 60 },
@@ -217,7 +221,7 @@ const styles = StyleSheet.create({
   msgRowOther:         { justifyContent: 'flex-start' },
   avatarSpace:         { width: 28, marginRight: 6, alignItems: 'center', justifyContent: 'flex-end' },
   msgAvatar:           { width: 26, height: 26, borderRadius: 13 },
-  msgAvatarFallback:   { width: 26, height: 26, borderRadius: 13, backgroundColor: '#eef2ff', alignItems: 'center', justifyContent: 'center' },
+  msgAvatarFallback:   { width: 26, height: 26, borderRadius: 13, backgroundColor: Colors.primary + '15', alignItems: 'center', justifyContent: 'center' },
   msgAvatarText:       { fontSize: 10, fontWeight: '900', color: Colors.primary },
   bubble:              { maxWidth: '72%', paddingHorizontal: 13, paddingTop: 8, paddingBottom: 6, borderRadius: 18 },
   bubbleMine:          { backgroundColor: Colors.primary, borderBottomRightRadius: 4 },

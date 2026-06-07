@@ -41,7 +41,7 @@ export const GET_MY_JOBS = gql`
   query GetMyJobs {
     getMyJobs {
       _id title description category budget status
-      bidCount propertyType location bumpedAt
+      bidCount viewCount propertyType location bumpedAt
       boostExpiresAt boostPlan createdAt
     }
   }
@@ -73,6 +73,7 @@ export const GET_USER_BY_ID = gql`
       _id username fullName profileImage bio
       skills hourlyRate freelancerCategory availability
       completedJobCount userType followerCount followingCount
+      phoneNumber
     }
   }
 `;
@@ -144,7 +145,12 @@ export const GET_UNREAD_MESSAGE_COUNT = gql`
 export const GET_MY_NOTIFICATIONS = gql`
   query GetMyNotifications {
     getMyNotifications {
-      _id type title message isRead createdAt
+      _id
+      type: notificationType
+      title
+      message: description
+      isRead
+      createdAt
     }
   }
 `;
@@ -152,5 +158,19 @@ export const GET_MY_NOTIFICATIONS = gql`
 export const GET_UNREAD_COUNT = gql`
   query GetUnreadNotificationCount {
     getUnreadNotificationCount
+  }
+`;
+
+// ─── Announcements / Reklama (admin joylagan) ─────────────────────────────────
+export const GET_ACTIVE_ANNOUNCEMENTS = gql`
+  query GetActiveAnnouncements {
+    getActiveAnnouncements {
+      _id
+      title
+      body
+      imageUrl
+      announcementType
+      createdAt
+    }
   }
 `;

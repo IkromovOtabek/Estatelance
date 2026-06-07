@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useTheme } from '../../hooks/useThemeContext';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView,
@@ -9,8 +10,11 @@ import { useMutation, useApolloClient } from '@apollo/client';
 import { Ionicons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as WebBrowser from 'expo-web-browser';
+// expo-web-browser Expo Go'da bo'lmasligi mumkin — xavfsiz yuklash
+let WebBrowser: any = null;
+try { WebBrowser = require('expo-web-browser'); } catch { /* Expo Go */ }
 import { Colors } from '../../constants/colors';
+import { safeImageUri } from '../../libs/safeImage';
 import { useAuth } from '../../hooks/useAuth';
 import { LOGIN, CREATE_TELEGRAM_AUTH_TOKEN, CREATE_GOOGLE_AUTH_TOKEN } from '../../apollo/mutations';
 import { CHECK_TELEGRAM_AUTH_TOKEN, CHECK_GOOGLE_AUTH_TOKEN, GET_ME } from '../../apollo/queries';
@@ -24,6 +28,8 @@ const REM_KEY    = 'rememberedToken';
 interface SavedUser { name: string; photo?: string; provider: 'telegram' | 'google'; }
 
 export default function LoginScreen() {
+  const { themeKey } = useTheme();
+  const styles = useMemo(() => createStyles(), [themeKey]);
   const { login } = useAuth();
   const client    = useApolloClient();
 
@@ -119,7 +125,12 @@ export default function LoginScreen() {
       setGLoading(false);
       setWaitFor('google');
       poll(token, 'google');
-      await WebBrowser.openAuthSessionAsync(json.url, 'bufu://');
+      if (WebBrowser?.openAuthSessionAsync) {
+        await WebBrowser.openAuthSessionAsync(json.url, 'bufu://');
+      } else {
+        // Expo Go: native brauzer yo'q — tashqi brauzerda ochamiz
+        await Linking.openURL(json.url);
+      }
     } catch (e: any) {
       setGLoading(false);
       setWaitFor('idle');
@@ -206,8 +217,13 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+
+        {/* Home tugmasi */}
+        <TouchableOpacity style={styles.homeBtn} onPress={() => router.replace('/(tabs)')}>
+          <Ionicons name="chevron-back" size={22} color={Colors.text} />
+        </TouchableOpacity>
 
         {/* Logo */}
         <View style={styles.logoBox}>
@@ -314,6 +330,7 @@ function SavedAccountBtn({ user, loading, onPress, onRemove }: {
   user: SavedUser; loading: boolean;
   onPress: () => void; onRemove: () => void;
 }) {
+  const styles = useMemo(() => createStyles(), []);
   const initials = user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const isTg  = user.provider === 'telegram';
   const color = isTg ? '#0088cc' : '#4285F4';
@@ -322,8 +339,8 @@ function SavedAccountBtn({ user, loading, onPress, onRemove }: {
     <TouchableOpacity style={[styles.savedBtn, { borderColor: color + '33' }]} onPress={onPress} activeOpacity={0.85}>
       {/* Avatar */}
       <View style={styles.savedAvatar}>
-        {user.photo
-          ? <Image source={{ uri: user.photo }} style={styles.savedAvatarImg} />
+        {safeImageUri(user.photo)
+          ? <Image source={{ uri: safeImageUri(user.photo) }} style={styles.savedAvatarImg} />
           : <View style={[styles.savedAvatarFallback, { backgroundColor: color + '22' }]}>
               <Text style={[styles.savedAvatarText, { color }]}>{initials}</Text>
             </View>
@@ -362,8 +379,9 @@ function SavedAccountBtn({ user, loading, onPress, onRemove }: {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container:          { flexGrow: 1, backgroundColor: Colors.bg, padding: 20, justifyContent: 'center' },
+  homeBtn:            { position: 'absolute', top: 87, left: 12, width: 40, height: 40, borderRadius: 12, backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.border, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
   logoBox:            { alignItems: 'center', marginBottom: 28 },
   logo:               { width: 72, height: 72, borderRadius: 20, marginBottom: 10 },
   appName:            { fontSize: 24, fontWeight: '900', color: Colors.text },

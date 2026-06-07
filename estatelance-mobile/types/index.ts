@@ -15,6 +15,7 @@ export interface User {
   followingCount?: number;
   accessToken?: string;
   needsOnboarding?: boolean;
+  phoneNumber?: string;
 }
 
 export interface Job {
@@ -28,6 +29,7 @@ export interface Job {
   agentId: string;
   agentName?: string;
   bidCount: number;
+  viewCount?: number;
   location?: string;
   experienceLevel?: string;
   jobType?: string;

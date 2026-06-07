@@ -16,6 +16,12 @@ interface TgUpdate {
     chat: { id: number };
     text?: string;
   };
+  callback_query?: {
+    id: string;
+    from: TgUser;
+    data?: string;
+    message?: { chat: { id: number } };
+  };
 }
 
 // ─── In-memory token store ────────────────────────────────────────────────────
@@ -52,12 +58,32 @@ export class TelegramBotService implements OnModuleInit {
       })
       .catch((e: any) => this.logger.error(e.message));
 
+    // Telegram menyu komandalari (foydalanuvchi "/" bosganda ko'rinadi)
+    this.tg('setMyCommands', {
+      commands: [
+        { command: 'start',    description: 'Botni ishga tushirish' },
+        { command: 'download', description: '📥 Android ilovani yuklab olish' },
+      ],
+    }).catch(() => {});
+
     // Har 60 soniyada eskirgan tokenlarni tozalaymiz
     setInterval(() => this.cleanExpired(), 60_000);
   }
 
   // ─── Webhook update ──────────────────────────────────────────────────────
   async handleUpdate(update: TgUpdate) {
+    // Inline tugma bosilganda (callback_query)
+    if (update.callback_query) {
+      const cq     = update.callback_query;
+      const chatId = cq.message?.chat.id ?? cq.from.id;
+      // "Yuklanmoqda..." holatini yopish
+      await this.tg('answerCallbackQuery', { callback_query_id: cq.id }).catch(() => {});
+      if (cq.data === 'download') {
+        await this.sendAppDownload(chatId);
+      }
+      return;
+    }
+
     const msg  = update.message;
     if (!msg?.text || !msg.from) return;
 
@@ -68,12 +94,67 @@ export class TelegramBotService implements OnModuleInit {
       // App tomonidan yuborilgan token
       const token = text.replace('/start tgauth_', '').trim();
       await this.confirmToken(token, from);
+    } else if (text.startsWith('/start download') || text === '/download' || text === '/yuklab') {
+      // Android ilovani yuklab olish
+      await this.sendAppDownload(from.id);
     } else if (text.startsWith('/start')) {
       await this.tg('sendMessage', {
         chat_id: from.id,
-        text: '👋 BuFu ga xush kelibsiz!\n\nMobil ilovada "Telegram orqali kirish" tugmasini bosing.',
+        text:
+          '👋 <b>BuFu</b> ga xush kelibsiz!\n\n' +
+          'O\'zbekistondagi #1 frilanser platformasi. Quyidagi tugma orqali Android ilovani yuklab oling 👇',
+        parse_mode: 'HTML',
+        reply_markup: this.mainKeyboard(),
       });
     }
+  }
+
+  // ─── Android ilovani yuborish ─────────────────────────────────────────────
+  private async sendAppDownload(chatId: number) {
+    const apkUrl = process.env.APK_DOWNLOAD_URL;
+
+    if (!apkUrl) {
+      await this.tg('sendMessage', {
+        chat_id: chatId,
+        text: '⏳ Ilova hozircha tayyorlanmoqda. Tez orada shu yerdan yuklab olishingiz mumkin bo\'ladi.',
+      });
+      return;
+    }
+
+    // APK faylni to'g'ridan-to'g'ri hujjat sifatida yuboramiz (50MB gacha)
+    const res = await this.tg('sendDocument', {
+      chat_id:  chatId,
+      document: apkUrl,
+      caption:
+        '📥 <b>BuFu — Android ilova</b>\n\n' +
+        '1️⃣ Faylni yuklab oling\n' +
+        '2️⃣ Oching va o\'rnating\n' +
+        '3️⃣ "Noma\'lum manbalar"ga ruxsat bering (so\'rasa)\n\n' +
+        '✅ Tayyor! Endi BuFu\'dan to\'liq foydalaning.',
+      parse_mode: 'HTML',
+    });
+
+    // Agar sendDocument ishlamasa (URL/o'lcham muammosi) — havola yuboramiz
+    if (!res?.ok) {
+      await this.tg('sendMessage', {
+        chat_id: chatId,
+        text: '📥 Android ilovani yuklab olish:',
+        reply_markup: {
+          inline_keyboard: [[{ text: '⬇️ BuFu.apk yuklab olish', url: apkUrl }]],
+        },
+      });
+    }
+  }
+
+  // ─── Asosiy menyu tugmalari ───────────────────────────────────────────────
+  private mainKeyboard() {
+    const webUrl = process.env.FRONTEND_URL || 'https://bufu.uz';
+    return {
+      inline_keyboard: [
+        [{ text: '📥 Android ilovani yuklab olish', callback_data: 'download' }],
+        [{ text: '🌐 Veb-saytni ochish', url: webUrl }],
+      ],
+    };
   }
 
   // ─── 1. App token yaratadi ────────────────────────────────────────────────

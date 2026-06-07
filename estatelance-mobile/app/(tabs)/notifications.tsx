@@ -3,7 +3,7 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator }
 import { useQuery, useMutation } from '@apollo/client';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { GET_MY_NOTIFICATIONS } from '../../apollo/queries';
+import { GET_MY_NOTIFICATIONS, GET_UNREAD_COUNT } from '../../apollo/queries';
 import { MARK_NOTIFICATIONS_READ } from '../../apollo/mutations';
 import { Colors } from '../../constants/colors';
 import { Notification } from '../../types';
@@ -16,22 +16,44 @@ const TYPE_ICONS: Record<string, { name: any; color: string }> = {
   SYSTEM:       { name: 'information-circle',    color: '#64748b' },
 };
 
-function timeAgo(d?: string) {
-  if (!d) return '';
-  const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+function timeAgo(d?: string | number) {
+  if (d === undefined || d === null || d === '') return '';
+
+  // Qiymat: ISO string, epoch (ms yoki soniya) yoki raqamli string bo'lishi mumkin
+  let ms: number;
+  if (typeof d === 'number') {
+    ms = d;
+  } else if (/^\d+$/.test(d)) {
+    ms = parseInt(d, 10);           // epoch string: "1717761600000"
+  } else {
+    ms = Date.parse(d);             // ISO: "2025-06-07T..."
+  }
+  if (isNaN(ms)) return '';
+  if (ms < 1e12) ms *= 1000;         // soniyada bo'lsa — millisekundga
+
+  const diff = Date.now() - ms;
+  if (diff < 0) return 'hozir';
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'hozir';
   if (m < 60) return `${m} daq`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h} soat`;
-  return `${Math.floor(h / 24)} kun`;
+  const days = Math.floor(h / 24);
+  if (days < 7) return `${days} kun`;
+  return `${Math.floor(days / 7)} hafta`;
 }
 
 export default function NotificationsScreen() {
   const { data, loading, refetch } = useQuery(GET_MY_NOTIFICATIONS);
-  const [markRead] = useMutation(MARK_NOTIFICATIONS_READ);
+  const [markRead] = useMutation(MARK_NOTIFICATIONS_READ, {
+    refetchQueries: [{ query: GET_UNREAD_COUNT }],
+  });
 
   useEffect(() => {
-    markRead().catch(() => {});
-  }, []);
+    if ((data?.getMyNotifications?.length ?? 0) > 0) {
+      markRead().catch(() => {});
+    }
+  }, [data]);
 
   const notifications: Notification[] = data?.getMyNotifications ?? [];
 

@@ -42,12 +42,18 @@ export const SIGNUP = gql`
   }
 `;
 
+export const DELETE_MY_ACCOUNT = gql`
+  mutation DeleteMyAccount {
+    deleteMyAccount
+  }
+`;
+
 export const UPDATE_PROFILE = gql`
   mutation UpdateProfile($input: UpdateProfileInput!) {
     updateProfile(input: $input) {
       _id username fullName profileImage bio userType
       skills hourlyRate freelancerCategory availability
-      needsOnboarding accessToken location companyImage
+      needsOnboarding accessToken location companyImage phoneNumber
       address { latitude longitude name }
     }
   }
@@ -77,8 +83,24 @@ export const DELETE_JOB = gql`
 `;
 
 export const COMPLETE_JOB = gql`
-  mutation CompleteJob($jobId: String!) {
-    completeJob(jobId: $jobId) { _id status }
+  mutation CompleteJob($jobId: String!, $hiredFreelancerId: String) {
+    completeJob(jobId: $jobId, hiredFreelancerId: $hiredFreelancerId) {
+      _id status hiredFreelancerId
+    }
+  }
+`;
+
+export const CANCEL_JOB = gql`
+  mutation CancelJob($jobId: String!, $reason: String!) {
+    cancelJob(jobId: $jobId, reason: $reason) {
+      _id status cancelReason
+    }
+  }
+`;
+
+export const MARK_JOB_ACTIVE = gql`
+  mutation MarkJobActive($jobId: String!) {
+    markJobActive(jobId: $jobId) { _id status }
   }
 `;
 
@@ -151,8 +173,8 @@ export const MARK_MESSAGES_AS_READ = gql`
 
 // ─── Notifications ────────────────────────────────────────────────────────────
 export const MARK_NOTIFICATIONS_READ = gql`
-  mutation MarkNotificationsAsRead {
-    markNotificationsAsRead
+  mutation MarkAllNotificationsRead {
+    markAllNotificationsRead
   }
 `;
 

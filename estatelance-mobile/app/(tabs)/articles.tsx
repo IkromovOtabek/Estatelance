@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useTheme } from '../../hooks/useThemeContext';
+import SwipeWrapper from '../../components/SwipeWrapper';
 import {
   View, Text, FlatList, StyleSheet, TouchableOpacity,
   TextInput, ActivityIndicator, RefreshControl, Image,
@@ -10,10 +12,52 @@ import { Ionicons } from '@expo/vector-icons';
 import { GET_POSTS } from '../../apollo/queries';
 import { CREATE_POST, TOGGLE_LIKE_POST, ADD_COMMENT } from '../../apollo/mutations';
 import { Colors } from '../../constants/colors';
+import { safeImageUri } from '../../libs/safeImage';
 import { Post } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function ArticlesScreen() {
+  const { themeKey } = useTheme();
+  const styles = useMemo(() => StyleSheet.create({
+    safe:           { flex: 1, backgroundColor: Colors.bg },
+    header:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
+    headerTitle:    { fontSize: 22, fontWeight: '900', color: Colors.text },
+    headerSub:      { fontSize: 12, color: Colors.textSub, marginTop: 2 },
+    addBtn:         { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+    list:           { paddingHorizontal: 16, paddingBottom: 20 },
+    center:         { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    postCard:       { backgroundColor: Colors.white, borderRadius: 14, marginBottom: 14, overflow: 'hidden', borderWidth: 1, borderColor: Colors.border },
+    postImage:      { width: '100%', height: 180 },
+    postBody:       { padding: 16 },
+    authorRow:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+    avatarSmall:    { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.primary + '15', alignItems: 'center', justifyContent: 'center' },
+    avatarLetter:   { fontSize: 15, fontWeight: '800', color: Colors.primary },
+    authorName:     { fontSize: 14, fontWeight: '700', color: Colors.text },
+    postDate:       { fontSize: 11, color: Colors.textMuted },
+    postTitle:      { fontSize: 16, fontWeight: '800', color: Colors.text, marginBottom: 6 },
+    postText:       { fontSize: 14, color: Colors.textSub, lineHeight: 20, marginBottom: 8 },
+    readMore:       { fontSize: 13, color: Colors.primary, fontWeight: '600', marginBottom: 10 },
+    postActions:    { flexDirection: 'row', gap: 16, paddingTop: 10, borderTopWidth: 1, borderTopColor: Colors.border },
+    actionItem:     { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    actionCount:    { fontSize: 13, color: Colors.textMuted },
+    commentsSection:{ marginTop: 12 },
+    commentRow:     { flexDirection: 'row', gap: 8, marginBottom: 8 },
+    avatarTiny:     { width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
+    avatarTinyText: { fontSize: 12, fontWeight: '700', color: Colors.textSub },
+    commentBubble:  { flex: 1, backgroundColor: Colors.bg, borderRadius: 10, padding: 8 },
+    commentAuthor:  { fontSize: 12, fontWeight: '700', color: Colors.text },
+    commentText:    { fontSize: 13, color: Colors.textSub, marginTop: 2 },
+    commentInput:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
+    commentField:   { flex: 1, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: Colors.text, backgroundColor: Colors.bg },
+    modalSafe:      { flex: 1, backgroundColor: Colors.white },
+    modalHeader:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: Colors.border },
+    modalTitle:     { fontSize: 18, fontWeight: '800', color: Colors.text },
+    modalBody:      { padding: 20 },
+    fieldLabel:     { fontSize: 13, fontWeight: '600', color: Colors.textSub, marginBottom: 6 },
+    fieldInput:     { borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: Colors.text, backgroundColor: Colors.bg, marginBottom: 14 },
+    btn:            { backgroundColor: Colors.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+    btnText:        { color: 'white', fontWeight: '800', fontSize: 16 },
+  }), [themeKey]);
   const { user } = useAuth();
   const [createModal, setCreateModal] = useState(false);
   const [expanded, setExpanded]       = useState<string | null>(null);
@@ -57,7 +101,7 @@ export default function ArticlesScreen() {
     const isExpanded = expanded === post._id;
     return (
       <View style={styles.postCard}>
-        {post.imageUrl && <Image source={{ uri: post.imageUrl }} style={styles.postImage} />}
+        {safeImageUri(post.imageUrl) ? <Image source={{ uri: safeImageUri(post.imageUrl) }} style={styles.postImage} /> : null}
         <View style={styles.postBody}>
           <View style={styles.authorRow}>
             <View style={styles.avatarSmall}>
@@ -125,7 +169,7 @@ export default function ArticlesScreen() {
     );
   };
 
-  return (
+  return (<SwipeWrapper>
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <View>
@@ -154,7 +198,7 @@ export default function ArticlesScreen() {
 
       {/* Create Modal */}
       <Modal visible={createModal} animationType="slide" presentationStyle="pageSheet">
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <SafeAreaView style={styles.modalSafe}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Maqola yozish</Text>
@@ -175,46 +219,6 @@ export default function ArticlesScreen() {
         </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
-  );
+  </SwipeWrapper>);
 }
 
-const styles = StyleSheet.create({
-  safe:           { flex: 1, backgroundColor: Colors.bg },
-  header:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
-  headerTitle:    { fontSize: 22, fontWeight: '900', color: Colors.text },
-  headerSub:      { fontSize: 12, color: Colors.textSub, marginTop: 2 },
-  addBtn:         { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
-  list:           { paddingHorizontal: 16, paddingBottom: 20 },
-  center:         { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  postCard:       { backgroundColor: Colors.white, borderRadius: 14, marginBottom: 14, overflow: 'hidden', borderWidth: 1, borderColor: Colors.border },
-  postImage:      { width: '100%', height: 180 },
-  postBody:       { padding: 16 },
-  authorRow:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  avatarSmall:    { width: 36, height: 36, borderRadius: 18, backgroundColor: '#eef2ff', alignItems: 'center', justifyContent: 'center' },
-  avatarLetter:   { fontSize: 15, fontWeight: '800', color: Colors.primary },
-  authorName:     { fontSize: 14, fontWeight: '700', color: Colors.text },
-  postDate:       { fontSize: 11, color: Colors.textMuted },
-  postTitle:      { fontSize: 16, fontWeight: '800', color: Colors.text, marginBottom: 6 },
-  postText:       { fontSize: 14, color: Colors.textSub, lineHeight: 20, marginBottom: 8 },
-  readMore:       { fontSize: 13, color: Colors.primary, fontWeight: '600', marginBottom: 10 },
-  postActions:    { flexDirection: 'row', gap: 16, paddingTop: 10, borderTopWidth: 1, borderTopColor: Colors.border },
-  actionItem:     { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  actionCount:    { fontSize: 13, color: Colors.textMuted },
-  commentsSection:{ marginTop: 12 },
-  commentRow:     { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  avatarTiny:     { width: 28, height: 28, borderRadius: 14, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' },
-  avatarTinyText: { fontSize: 12, fontWeight: '700', color: Colors.textSub },
-  commentBubble:  { flex: 1, backgroundColor: Colors.bg, borderRadius: 10, padding: 8 },
-  commentAuthor:  { fontSize: 12, fontWeight: '700', color: Colors.text },
-  commentText:    { fontSize: 13, color: Colors.textSub, marginTop: 2 },
-  commentInput:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
-  commentField:   { flex: 1, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: Colors.text, backgroundColor: Colors.bg },
-  modalSafe:      { flex: 1, backgroundColor: Colors.white },
-  modalHeader:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  modalTitle:     { fontSize: 18, fontWeight: '800', color: Colors.text },
-  modalBody:      { padding: 20 },
-  fieldLabel:     { fontSize: 13, fontWeight: '600', color: Colors.textSub, marginBottom: 6 },
-  fieldInput:     { borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: Colors.text, backgroundColor: Colors.bg, marginBottom: 14 },
-  btn:            { backgroundColor: Colors.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  btnText:        { color: 'white', fontWeight: '800', fontSize: 16 },
-});

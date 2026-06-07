@@ -20,7 +20,7 @@ export class NotificationService {
     relatedItemId?: string,
     linkPath?: string,
   ): Promise<Notification> {
-    return this.notificationModel.create({
+    const notification = await this.notificationModel.create({
       recipientId,
       notificationType,
       title,
@@ -28,6 +28,11 @@ export class NotificationService {
       relatedItemId,
       linkPath,
     });
+
+    // Expo Push Notification yuborish (background/killed app uchun)
+    this.sendPushNotification(recipientId, title, description, { linkPath, relatedItemId }).catch(() => {});
+
+    return notification;
   }
 
   async notifyAllAdmins(
@@ -80,5 +85,53 @@ export class NotificationService {
 
   async getUnreadCount(userId: string): Promise<number> {
     return this.notificationModel.countDocuments({ recipientId: userId, isRead: false });
+  }
+
+  // ─── Expo Push yuborish ───────────────────────────────────────────────────
+  private async sendPushNotification(
+    recipientId: string,
+    title: string,
+    body: string,
+    data?: Record<string, any>,
+  ): Promise<void> {
+    const user = await this.userModel.findById(recipientId).select('expoPushToken').lean();
+    const token = (user as any)?.expoPushToken;
+    if (!token || !token.startsWith('ExponentPushToken')) return;
+
+    // O'qilmagan bildirishnomalar soni (iOS badge uchun)
+    const unread = await this.notificationModel.countDocuments({
+      recipientId,
+      isRead: false,
+    });
+
+    const message = {
+      to:           token,
+      // iOS: custom ovoz fayli; Android: 'bufu-default' kanalining ovozi ishlatiladi
+      sound:        'notification.wav',
+      title,
+      body,
+      data:         data ?? {},
+      channelId:    'bufu-default',
+      priority:     'high',           // Android: telefon uxlab yotsa ham darhol yetkazadi
+      // iOS: bloklangan ekranda ham banner + ovoz
+      _displayInForeground: true,
+      interruptionLevel:    'active',
+      badge:        unread > 0 ? unread : 1,
+    };
+
+    const response = await fetch('https://exp.host/--/api/v2/push/send', {
+      method:  'POST',
+      headers: {
+        'Accept':         'application/json',
+        'Content-Type':   'application/json',
+        'Accept-Encoding':'gzip, deflate',
+      },
+      body: JSON.stringify(message),
+    });
+
+    const result = await response.json();
+    if (result?.data?.status === 'error') {
+      console.error('[Push] Error:', result.data.message, result.data.details ?? '');
+    }
   }
 }

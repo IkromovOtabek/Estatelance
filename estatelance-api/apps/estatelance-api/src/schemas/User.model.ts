@@ -233,6 +233,10 @@ export class User extends Document {
   @Field(() => String, { nullable: true })
   phoneNumber?: string;
 
+  @Prop()
+  @Field(() => String, { nullable: true })
+  expoPushToken?: string;
+
   // Card / wallet number used for direct (bevosita) payments between agent and freelancer
   @Prop()
   @Field(() => String, { nullable: true })

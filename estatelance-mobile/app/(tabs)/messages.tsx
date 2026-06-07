@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useTheme } from '../../hooks/useThemeContext';
+import SwipeWrapper from '../../components/SwipeWrapper';
 import {
   View, Text, FlatList, StyleSheet, TouchableOpacity,
   TextInput, Image, ActivityIndicator, RefreshControl,
@@ -7,10 +9,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useQuery } from '@apollo/client';
-import { GET_MY_CONVERSATIONS } from '../apollo/queries';
-import { Colors } from '../constants/colors';
-import { useAuth } from '../hooks/useAuth';
-import { Message } from '../types';
+import { GET_MY_CONVERSATIONS } from '../../apollo/queries';
+import { Colors } from '../../constants/colors';
+import { safeImageUri } from '../../libs/safeImage';
+import { useAuth } from '../../hooks/useAuth';
+import { Message } from '../../types';
 
 interface ConvSummary {
   otherUserId: string;
@@ -55,6 +58,36 @@ function safeDate(iso?: string): string {
 }
 
 export default function MessagesScreen() {
+  const { themeKey } = useTheme();
+  const styles = useMemo(() => StyleSheet.create({
+    safe:           { flex: 1, backgroundColor: Colors.bg },
+    header:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border },
+    backBtn:        { width: 38, height: 38, borderRadius: 12, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
+    headerTitle:    { fontSize: 17, fontWeight: '800', color: Colors.text },
+    searchBox:      { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border, paddingHorizontal: 16, paddingVertical: 10 },
+    searchInput:    { flex: 1, fontSize: 15, color: Colors.text },
+    center:         { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    empty:          { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
+    emptyTitle:     { fontSize: 17, fontWeight: '800', color: Colors.text, marginTop: 16 },
+    emptyDesc:      { fontSize: 13, color: Colors.textMuted, marginTop: 8, textAlign: 'center', lineHeight: 20 },
+    separator:      { height: 1, backgroundColor: Colors.border },
+    chatRow:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: Colors.white },
+    avatarWrap:     { position: 'relative', marginRight: 12 },
+    avatar:         { width: 48, height: 48, borderRadius: 24 },
+    avatarFallback: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.primary + '15', alignItems: 'center', justifyContent: 'center' },
+    avatarText:     { fontSize: 16, fontWeight: '900', color: Colors.primary },
+    unreadDot:      { position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: 6, backgroundColor: '#dc2626', borderWidth: 2, borderColor: Colors.white },
+    chatInfo:       { flex: 1 },
+    chatTop:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 },
+    chatName:       { fontSize: 15, fontWeight: '600', color: Colors.text, flex: 1, marginRight: 8 },
+    chatNameBold:   { fontWeight: '800' },
+    chatTime:       { fontSize: 11, color: Colors.textMuted },
+    chatBottom:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    chatMsg:        { fontSize: 13, color: Colors.textSub, flex: 1, marginRight: 8 },
+    chatMsgBold:    { fontWeight: '700', color: Colors.primary },
+    badge:          { backgroundColor: Colors.primary, borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+    badgeText:      { color: 'white', fontSize: 10, fontWeight: '800' },
+  }), [themeKey]);
   const { user } = useAuth();
   const [search, setSearch] = useState('');
 
@@ -70,15 +103,11 @@ export default function MessagesScreen() {
     ? conversations.filter(c => c.otherUserName.toLowerCase().includes(search.toLowerCase()))
     : conversations;
 
-  return (
+  return (<SwipeWrapper>
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color={Colors.text} />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Xabarlar</Text>
-        <View style={{ width: 38 }} />
       </View>
 
       {/* Search */}
@@ -135,8 +164,8 @@ export default function MessagesScreen() {
                 }
               >
                 <View style={styles.avatarWrap}>
-                  {item.otherUserAvatar ? (
-                    <Image source={{ uri: item.otherUserAvatar }} style={styles.avatar} />
+                  {safeImageUri(item.otherUserAvatar) ? (
+                    <Image source={{ uri: safeImageUri(item.otherUserAvatar) }} style={styles.avatar} />
                   ) : (
                     <View style={styles.avatarFallback}>
                       <Text style={styles.avatarText}>{initials}</Text>
@@ -177,35 +206,6 @@ export default function MessagesScreen() {
         />
       )}
     </SafeAreaView>
-  );
+  </SwipeWrapper>);
 }
 
-const styles = StyleSheet.create({
-  safe:           { flex: 1, backgroundColor: Colors.bg },
-  header:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  backBtn:        { width: 38, height: 38, borderRadius: 12, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
-  headerTitle:    { fontSize: 17, fontWeight: '800', color: Colors.text },
-  searchBox:      { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border, paddingHorizontal: 16, paddingVertical: 10 },
-  searchInput:    { flex: 1, fontSize: 15, color: Colors.text },
-  center:         { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  empty:          { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
-  emptyTitle:     { fontSize: 17, fontWeight: '800', color: Colors.text, marginTop: 16 },
-  emptyDesc:      { fontSize: 13, color: Colors.textMuted, marginTop: 8, textAlign: 'center', lineHeight: 20 },
-  separator:      { height: 1, backgroundColor: Colors.border, marginLeft: 76 },
-  chatRow:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: Colors.white },
-  avatarWrap:     { position: 'relative', marginRight: 12 },
-  avatar:         { width: 48, height: 48, borderRadius: 24 },
-  avatarFallback: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#eef2ff', alignItems: 'center', justifyContent: 'center' },
-  avatarText:     { fontSize: 16, fontWeight: '900', color: Colors.primary },
-  unreadDot:      { position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: 6, backgroundColor: '#dc2626', borderWidth: 2, borderColor: Colors.white },
-  chatInfo:       { flex: 1 },
-  chatTop:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 },
-  chatName:       { fontSize: 15, fontWeight: '600', color: Colors.text, flex: 1, marginRight: 8 },
-  chatNameBold:   { fontWeight: '800' },
-  chatTime:       { fontSize: 11, color: Colors.textMuted },
-  chatBottom:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  chatMsg:        { fontSize: 13, color: Colors.textSub, flex: 1, marginRight: 8 },
-  chatMsgBold:    { fontWeight: '700', color: Colors.primary },
-  badge:          { backgroundColor: Colors.primary, borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  badgeText:      { color: 'white', fontSize: 10, fontWeight: '800' },
-});

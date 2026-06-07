@@ -8,10 +8,15 @@ import { router } from 'expo-router';
 import { useMutation } from '@apollo/client';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
-import * as ImagePicker from 'expo-image-picker';
+// Native modullar Expo Go'da bo'lmasligi mumkin — xavfsiz yuklash
+let DocumentPicker: any = null;
+let FileSystem: any = null;
+let ImagePicker: any = null;
+try { DocumentPicker = require('expo-document-picker'); } catch {}
+try { FileSystem = require('expo-file-system'); } catch {}
+try { ImagePicker = require('expo-image-picker'); } catch {}
 import { Colors } from '../../constants/colors';
+import { safeImageUri } from '../../libs/safeImage';
 import { useAuth } from '../../hooks/useAuth';
 import { SIGNUP } from '../../apollo/mutations';
 import MapPickerModal, { PickedAddress } from '../../components/MapPickerModal';
@@ -142,8 +147,18 @@ export default function RegisterScreen() {
     }
   };
 
+  // Native modul mavjudligini tekshirish (Expo Go himoyasi)
+  const nativeMissing = (mod: any) => {
+    if (!mod) {
+      Alert.alert('Mavjud emas', "Bu funksiya Expo Go'da ishlamaydi. To'liq ilovada (development build) ishlaydi.");
+      return true;
+    }
+    return false;
+  };
+
   // ─── Profil rasm tanlash ───────────────────────────────────────────────────
   const pickImage = () => {
+    if (nativeMissing(ImagePicker) || nativeMissing(FileSystem)) return;
     Alert.alert('Rasm tanlash', '', [
       {
         text: 'Galereya / Foto',
@@ -174,6 +189,7 @@ export default function RegisterScreen() {
 
   // ─── Kompaniya rasmi yuklash ──────────────────────────────────────────────
   const pickCompanyImage = async () => {
+    if (nativeMissing(ImagePicker)) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) { Alert.alert('Ruxsat kerak', 'Galereya ruxsatini bering'); return; }
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -204,6 +220,7 @@ export default function RegisterScreen() {
 
   // ─── PDF Resume yuklash ─────────────────────────────────────────────────────
   const pickResume = async () => {
+    if (nativeMissing(DocumentPicker) || nativeMissing(FileSystem)) return;
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: 'application/pdf',
@@ -330,7 +347,7 @@ export default function RegisterScreen() {
         <View style={[styles.progressFill, { width: `${stepProgress * 100}%` as any }]} />
       </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
           {/* ══ STEP 1: Rol tanlash ══ */}
@@ -344,13 +361,13 @@ export default function RegisterScreen() {
                   {
                     value: 'AGENT' as Role,
                     icon: 'business-outline',
-                    title: 'Ish beruvchi',
-                    desc: 'Frilanserlarni topib, loyihalarim uchun mutaxassislar yollayman',
+                    title: 'Agent',
+                    desc: 'Freelancerlarni topib, loyihalarim uchun mutaxassislar yollayman',
                   },
                   {
                     value: 'FREELANCER' as Role,
                     icon: 'briefcase-outline',
-                    title: 'Frilanser',
+                    title: 'Freelancer',
                     desc: "Ko'nikmalarimni taklif qilib, turli loyihalarda ishlayman",
                   },
                 ]).map(opt => (
@@ -390,11 +407,11 @@ export default function RegisterScreen() {
             <View>
               <Text style={styles.stepMeta}>Bosqich 2 dan 4</Text>
               <Text style={styles.heading}>
-                {role === 'FREELANCER' ? 'Frilanser profili' : "Profil ma'lumotlari"}
+                {role === 'FREELANCER' ? 'Freelancer profili' : "Profil ma'lumotlari"}
               </Text>
               <Text style={styles.subheading}>
                 {role === 'FREELANCER'
-                  ? "Mijozlar sizni yaxshiroq tanishi uchun asosiy ma'lumotlarni kiriting"
+                  ? "Agentlar sizni yaxshiroq tanishi uchun asosiy ma'lumotlarni kiriting"
                   : "Loyihalaringizni boshlash uchun quyidagi ma'lumotlarni to'ldiring"}
               </Text>
 
@@ -406,7 +423,7 @@ export default function RegisterScreen() {
                   {imgLoading ? (
                     <ActivityIndicator color={Colors.primary} />
                   ) : profileImage ? (
-                    <Image source={{ uri: profileImage }} style={styles.avatarImg} />
+                    <Image source={{ uri: safeImageUri(profileImage) }} style={styles.avatarImg} />
                   ) : (
                     <View style={styles.avatarPlaceholder}>
                       <Ionicons name="person-outline" size={32} color={Colors.textMuted} />
@@ -551,7 +568,7 @@ export default function RegisterScreen() {
                     {companyImgLoading ? (
                       <ActivityIndicator color={Colors.primary} />
                     ) : companyImage ? (
-                      <Image source={{ uri: companyImage }} style={styles.companyImgPreview} resizeMode="cover" />
+                      <Image source={{ uri: safeImageUri(companyImage) }} style={styles.companyImgPreview} resizeMode="cover" />
                     ) : (
                       <View style={styles.companyImgPlaceholder}>
                         <Ionicons name="image-outline" size={26} color={Colors.textMuted} />
@@ -728,7 +745,7 @@ export default function RegisterScreen() {
                 {/* Avatar */}
                 <View style={styles.previewAvatarWrap}>
                   {profileImage ? (
-                    <Image source={{ uri: profileImage }} style={styles.previewAvatar} />
+                    <Image source={{ uri: safeImageUri(profileImage) }} style={styles.previewAvatar} />
                   ) : (
                     <View style={styles.previewAvatarFallback}>
                       <Text style={styles.previewAvatarText}>
@@ -753,7 +770,7 @@ export default function RegisterScreen() {
                       color={role === 'AGENT' ? '#0891b2' : '#7c3aed'}
                     />
                     <Text style={[styles.previewRoleText, { color: role === 'AGENT' ? '#0891b2' : '#7c3aed' }]}>
-                      {role === 'AGENT' ? 'Ish beruvchi' : 'Frilanser'}
+                      {role === 'AGENT' ? 'Agent' : 'Freelancer'}
                     </Text>
                   </View>
                 </View>
@@ -934,7 +951,7 @@ const styles = StyleSheet.create({
   // Role cards
   roleRow:          { flexDirection: 'row', gap: 12, marginBottom: 24 },
   roleCard:         { flex: 1, borderRadius: 16, borderWidth: 2, borderColor: Colors.border, backgroundColor: Colors.white, padding: 16, alignItems: 'center', position: 'relative' },
-  roleCardActive:   { borderColor: Colors.primary, backgroundColor: '#eef2ff' },
+  roleCardActive:   { borderColor: Colors.primary, backgroundColor: Colors.primary + '15' },
   roleCheck:        { position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: 10, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
   roleIconWrap:     { width: 56, height: 56, borderRadius: 16, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center', marginBottom: 10, borderWidth: 1, borderColor: Colors.border },
   roleIconWrapActive:{ backgroundColor: '#e0e7ff', borderColor: '#a5b4fc' },
@@ -963,7 +980,7 @@ const styles = StyleSheet.create({
   // Experience
   expRow:           { gap: 8 },
   expBtn:           { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.border, backgroundColor: Colors.white },
-  expBtnActive:     { borderColor: Colors.primary, backgroundColor: '#eef2ff' },
+  expBtnActive:     { borderColor: Colors.primary, backgroundColor: Colors.primary + '15' },
   expBtnText:       { fontSize: 13, fontWeight: '600', color: Colors.textSub },
 
   // Chips
@@ -987,7 +1004,7 @@ const styles = StyleSheet.create({
   previewCover:        { height: 80, backgroundColor: Colors.primary + '22' },
   previewAvatarWrap:   { position: 'relative', alignSelf: 'center', marginTop: -36, marginBottom: 10 },
   previewAvatar:       { width: 72, height: 72, borderRadius: 36, borderWidth: 3, borderColor: Colors.white },
-  previewAvatarFallback: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#eef2ff', borderWidth: 3, borderColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
+  previewAvatarFallback: { width: 72, height: 72, borderRadius: 36, backgroundColor: Colors.primary + '15', borderWidth: 3, borderColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   previewAvatarText:   { fontSize: 28, fontWeight: '900', color: Colors.primary },
   previewAvailDot:     { position: 'absolute', bottom: 2, right: 2, width: 16, height: 16, borderRadius: 8, borderWidth: 2.5, borderColor: Colors.white },
   previewInfo:         { alignItems: 'center', paddingHorizontal: 16, paddingBottom: 12 },
@@ -1004,7 +1021,7 @@ const styles = StyleSheet.create({
   previewStatLabel:    { fontSize: 11, color: Colors.textSub, marginTop: 2 },
   previewDetails:      { backgroundColor: Colors.white, borderRadius: 14, borderWidth: 1, borderColor: Colors.border, padding: 4, marginBottom: 14 },
   previewRow:          { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 10 },
-  previewRowIcon:      { width: 30, height: 30, borderRadius: 10, backgroundColor: '#eef2ff', alignItems: 'center', justifyContent: 'center' },
+  previewRowIcon:      { width: 30, height: 30, borderRadius: 10, backgroundColor: Colors.primary + '15', alignItems: 'center', justifyContent: 'center' },
   previewRowLabel:     { fontSize: 11, color: Colors.textMuted, fontWeight: '600' },
   previewRowValue:     { fontSize: 14, color: Colors.text, fontWeight: '600', marginTop: 1 },
   previewSection:      { backgroundColor: Colors.white, borderRadius: 14, borderWidth: 1, borderColor: Colors.border, padding: 14, marginBottom: 14 },
@@ -1015,7 +1032,7 @@ const styles = StyleSheet.create({
   profSelectorText:    { fontSize: 15, color: Colors.text, fontWeight: '500' },
   profSelectorPlaceholder: { fontSize: 15, color: Colors.textMuted },
   profItem:            { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.white, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: Colors.border },
-  profItemActive:      { borderColor: Colors.primary, backgroundColor: '#eef2ff' },
+  profItemActive:      { borderColor: Colors.primary, backgroundColor: Colors.primary + '15' },
   profItemIcon:        { width: 40, height: 40, borderRadius: 12, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
   profItemText:        { flex: 1, fontSize: 15, color: Colors.text },
   modalHeader:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: Colors.border, backgroundColor: Colors.white },

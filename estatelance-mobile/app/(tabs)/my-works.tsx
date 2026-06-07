@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useTheme } from '../../hooks/useThemeContext';
+import SwipeWrapper from '../../components/SwipeWrapper';
 import {
   View, Text, FlatList, StyleSheet, TouchableOpacity,
   ActivityIndicator, RefreshControl, Alert, Modal,
   TextInput, ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
-import { useQuery, useMutation } from '@apollo/client';
+import { useQuery, useMutation, useLazyQuery } from '@apollo/client';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { GET_MY_JOBS } from '../../apollo/queries';
-import { DELETE_JOB, UPDATE_JOB, COMPLETE_JOB, BOOST_JOB, CREATE_JOB } from '../../apollo/mutations';
+import { GET_MY_JOBS, GET_BIDS_FOR_JOB } from '../../apollo/queries';
+import { DELETE_JOB, UPDATE_JOB, COMPLETE_JOB, BOOST_JOB, CREATE_JOB, CANCEL_JOB, MARK_JOB_ACTIVE } from '../../apollo/mutations';
 import { Colors } from '../../constants/colors';
 import { Job } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
@@ -97,6 +99,123 @@ const stp = StyleSheet.create({
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function MyWorksScreen() {
+  const { themeKey } = useTheme();
+  const styles = useMemo(() => StyleSheet.create({
+    safe:             { flex: 1, backgroundColor: Colors.bg },
+    header:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
+    headerTitle:      { fontSize: 22, fontWeight: '900', color: Colors.text },
+    headerSub:        { fontSize: 12, color: Colors.textSub, marginTop: 2 },
+    addBtn:           { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+    list:             { paddingHorizontal: 16, paddingBottom: 20 },
+    center:           { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    empty:            { alignItems: 'center', paddingTop: 60 },
+    emptyText:        { fontSize: 16, color: Colors.textMuted, marginTop: 12 },
+    emptyBtn:         { marginTop: 16, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
+    emptyBtnText:     { color: 'white', fontWeight: '700', fontSize: 15 },
+    jobCard:          { backgroundColor: Colors.white, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: Colors.border, elevation: 2 },
+    jobTop:           { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    badge:            { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+    badgeText:        { fontSize: 11, fontWeight: '700' },
+    timeText:         { fontSize: 11, color: Colors.textMuted, marginLeft: 'auto' },
+    jobTitle:         { fontSize: 15, fontWeight: '800', color: Colors.text, marginBottom: 8 },
+    jobMeta:          { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+    budget:           { fontSize: 16, fontWeight: '900', color: Colors.green },
+    bids:             { fontSize: 13, color: Colors.textMuted },
+    actions:          { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+    actionBtn:        { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: Colors.bg, borderWidth: 1, borderColor: Colors.border },
+    actionText:       { fontSize: 12, fontWeight: '600' },
+    modalSafe:        { flex: 1, backgroundColor: Colors.white },
+    modalHeader:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: Colors.border },
+    modalTitle:       { fontSize: 17, fontWeight: '800', color: Colors.text },
+    modalBody:        { padding: 20 },
+    stepTitle:        { fontSize: 20, fontWeight: '900', color: Colors.text, marginBottom: 4 },
+    stepSub:          { fontSize: 13, color: Colors.textSub, marginBottom: 20 },
+    sectionTitle:     { fontSize: 14, fontWeight: '700', color: Colors.text, marginBottom: 10, marginTop: 6 },
+    fieldLabel:       { fontSize: 13, fontWeight: '600', color: Colors.textSub, marginBottom: 6 },
+    fieldInput:       { borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: Colors.text, backgroundColor: Colors.bg, marginBottom: 14 },
+    charCount:        { fontSize: 11, color: Colors.textMuted, textAlign: 'right', marginTop: -10, marginBottom: 14 },
+    budgetTypeRow:    { flexDirection: 'row', gap: 10, marginBottom: 14 },
+    budgetTypeBtn:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.border, backgroundColor: Colors.bg },
+    budgetTypeBtnActive: { borderColor: Colors.primary, backgroundColor: Colors.primary + '15' },
+    budgetTypeText:   { fontSize: 13, fontWeight: '600', color: Colors.textSub },
+    currencyRow:      { flexDirection: 'row', gap: 8, marginBottom: 10 },
+    currencyBtn:      { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8, borderWidth: 1, borderColor: Colors.border },
+    currencyBtnActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+    currencyText:     { fontSize: 12, fontWeight: '700', color: Colors.textSub },
+    budgetInputWrap:  { flexDirection: 'row', borderWidth: 1, borderColor: Colors.border, borderRadius: 10, overflow: 'hidden', marginBottom: 14, backgroundColor: Colors.bg },
+    budgetInput:      { flex: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: Colors.text, fontWeight: '700' },
+    budgetSuffix:     { paddingHorizontal: 14, justifyContent: 'center', borderLeftWidth: 1, borderLeftColor: Colors.border, backgroundColor: Colors.white },
+    budgetSuffixText: { fontSize: 13, fontWeight: '700', color: Colors.primary },
+    mapPickerBtn:     { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.5, borderColor: '#c7d2fe', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 14, backgroundColor: '#eef2ff', marginBottom: 14 },
+    mapPickerIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+    mapPickerLabel:   { fontSize: 14, fontWeight: '700', color: Colors.primary, marginBottom: 1 },
+    mapPickerText:    { fontSize: 13, color: Colors.textMuted },
+    chipWrap:         { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    chip:             { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.white },
+    chipActive:       { backgroundColor: Colors.primary, borderColor: Colors.primary },
+    chipText:         { fontSize: 12, fontWeight: '600', color: Colors.textSub },
+    expGrid:          { flexDirection: 'row', gap: 8, marginBottom: 14 },
+    expCard:          { flex: 1, padding: 12, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.border, backgroundColor: Colors.bg },
+    expCardActive:    { borderColor: Colors.primary, backgroundColor: Colors.primary + '15' },
+    expLabel:         { fontSize: 13, fontWeight: '700', color: Colors.text },
+    expSub:           { fontSize: 11, color: Colors.textSub, marginTop: 2 },
+    pillRow:          { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+    pill:             { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: Colors.border },
+    pillActive:       { backgroundColor: Colors.primary, borderColor: Colors.primary },
+    pillText:         { fontSize: 13, fontWeight: '600', color: Colors.textSub },
+    skillInputRow:    { flexDirection: 'row', gap: 8, marginBottom: 8 },
+    addSkillBtn:      { width: 46, height: 46, borderRadius: 10, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+    previewCard:      { backgroundColor: Colors.bg, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: Colors.border, marginBottom: 14 },
+    previewTitle:     { fontSize: 18, fontWeight: '900', color: Colors.text, marginBottom: 4 },
+    previewCat:       { fontSize: 13, fontWeight: '600', color: Colors.primary, marginBottom: 10 },
+    previewBudget:    { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
+    previewBudgetText: { fontSize: 14, fontWeight: '700', color: Colors.primary },
+    previewDesc:      { fontSize: 13, color: Colors.textSub, lineHeight: 20, marginBottom: 12 },
+    previewMeta:      { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: Colors.border },
+    previewMetaItem:  { minWidth: 80 },
+    previewMetaLabel: { fontSize: 10, color: Colors.textMuted, fontWeight: '600' },
+    previewMetaVal:   { fontSize: 13, fontWeight: '700', color: Colors.text, marginTop: 2 },
+    infoBox:          { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 14, backgroundColor: '#eff6ff', borderRadius: 12, borderWidth: 1, borderColor: '#bfdbfe', marginBottom: 14 },
+    infoText:         { flex: 1, fontSize: 13, color: '#1d4ed8', lineHeight: 20 },
+    agreeRow:         { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 20 },
+    agreeCheck:       { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: Colors.border, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+    agreeCheckActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+    agreeText:        { flex: 1, fontSize: 13, color: Colors.textSub, lineHeight: 20 },
+    navRow:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: Colors.border },
+    backBtn:          { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 16 },
+    backBtnText:      { fontSize: 14, fontWeight: '600', color: Colors.textSub },
+    nextBtn:          { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
+    nextBtnText:      { color: 'white', fontWeight: '800', fontSize: 15 },
+    submitBtn:        { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#7c3aed', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
+    errorBox:         { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fef2f2', borderRadius: 10, borderWidth: 1, borderColor: '#fecaca', padding: 10, marginBottom: 14 },
+    errorText:        { fontSize: 13, color: '#dc2626', flex: 1 },
+    planCard:         { backgroundColor: Colors.bg, borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1.5, borderColor: Colors.border, flexDirection: 'row', alignItems: 'center' },
+    planName:         { fontSize: 16, fontWeight: '800' },
+    planDesc:         { fontSize: 12, color: Colors.textSub, marginTop: 2 },
+    planDays:         { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+    planRight:        { alignItems: 'flex-end', gap: 4 },
+    planPrice:        { fontSize: 20, fontWeight: '900' },
+
+    // ── Status sheet & Statistika modal ──
+    sheetBackdrop:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+    sheet:            { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 34 },
+    sheetHandle:      { width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.border, alignSelf: 'center', marginBottom: 16 },
+    sheetTitle:       { fontSize: 18, fontWeight: '800', color: Colors.text },
+    sheetSub:         { fontSize: 13, color: Colors.textSub, marginBottom: 16, marginTop: 2 },
+    statusRow:        { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: Colors.border },
+    statusIcon:       { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    statusRowTitle:   { fontSize: 15, fontWeight: '700', color: Colors.text },
+    statusRowSub:     { fontSize: 12, color: Colors.textSub, marginTop: 2 },
+    sheetCancel:      { marginTop: 16, paddingVertical: 14, borderRadius: 14, backgroundColor: Colors.bg, alignItems: 'center' },
+    sheetCancelText:  { fontSize: 15, fontWeight: '700', color: Colors.textSub },
+    statGrid:         { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 4, marginBottom: 8 },
+    statCard:         { width: '47%', flexGrow: 1, backgroundColor: Colors.bg, borderRadius: 16, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: Colors.border },
+    statCardIcon:     { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+    statValue:        { fontSize: 24, fontWeight: '900', color: Colors.text },
+    statLabel:        { fontSize: 12, color: Colors.textSub, marginTop: 2, fontWeight: '500' },
+    statsViewBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 14, marginTop: 12 },
+    statsViewBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  }), [themeKey]);
   const { user } = useAuth();
   const [createModal, setCreateModal]   = useState(false);
   const [editJob, setEditJob]           = useState<Job | null>(null);
@@ -132,9 +251,23 @@ export default function MyWorksScreen() {
   const [updateJob, { loading: updating }] = useMutation(UPDATE_JOB);
   const [deleteJob]                        = useMutation(DELETE_JOB);
   const [completeJob]                      = useMutation(COMPLETE_JOB);
+  const [cancelJob]                        = useMutation(CANCEL_JOB);
+  const [markJobActive]                    = useMutation(MARK_JOB_ACTIVE);
   const [boostJob, { loading: boosting }]  = useMutation(BOOST_JOB);
+  const [fetchBids, { data: bidsData, loading: bidsLoading }] = useLazyQuery(GET_BIDS_FOR_JOB, { fetchPolicy: 'network-only' });
+
+  // ── Status o'zgartirish modallar ──────────────────────────────────────────
+  const [statusMenuJob, setStatusMenuJob]     = useState<Job | null>(null); // status tanlash sheet
+  const [completeJobItem, setCompleteJobItem] = useState<Job | null>(null); // "Tugadi" modal
+  const [hiredId, setHiredId]                 = useState<string>('');
+  const [completeSaving, setCompleteSaving]   = useState(false);
+  const [cancelJobItem, setCancelJobItem]     = useState<Job | null>(null); // "Bekor" modal
+  const [cancelReason, setCancelReason]       = useState('');
+  const [cancelSaving, setCancelSaving]       = useState(false);
+  const [statsJob, setStatsJob]               = useState<Job | null>(null); // statistika modal
 
   const jobs: Job[] = data?.getMyJobs ?? [];
+  const jobBids = bidsData?.getBidsForJob ?? [];
 
   // ── Create helpers ────────────────────────────────────────────────────────
   const resetCreate = () => {
@@ -217,11 +350,77 @@ export default function MyWorksScreen() {
     ]);
   };
 
-  const handleComplete = (jobId: string) => {
-    Alert.alert('Bajarildi', 'Ishni yakunlangan deb belgilaysizmi?', [
-      { text: 'Bekor', style: 'cancel' },
-      { text: 'Ha', onPress: async () => { await completeJob({ variables: { jobId } }); refetch(); } },
-    ]);
+  // ── Status menyusi (chiroyli sheet — Faol / Tugadi / Bekor) ────────────────
+  const openStatusMenu = (job: Job) => setStatusMenuJob(job);
+
+  // ── Xarita ochish/yopish (iOS: bir vaqtda faqat bitta modal) ───────────────
+  const openMap = () => {
+    setCreateModal(false);              // create modalni yashiramiz
+    setTimeout(() => setMapModal(true), 350); // dismiss animatsiyasi tugagach xaritani ochamiz
+  };
+  const closeMapAndReturn = (addr?: PickedAddress) => {
+    if (addr) setCLocation(addr);
+    setMapModal(false);
+    setTimeout(() => setCreateModal(true), 350); // create modalni qaytaramiz
+  };
+
+  // Faol (manual)
+  const handleSetActive = async (job: Job) => {
+    setStatusMenuJob(null);
+    try {
+      await markJobActive({ variables: { jobId: job._id } });
+      refetch();
+    } catch (err: any) {
+      Alert.alert('Xato', err?.graphQLErrors?.[0]?.message ?? 'Statusni o\'zgartirishda xato');
+    }
+  };
+
+  // Tugadi → frilanser tanlash modali
+  const openComplete = (job: Job) => {
+    setStatusMenuJob(null);
+    setCompleteJobItem(job);
+    setHiredId('');
+    fetchBids({ variables: { jobId: job._id } });
+  };
+
+  const confirmComplete = async () => {
+    if (!completeJobItem) return;
+    setCompleteSaving(true);
+    try {
+      await completeJob({
+        variables: {
+          jobId: completeJobItem._id,
+          hiredFreelancerId: hiredId || undefined,
+        },
+      });
+      await refetch();
+      setCompleteJobItem(null);
+    } catch (err: any) {
+      Alert.alert('Xato', err?.graphQLErrors?.[0]?.message ?? 'Yakunlashda xato');
+    } finally {
+      setCompleteSaving(false);
+    }
+  };
+
+  // Bekor → sabab modali
+  const openCancel = (job: Job) => {
+    setStatusMenuJob(null);
+    setCancelJobItem(job);
+    setCancelReason('');
+  };
+
+  const confirmCancel = async () => {
+    if (!cancelJobItem || cancelReason.trim().length < 5) return;
+    setCancelSaving(true);
+    try {
+      await cancelJob({ variables: { jobId: cancelJobItem._id, reason: cancelReason.trim() } });
+      await refetch();
+      setCancelJobItem(null);
+    } catch (err: any) {
+      Alert.alert('Xato', err?.graphQLErrors?.[0]?.message ?? 'Bekor qilishda xato');
+    } finally {
+      setCancelSaving(false);
+    }
   };
 
   const handleBoost = async () => {
@@ -268,9 +467,9 @@ export default function MyWorksScreen() {
           <Text style={styles.bids}>{job.bidCount} taklif</Text>
         </View>
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => router.push(`/jobs/${job._id}`)}>
-            <Ionicons name="eye-outline" size={16} color={Colors.primary} />
-            <Text style={[styles.actionText, { color: Colors.primary }]}>Ko'rish</Text>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => setStatsJob(job)}>
+            <Ionicons name="stats-chart-outline" size={16} color={Colors.primary} />
+            <Text style={[styles.actionText, { color: Colors.primary }]}>Statistika</Text>
           </TouchableOpacity>
           {(job.status === 'OPEN' || job.status === 'ACTIVE') && (
             <>
@@ -284,10 +483,10 @@ export default function MyWorksScreen() {
               </TouchableOpacity>
             </>
           )}
-          {job.status === 'ACTIVE' && (
-            <TouchableOpacity style={styles.actionBtn} onPress={() => handleComplete(job._id)}>
-              <Ionicons name="checkmark-circle-outline" size={16} color={Colors.green} />
-              <Text style={[styles.actionText, { color: Colors.green }]}>Bajarildi</Text>
+          {(job.status === 'OPEN' || job.status === 'ACTIVE') && (
+            <TouchableOpacity style={styles.actionBtn} onPress={() => openStatusMenu(job)}>
+              <Ionicons name="swap-horizontal-outline" size={16} color={Colors.green} />
+              <Text style={[styles.actionText, { color: Colors.green }]}>Status</Text>
             </TouchableOpacity>
           )}
           {job.status !== 'ACTIVE' && (
@@ -301,7 +500,25 @@ export default function MyWorksScreen() {
     );
   };
 
-  return (
+  if (!user) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center', padding: 32 }} edges={['top']}>
+        <Ionicons name="briefcase-outline" size={72} color={Colors.textMuted} />
+        <Text style={{ fontSize: 20, fontWeight: '800', color: Colors.text, marginTop: 16, marginBottom: 8 }}>Kirish talab etiladi</Text>
+        <Text style={{ fontSize: 14, color: Colors.textSub, textAlign: 'center', marginBottom: 28, lineHeight: 20 }}>
+          Ishlaringizni boshqarish uchun tizimga kiring
+        </Text>
+        <TouchableOpacity
+          style={{ backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 40 }}
+          onPress={() => router.push('/(auth)/login' as any)}
+        >
+          <Text style={{ color: 'white', fontWeight: '800', fontSize: 16 }}>Kirish</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  return (<SwipeWrapper>
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <View>
@@ -352,7 +569,7 @@ export default function MyWorksScreen() {
           {/* Stepper */}
           <Stepper step={step} />
 
-          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <ScrollView contentContainerStyle={styles.modalBody} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
               {/* Error */}
@@ -439,20 +656,32 @@ export default function MyWorksScreen() {
                   </View>
 
                   {/* Location */}
-                  <Text style={styles.fieldLabel}>Ish joyi manzili (ixtiyoriy)</Text>
-                  <TouchableOpacity style={styles.mapPickerBtn} onPress={() => setMapModal(true)}>
-                    <Ionicons name="map-outline" size={18} color={Colors.primary} />
-                    <Text style={[styles.mapPickerText, cLocation && { color: Colors.text }]}>
-                      {cLocation?.name
-                        ? cLocation.name
-                        : cLocation
-                          ? `${cLocation.latitude.toFixed(5)}, ${cLocation.longitude.toFixed(5)}`
-                          : 'Xaritadan manzil tanlang...'}
-                    </Text>
-                    {cLocation && (
-                      <TouchableOpacity onPress={() => setCLocation(null)}>
-                        <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, marginBottom: 8 }}>
+                    <Ionicons name="location-outline" size={16} color={Colors.text} />
+                    <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Ish joyi manzili</Text>
+                  </View>
+                  <TouchableOpacity style={styles.mapPickerBtn} onPress={openMap} activeOpacity={0.8}>
+                    <View style={styles.mapPickerIconBox}>
+                      <Ionicons name="map" size={22} color="#fff" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.mapPickerLabel}>
+                        {cLocation ? 'Manzil tanlandi' : 'Xaritadan manzil tanlash'}
+                      </Text>
+                      <Text style={[styles.mapPickerText, cLocation && { color: Colors.text }]} numberOfLines={1}>
+                        {cLocation?.name
+                          ? cLocation.name
+                          : cLocation
+                            ? `${cLocation.latitude.toFixed(5)}, ${cLocation.longitude.toFixed(5)}`
+                            : 'Bosing va xaritada belgilang (ixtiyoriy)'}
+                      </Text>
+                    </View>
+                    {cLocation ? (
+                      <TouchableOpacity onPress={() => setCLocation(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                        <Ionicons name="close-circle" size={22} color={Colors.textMuted} />
                       </TouchableOpacity>
+                    ) : (
+                      <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
                     )}
                   </TouchableOpacity>
 
@@ -664,8 +893,8 @@ export default function MyWorksScreen() {
       <MapPickerModal
         visible={mapModal}
         initial={cLocation}
-        onConfirm={(addr) => { setCLocation(addr); setMapModal(false); }}
-        onClose={() => setMapModal(false)}
+        onConfirm={(addr) => closeMapAndReturn(addr)}
+        onClose={() => closeMapAndReturn()}
       />
 
       {/* ── Edit Modal ── */}
@@ -731,131 +960,238 @@ export default function MyWorksScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* ── "Tugadi" modal — frilanser tanlash ── */}
+      <Modal visible={!!completeJobItem} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setCompleteJobItem(null)}>
+        <SafeAreaView style={styles.modalSafe}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setCompleteJobItem(null)}>
+              <Ionicons name="close" size={24} color={Colors.text} />
+            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="checkmark-circle-outline" size={18} color={Colors.green} />
+              <Text style={styles.modalTitle}>Ishni yakunlash</Text>
+            </View>
+            <View style={{ width: 24 }} />
+          </View>
+
+          <ScrollView contentContainerStyle={{ padding: 16 }}>
+            <Text style={{ fontSize: 13, color: Colors.textSub, marginBottom: 14 }}>
+              Kim ishni bajardi? Yollangan frilanserni tanlang (ixtiyoriy — tanlamasangiz ham yakunlash mumkin).
+            </Text>
+
+            {bidsLoading ? (
+              <ActivityIndicator color={Colors.primary} style={{ marginVertical: 24 }} />
+            ) : jobBids.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                <Ionicons name="people-outline" size={40} color={Colors.textMuted} />
+                <Text style={{ color: Colors.textMuted, marginTop: 8, fontSize: 13 }}>Bu ishga takliflar yo'q</Text>
+              </View>
+            ) : (
+              jobBids.map((b: any) => {
+                const sel = hiredId === b.freelancerId;
+                return (
+                  <TouchableOpacity
+                    key={b._id}
+                    onPress={() => setHiredId(sel ? '' : b.freelancerId)}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 12,
+                      padding: 14, borderRadius: 12, marginBottom: 8,
+                      borderWidth: 1.5,
+                      borderColor: sel ? Colors.green : Colors.border,
+                      backgroundColor: sel ? '#f0fdf4' : Colors.white,
+                    }}
+                  >
+                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#eef2ff', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontWeight: '800', color: Colors.primary }}>
+                        {(b.freelancerName ?? '?')[0]?.toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: Colors.text }}>{b.freelancerName ?? 'Frilanser'}</Text>
+                      <Text style={{ fontSize: 12, color: Colors.textSub }}>Taklif: ${b.bidAmount}</Text>
+                    </View>
+                    {sel && <Ionicons name="checkmark-circle" size={22} color={Colors.green} />}
+                  </TouchableOpacity>
+                );
+              })
+            )}
+
+            <TouchableOpacity
+              style={{ backgroundColor: Colors.green, borderRadius: 14, paddingVertical: 15, alignItems: 'center', marginTop: 12, opacity: completeSaving ? 0.7 : 1 }}
+              onPress={confirmComplete}
+              disabled={completeSaving}
+            >
+              {completeSaving
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>Yakunlandi deb belgilash</Text>}
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* ── "Bekor" modal — sabab ── */}
+      <Modal visible={!!cancelJobItem} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setCancelJobItem(null)}>
+        <SafeAreaView style={styles.modalSafe}>
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setCancelJobItem(null)}>
+                <Ionicons name="close" size={24} color={Colors.text} />
+              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="close-circle-outline" size={18} color={Colors.red} />
+                <Text style={styles.modalTitle}>Ishni bekor qilish</Text>
+              </View>
+              <View style={{ width: 24 }} />
+            </View>
+
+            <ScrollView contentContainerStyle={{ padding: 16 }}>
+              <Text style={{ fontSize: 13, color: Colors.textSub, marginBottom: 12 }}>
+                Bekor qilish sababini yozing (kamida 5 belgi). Bu frilanserlarga ko'rsatiladi.
+              </Text>
+              <TextInput
+                value={cancelReason}
+                onChangeText={setCancelReason}
+                placeholder="Masalan: Loyiha kechiktirildi..."
+                placeholderTextColor={Colors.textMuted}
+                multiline
+                style={{
+                  borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12,
+                  padding: 14, fontSize: 15, color: Colors.text, backgroundColor: Colors.white,
+                  height: 120, textAlignVertical: 'top', marginBottom: 16,
+                }}
+              />
+              <TouchableOpacity
+                style={{
+                  backgroundColor: cancelReason.trim().length >= 5 ? Colors.red : '#fca5a5',
+                  borderRadius: 14, paddingVertical: 15, alignItems: 'center',
+                  opacity: cancelSaving ? 0.7 : 1,
+                }}
+                onPress={confirmCancel}
+                disabled={cancelSaving || cancelReason.trim().length < 5}
+              >
+                {cancelSaving
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>Bekor qilishni tasdiqlash</Text>}
+              </TouchableOpacity>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* ── Status tanlash sheet (chiroyli, iconli) ── */}
+      <Modal visible={!!statusMenuJob} transparent animationType="fade" onRequestClose={() => setStatusMenuJob(null)}>
+        <TouchableOpacity activeOpacity={1} onPress={() => setStatusMenuJob(null)} style={styles.sheetBackdrop}>
+          <TouchableOpacity activeOpacity={1} style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Status o'zgartirish</Text>
+            <Text style={styles.sheetSub} numberOfLines={1}>{statusMenuJob?.title}</Text>
+
+            {statusMenuJob?.status === 'OPEN' && (
+              <TouchableOpacity style={styles.statusRow} onPress={() => statusMenuJob && handleSetActive(statusMenuJob)}>
+                <View style={[styles.statusIcon, { backgroundColor: '#e0f2fe' }]}>
+                  <Ionicons name="flash" size={20} color="#0891b2" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.statusRowTitle}>Faol deb belgilash</Text>
+                  <Text style={styles.statusRowSub}>Ish faol holatga o'tadi</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              </TouchableOpacity>
+            )}
+
+            {(statusMenuJob?.status === 'OPEN' || statusMenuJob?.status === 'ACTIVE') && (
+              <>
+                <TouchableOpacity style={styles.statusRow} onPress={() => statusMenuJob && openComplete(statusMenuJob)}>
+                  <View style={[styles.statusIcon, { backgroundColor: '#dcfce7' }]}>
+                    <Ionicons name="checkmark-circle" size={20} color="#16a34a" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.statusRowTitle}>Tugadi (yakunlash)</Text>
+                    <Text style={styles.statusRowSub}>Yollangan frilanserni tanlang</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.statusRow} onPress={() => statusMenuJob && openCancel(statusMenuJob)}>
+                  <View style={[styles.statusIcon, { backgroundColor: '#fee2e2' }]}>
+                    <Ionicons name="close-circle" size={20} color="#dc2626" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.statusRowTitle}>Bekor qilish</Text>
+                    <Text style={styles.statusRowSub}>Sabab bilan bekor qilinadi</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+                </TouchableOpacity>
+              </>
+            )}
+
+            <TouchableOpacity style={styles.sheetCancel} onPress={() => setStatusMenuJob(null)}>
+              <Text style={styles.sheetCancelText}>Yopish</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* ── Statistika modali ── */}
+      <Modal visible={!!statsJob} transparent animationType="fade" onRequestClose={() => setStatsJob(null)}>
+        <TouchableOpacity activeOpacity={1} onPress={() => setStatsJob(null)} style={styles.sheetBackdrop}>
+          <TouchableOpacity activeOpacity={1} style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+              <Ionicons name="stats-chart" size={18} color={Colors.primary} />
+              <Text style={styles.sheetTitle}>Statistika</Text>
+            </View>
+            <Text style={styles.sheetSub} numberOfLines={1}>{statsJob?.title}</Text>
+
+            <View style={styles.statGrid}>
+              <View style={styles.statCard}>
+                <View style={[styles.statCardIcon, { backgroundColor: '#eef2ff' }]}>
+                  <Ionicons name="eye" size={20} color="#4f46e5" />
+                </View>
+                <Text style={styles.statValue}>{statsJob?.viewCount ?? 0}</Text>
+                <Text style={styles.statLabel}>Ko'rishlar</Text>
+              </View>
+              <View style={styles.statCard}>
+                <View style={[styles.statCardIcon, { backgroundColor: '#dcfce7' }]}>
+                  <Ionicons name="people" size={20} color="#16a34a" />
+                </View>
+                <Text style={styles.statValue}>{statsJob?.bidCount ?? 0}</Text>
+                <Text style={styles.statLabel}>Takliflar</Text>
+              </View>
+              <View style={styles.statCard}>
+                <View style={[styles.statCardIcon, { backgroundColor: '#fef3c7' }]}>
+                  <Ionicons name="trending-up" size={20} color="#d97706" />
+                </View>
+                <Text style={styles.statValue}>
+                  {(statsJob?.viewCount ?? 0) > 0
+                    ? Math.round(((statsJob?.bidCount ?? 0) / (statsJob?.viewCount ?? 1)) * 100)
+                    : 0}%
+                </Text>
+                <Text style={styles.statLabel}>Javob darajasi</Text>
+              </View>
+              <View style={styles.statCard}>
+                <View style={[styles.statCardIcon, { backgroundColor: '#f5f3ff' }]}>
+                  <Ionicons name={statsJob?.boostPlan ? 'rocket' : 'rocket-outline'} size={20} color="#7c3aed" />
+                </View>
+                <Text style={styles.statValue}>
+                  {statsJob?.boostExpiresAt && new Date(statsJob.boostExpiresAt).getTime() > Date.now() ? 'Faol' : "Yo'q"}
+                </Text>
+                <Text style={styles.statLabel}>Top reklama</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.statsViewBtn}
+              onPress={() => { const id = statsJob?._id; setStatsJob(null); if (id) router.push(`/jobs/${id}`); }}
+            >
+              <Ionicons name="open-outline" size={16} color="#fff" />
+              <Text style={styles.statsViewBtnText}>Ish e'lonini ochish</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
-  );
+  </SwipeWrapper>);
 }
 
-const styles = StyleSheet.create({
-  safe:             { flex: 1, backgroundColor: Colors.bg },
-  header:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
-  headerTitle:      { fontSize: 22, fontWeight: '900', color: Colors.text },
-  headerSub:        { fontSize: 12, color: Colors.textSub, marginTop: 2 },
-  addBtn:           { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
-  list:             { paddingHorizontal: 16, paddingBottom: 20 },
-  center:           { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  empty:            { alignItems: 'center', paddingTop: 60 },
-  emptyText:        { fontSize: 16, color: Colors.textMuted, marginTop: 12 },
-  emptyBtn:         { marginTop: 16, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
-  emptyBtnText:     { color: 'white', fontWeight: '700', fontSize: 15 },
-  jobCard:          { backgroundColor: Colors.white, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: Colors.border, elevation: 2 },
-  jobTop:           { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  badge:            { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  badgeText:        { fontSize: 11, fontWeight: '700' },
-  timeText:         { fontSize: 11, color: Colors.textMuted, marginLeft: 'auto' },
-  jobTitle:         { fontSize: 15, fontWeight: '800', color: Colors.text, marginBottom: 8 },
-  jobMeta:          { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-  budget:           { fontSize: 16, fontWeight: '900', color: Colors.green },
-  bids:             { fontSize: 13, color: Colors.textMuted },
-  actions:          { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  actionBtn:        { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: Colors.bg, borderWidth: 1, borderColor: Colors.border },
-  actionText:       { fontSize: 12, fontWeight: '600' },
-
-  // Modal
-  modalSafe:        { flex: 1, backgroundColor: Colors.white },
-  modalHeader:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  modalTitle:       { fontSize: 17, fontWeight: '800', color: Colors.text },
-  modalBody:        { padding: 20 },
-
-  // Steps
-  stepTitle:        { fontSize: 20, fontWeight: '900', color: Colors.text, marginBottom: 4 },
-  stepSub:          { fontSize: 13, color: Colors.textSub, marginBottom: 20 },
-  sectionTitle:     { fontSize: 14, fontWeight: '700', color: Colors.text, marginBottom: 10, marginTop: 6 },
-
-  // Fields
-  fieldLabel:       { fontSize: 13, fontWeight: '600', color: Colors.textSub, marginBottom: 6 },
-  fieldInput:       { borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: Colors.text, backgroundColor: Colors.bg, marginBottom: 14 },
-  charCount:        { fontSize: 11, color: Colors.textMuted, textAlign: 'right', marginTop: -10, marginBottom: 14 },
-
-  // Budget
-  budgetTypeRow:    { flexDirection: 'row', gap: 10, marginBottom: 14 },
-  budgetTypeBtn:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.border, backgroundColor: Colors.bg },
-  budgetTypeBtnActive: { borderColor: Colors.primary, backgroundColor: '#eef2ff' },
-  budgetTypeText:   { fontSize: 13, fontWeight: '600', color: Colors.textSub },
-  currencyRow:      { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  currencyBtn:      { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8, borderWidth: 1, borderColor: Colors.border },
-  currencyBtnActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  currencyText:     { fontSize: 12, fontWeight: '700', color: Colors.textSub },
-  budgetInputWrap:  { flexDirection: 'row', borderWidth: 1, borderColor: Colors.border, borderRadius: 10, overflow: 'hidden', marginBottom: 14, backgroundColor: Colors.bg },
-  budgetInput:      { flex: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: Colors.text, fontWeight: '700' },
-  budgetSuffix:     { paddingHorizontal: 14, justifyContent: 'center', borderLeftWidth: 1, borderLeftColor: Colors.border, backgroundColor: Colors.white },
-  budgetSuffixText: { fontSize: 13, fontWeight: '700', color: Colors.primary },
-
-  // Map
-  mapPickerBtn:     { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: Colors.bg, marginBottom: 14 },
-  mapPickerText:    { flex: 1, fontSize: 15, color: Colors.textMuted },
-
-  // Chips
-  chipWrap:         { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip:             { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.white },
-  chipActive:       { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  chipText:         { fontSize: 12, fontWeight: '600', color: Colors.textSub },
-
-  // Experience
-  expGrid:          { flexDirection: 'row', gap: 8, marginBottom: 14 },
-  expCard:          { flex: 1, padding: 12, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.border, backgroundColor: Colors.bg },
-  expCardActive:    { borderColor: Colors.primary, backgroundColor: '#eef2ff' },
-  expLabel:         { fontSize: 13, fontWeight: '700', color: Colors.text },
-  expSub:           { fontSize: 11, color: Colors.textSub, marginTop: 2 },
-
-  // Pills
-  pillRow:          { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  pill:             { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: Colors.border },
-  pillActive:       { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  pillText:         { fontSize: 13, fontWeight: '600', color: Colors.textSub },
-
-  // Skills input
-  skillInputRow:    { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  addSkillBtn:      { width: 46, height: 46, borderRadius: 10, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
-
-  // Preview
-  previewCard:      { backgroundColor: Colors.bg, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: Colors.border, marginBottom: 14 },
-  previewTitle:     { fontSize: 18, fontWeight: '900', color: Colors.text, marginBottom: 4 },
-  previewCat:       { fontSize: 13, fontWeight: '600', color: Colors.primary, marginBottom: 10 },
-  previewBudget:    { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
-  previewBudgetText: { fontSize: 14, fontWeight: '700', color: Colors.primary },
-  previewDesc:      { fontSize: 13, color: Colors.textSub, lineHeight: 20, marginBottom: 12 },
-  previewMeta:      { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: Colors.border },
-  previewMetaItem:  { minWidth: 80 },
-  previewMetaLabel: { fontSize: 10, color: Colors.textMuted, fontWeight: '600' },
-  previewMetaVal:   { fontSize: 13, fontWeight: '700', color: Colors.text, marginTop: 2 },
-
-  // Info
-  infoBox:          { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 14, backgroundColor: '#eff6ff', borderRadius: 12, borderWidth: 1, borderColor: '#bfdbfe', marginBottom: 14 },
-  infoText:         { flex: 1, fontSize: 13, color: '#1d4ed8', lineHeight: 20 },
-
-  // Agree
-  agreeRow:         { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 20 },
-  agreeCheck:       { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: Colors.border, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-  agreeCheckActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  agreeText:        { flex: 1, fontSize: 13, color: Colors.textSub, lineHeight: 20 },
-
-  // Navigation
-  navRow:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: Colors.border },
-  backBtn:          { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 16 },
-  backBtnText:      { fontSize: 14, fontWeight: '600', color: Colors.textSub },
-  nextBtn:          { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
-  nextBtnText:      { color: 'white', fontWeight: '800', fontSize: 15 },
-  submitBtn:        { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#7c3aed', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
-
-  // Error
-  errorBox:         { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fef2f2', borderRadius: 10, borderWidth: 1, borderColor: '#fecaca', padding: 10, marginBottom: 14 },
-  errorText:        { fontSize: 13, color: '#dc2626', flex: 1 },
-
-  // Boost
-  planCard:         { backgroundColor: Colors.bg, borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1.5, borderColor: Colors.border, flexDirection: 'row', alignItems: 'center' },
-  planName:         { fontSize: 16, fontWeight: '800' },
-  planDesc:         { fontSize: 12, color: Colors.textSub, marginTop: 2 },
-  planDays:         { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
-  planRight:        { alignItems: 'flex-end', gap: 4 },
-  planPrice:        { fontSize: 20, fontWeight: '900' },
-});

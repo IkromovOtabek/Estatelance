@@ -190,6 +190,10 @@ export class UpdateProfileInput {
 
   @IsOptional()
   @Field(() => String, { nullable: true })
+  expoPushToken?: string;
+
+  @IsOptional()
+  @Field(() => String, { nullable: true })
   cardNumber?: string;
 
   @IsOptional()

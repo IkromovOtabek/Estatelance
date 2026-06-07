@@ -17,7 +17,14 @@
       "bundleIdentifier": "uz.bufu.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Manzil tanlash uchun joylashuv ruxsati kerak.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Manzil tanlash uchun joylashuv ruxsati kerak."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Manzil tanlash uchun joylashuv ruxsati kerak.",
+        "UIBackgroundModes": ["remote-notification", "fetch"],
+        "LSApplicationQueriesSchemes": [
+          "comgooglemaps",
+          "yandexmaps",
+          "dgis",
+          "maps"
+        ]
       }
     },
     "android": {
@@ -31,6 +38,15 @@
     "plugins": [
       "expo-router",
       "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/bufu-logo.png",
+          "color": "#6366f1",
+          "defaultChannel": "bufu-default",
+          "sounds": ["./assets/notification.wav"]
+        }
+      ],
       [
         "expo-location",
         {

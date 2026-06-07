@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useTheme } from '../../hooks/useThemeContext';
+import SwipeWrapper from '../../components/SwipeWrapper';
 import {
   View, Text, FlatList, StyleSheet, TextInput,
   TouchableOpacity, ActivityIndicator, RefreshControl,
@@ -13,6 +15,7 @@ import { Colors } from '../../constants/colors';
 import { User } from '../../types';
 
 export default function BrowseScreen() {
+  const { themeKey } = useTheme();
   const [search, setSearch] = useState('');
 
   const { data, loading, refetch } = useQuery(GET_FREELANCERS, {
@@ -21,7 +24,22 @@ export default function BrowseScreen() {
 
   const users: User[] = data?.getFreelancers ?? [];
 
-  return (
+  const styles = useMemo(() => StyleSheet.create({
+    safe:        { flex: 1, backgroundColor: Colors.bg },
+    header:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
+    headerTitle: { fontSize: 22, fontWeight: '900', color: Colors.text },
+    headerSub:   { fontSize: 12, color: Colors.textSub, marginTop: 2 },
+    msgBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
+    msgBtnText:  { fontSize: 13, fontWeight: '700', color: Colors.text },
+    searchBox:   { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.border, borderRadius: 12, marginHorizontal: 16, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 10 },
+    searchInput: { flex: 1, fontSize: 15, color: Colors.text },
+    list:        { paddingHorizontal: 16, paddingBottom: 20 },
+    center:      { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    empty:       { alignItems: 'center', paddingTop: 60 },
+    emptyText:   { fontSize: 16, color: Colors.textMuted, marginTop: 12 },
+  }), [themeKey]);
+
+  return (<SwipeWrapper>
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Frilanserlar</Text>
@@ -66,18 +84,6 @@ export default function BrowseScreen() {
         />
       )}
     </SafeAreaView>
-  );
+  </SwipeWrapper>);
 }
 
-const styles = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: Colors.bg },
-  header:      { paddingHorizontal: 16, paddingVertical: 12 },
-  headerTitle: { fontSize: 22, fontWeight: '900', color: Colors.text },
-  headerSub:   { fontSize: 12, color: Colors.textSub, marginTop: 2 },
-  searchBox:   { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.border, borderRadius: 12, marginHorizontal: 16, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 10 },
-  searchInput: { flex: 1, fontSize: 15, color: Colors.text },
-  list:        { paddingHorizontal: 16, paddingBottom: 20 },
-  center:      { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  empty:       { alignItems: 'center', paddingTop: 60 },
-  emptyText:   { fontSize: 16, color: Colors.textMuted, marginTop: 12 },
-});

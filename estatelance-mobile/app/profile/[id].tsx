@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useTheme } from '../../hooks/useThemeContext';
 import {
   View, Text, ScrollView, StyleSheet, Image, ActivityIndicator,
   TouchableOpacity, Alert,
@@ -10,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { GET_USER_BY_ID, CHECK_IS_FOLLOWING } from '../../apollo/queries';
 import { TOGGLE_FOLLOW } from '../../apollo/mutations';
 import { Colors } from '../../constants/colors';
+import { safeImageUri } from '../../libs/safeImage';
 import { useAuth } from '../../hooks/useAuth';
 import { User } from '../../types';
 
@@ -20,6 +22,8 @@ const AVAIL_OPTS: Record<string, { label: string; icon: string; color: string }>
 };
 
 export default function UserProfileScreen() {
+  const { themeKey } = useTheme();
+  const styles = useMemo(() => createStyles(), [themeKey]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user: me } = useAuth();
 
@@ -106,8 +110,8 @@ export default function UserProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile header */}
         <View style={styles.profileTop}>
-          {user.profileImage ? (
-            <Image source={{ uri: user.profileImage }} style={styles.avatar} />
+          {safeImageUri(user.profileImage) ? (
+            <Image source={{ uri: safeImageUri(user.profileImage) }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarFallback}>
               <Text style={styles.avatarText}>{initials}</Text>
@@ -128,7 +132,7 @@ export default function UserProfileScreen() {
               color={user.userType === 'AGENT' ? '#0891b2' : '#7c3aed'}
             />
             <Text style={[styles.typeText, { color: user.userType === 'AGENT' ? '#0891b2' : '#7c3aed' }]}>
-              {user.userType === 'AGENT' ? 'Mijoz' : 'Frilanser'}
+              {user.userType === 'AGENT' ? 'Agent' : 'Freelancer'}
             </Text>
           </View>
 
@@ -223,7 +227,7 @@ export default function UserProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   safe:             { flex: 1, backgroundColor: Colors.bg },
   center:           { flex: 1, alignItems: 'center', justifyContent: 'center' },
   notFoundText:     { fontSize: 16, color: Colors.textMuted, marginTop: 12 },
@@ -232,7 +236,7 @@ const styles = StyleSheet.create({
   topTitle:         { fontSize: 16, fontWeight: '700', color: Colors.text, flex: 1, textAlign: 'center' },
   profileTop:       { alignItems: 'center', paddingTop: 28, paddingBottom: 20, backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border, position: 'relative' },
   avatar:           { width: 88, height: 88, borderRadius: 44, marginBottom: 12 },
-  avatarFallback:   { width: 88, height: 88, borderRadius: 44, backgroundColor: '#eef2ff', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  avatarFallback:   { width: 88, height: 88, borderRadius: 44, backgroundColor: Colors.primary + '15', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   avatarText:       { fontSize: 32, fontWeight: '900', color: Colors.primary },
   availDot:         { position: 'absolute', top: 88, left: '50%', width: 16, height: 16, borderRadius: 8, borderWidth: 2.5, borderColor: Colors.white, marginLeft: 22 },
   name:             { fontSize: 21, fontWeight: '900', color: Colors.text },

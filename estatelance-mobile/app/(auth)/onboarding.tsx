@@ -15,8 +15,8 @@ const ROLES = [
   {
     type:  'AGENT',
     icon:  'business-outline' as const,
-    title: 'Ish beruvchi',
-    desc:  'Frilanserlarni topib, loyihalarim uchun mutaxassislar yollayman',
+    title: 'Agent',
+    desc:  'Freelancerlarni topib, loyihalarim uchun mutaxassislar yollayman',
     color: '#0891b2',
     bg:    '#e0f2fe',
     border:'#7dd3fc',
@@ -24,7 +24,7 @@ const ROLES = [
   {
     type:  'FREELANCER',
     icon:  'briefcase-outline' as const,
-    title: 'Frilanser',
+    title: 'Freelancer',
     desc:  'Ko\'nikmalarimni taklif qilib, turli loyihalarda ishlayman',
     color: '#7c3aed',
     bg:    '#f5f3ff',

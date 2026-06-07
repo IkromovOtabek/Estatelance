@@ -3,9 +3,10 @@ import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Colors } from '../../constants/colors';
+import { useTheme } from '../../hooks/useThemeContext';
 import { useAuth } from '../../hooks/useAuth';
 import { useQuery } from '@apollo/client';
-import { GET_UNREAD_COUNT } from '../../apollo/queries';
+import { GET_UNREAD_COUNT, GET_UNREAD_MESSAGE_COUNT } from '../../apollo/queries';
 
 function TabIcon({ name, focused, badge }: { name: any; focused: boolean; badge?: number }) {
   return (
@@ -51,20 +52,20 @@ function AddButton() {
 
 export default function TabsLayout() {
   const { user, loading } = useAuth();
+  useTheme(); // theme o'zgarganda qayta render uchun
   const { data: notifData } = useQuery(GET_UNREAD_COUNT, {
     skip: !user,
-    pollInterval: 60_000,
+    pollInterval: 30_000,
+    fetchPolicy: 'cache-and-network',
+  });
+  const { data: msgData } = useQuery(GET_UNREAD_MESSAGE_COUNT, {
+    skip: !user,
+    pollInterval: 8_000,
+    fetchPolicy: 'cache-and-network',
   });
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/(auth)/login');
-    }
-  }, [user, loading]);
-
-  if (!user) return null;
-
-  const unread = notifData?.getUnreadNotificationCount ?? 0;
+  const unreadNotif = notifData?.getUnreadNotificationCount ?? 0;
+  const unreadMsg   = msgData?.getUnreadMessageCount ?? 0;
 
   return (
     <Tabs
@@ -73,13 +74,15 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: Colors.tabBar,
           borderTopColor: Colors.border,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 4,
+          height: 84,
+          paddingBottom: 0,
+          paddingTop: 0,
+          justifyContent: 'center',
         },
         tabBarActiveTintColor: Colors.tabActive,
         tabBarInactiveTintColor: Colors.tabInactive,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginTop: 2 },
+        tabBarItemStyle: { justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
       }}
     >
       <Tabs.Screen
@@ -96,6 +99,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => <TabIcon name="people" focused={focused} />,
         }}
       />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Xabarlar',
+          tabBarIcon: ({ focused }) => <TabIcon name="chatbubble-ellipses" focused={focused} badge={unreadMsg} />,
+        }}
+      />
       {/* Center + button */}
       <Tabs.Screen
         name="my-works"
@@ -103,6 +113,13 @@ export default function TabsLayout() {
           title: '',
           tabBarIcon: () => <AddButton />,
           tabBarLabel: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="favorites"
+        options={{
+          title: 'Sevimlilar',
+          tabBarIcon: ({ focused }) => <TabIcon name="heart" focused={focused} />,
         }}
       />
       <Tabs.Screen
@@ -121,8 +138,16 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
-          tabBarIcon: ({ focused }) => <TabIcon name="person" focused={focused} />,
+          title: user ? 'Profil' : 'Kirish',
+          tabBarIcon: ({ focused }) => <TabIcon name={user ? 'person' : 'log-in'} focused={focused} />,
+        }}
+        listeners={{
+          tabPress: (e) => {
+            if (!user) {
+              e.preventDefault();
+              router.push('/(auth)/login');
+            }
+          },
         }}
       />
     </Tabs>

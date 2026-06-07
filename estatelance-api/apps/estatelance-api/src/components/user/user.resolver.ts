@@ -152,6 +152,13 @@ export class UserResolver {
     return this.userService.getFreelancerAnalytics(userId);
   }
 
+  // ─── Delete own account ───────────────────────────────────────────────────
+  @UseGuards(AuthGuard)
+  @Mutation(() => Boolean)
+  async deleteMyAccount(@AuthUser('_id') userId: string): Promise<boolean> {
+    return this.userService.deleteMyAccount(userId);
+  }
+
   // ─── Profil boost (frilanser va agent) ──────────────────────────────────────
   @UseGuards(ActiveUserGuard)
   @Mutation(() => User)
