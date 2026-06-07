@@ -30,11 +30,17 @@ const authLink = setContext(async (_, { headers }) => {
 
 const httpLink = new HttpLink({ uri: API_URL });
 
-const errorLink = onError(({ graphQLErrors, networkError }) => {
+const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
   if (graphQLErrors)
     graphQLErrors.forEach(({ message }) => console.error('[GraphQL error]:', message));
-  if (networkError)
-    console.error('[Network error]:', networkError);
+  if (networkError) {
+    const ne: any = networkError;
+    console.error('[Network error] URL:', API_URL);
+    console.error('[Network error] Operation:', operation?.operationName);
+    console.error('[Network error] statusCode:', ne.statusCode);
+    console.error('[Network error] bodyText:', ne.bodyText ?? ne.result);
+    console.error('[Network error] message:', ne.message);
+  }
 });
 
 export const apolloClient = new ApolloClient({

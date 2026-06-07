@@ -62,7 +62,8 @@ export class TelegramBotService implements OnModuleInit {
     this.tg('setMyCommands', {
       commands: [
         { command: 'start',    description: 'Botni ishga tushirish' },
-        { command: 'download', description: '📥 Android ilovani yuklab olish' },
+        { command: 'download', description: '📥 BuFu ilovasini yuklab olish' },
+        { command: 'help',     description: 'ℹ️ Yordam va imkoniyatlar' },
       ],
     }).catch(() => {});
 
@@ -98,15 +99,29 @@ export class TelegramBotService implements OnModuleInit {
       // Android ilovani yuklab olish
       await this.sendAppDownload(from.id);
     } else if (text.startsWith('/start')) {
-      await this.tg('sendMessage', {
-        chat_id: from.id,
-        text:
-          '👋 <b>BuFu</b> ga xush kelibsiz!\n\n' +
-          'O\'zbekistondagi #1 frilanser platformasi. Quyidagi tugma orqali Android ilovani yuklab oling 👇',
-        parse_mode: 'HTML',
-        reply_markup: this.mainKeyboard(),
-      });
+      await this.sendWelcome(from);
+    } else if (text === '/help' || text === '/yordam') {
+      await this.sendWelcome(from);
     }
+  }
+
+  // ─── Xush kelibsiz xabari (salomlashish + tanishtiruv + tugmalar) ──────────
+  private async sendWelcome(from: TgUser) {
+    const name = from.first_name || 'do\'st';
+    await this.tg('sendMessage', {
+      chat_id: from.id,
+      text:
+        `👋 Assalomu alaykum, <b>${name}</b>!\n\n` +
+        '🚀 <b>BuFu</b> — O\'zbekistondagi #1 frilanser platformasiga xush kelibsiz!\n\n' +
+        'Bu yerda nima qila olasiz:\n' +
+        '💼 <b>Ish topish</b> — frilanser bo\'lib daromad qiling\n' +
+        '🔍 <b>Mutaxassis topish</b> — foto, 3D, dizayn, IT, yuridik va boshqa sohalarda\n' +
+        '📢 <b>Ish e\'lon qilish</b> — bir necha daqiqada\n' +
+        '✨ <b>AI Resume</b> — sun\'iy intellekt bilan rezyume yarating\n\n' +
+        '📲 Boshlash uchun Android ilovani yuklab oling yoki veb-saytga kiring 👇',
+      parse_mode: 'HTML',
+      reply_markup: this.mainKeyboard(),
+    });
   }
 
   // ─── Android ilovani yuborish ─────────────────────────────────────────────
@@ -151,8 +166,15 @@ export class TelegramBotService implements OnModuleInit {
     const webUrl = process.env.FRONTEND_URL || 'https://bufu.uz';
     return {
       inline_keyboard: [
-        [{ text: '📥 Android ilovani yuklab olish', callback_data: 'download' }],
-        [{ text: '🌐 Veb-saytni ochish', url: webUrl }],
+        [{ text: '📥 BuFu ilovasini yuklab olish', callback_data: 'download' }],
+        [
+          { text: '💼 Ishlar', url: `${webUrl}/jobs` },
+          { text: '🔍 Frilanserlar', url: `${webUrl}/browse` },
+        ],
+        [
+          { text: '✨ AI Resume', url: `${webUrl}/resume` },
+          { text: '🌐 Veb-sayt', url: webUrl },
+        ],
       ],
     };
   }
