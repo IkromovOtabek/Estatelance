@@ -614,8 +614,9 @@ export class AdminService {
   async getActiveAnnouncements(): Promise<Announcement[]> {
     // KESH: bu so'rov HAR sahifa yuklanishida banner uchun chaqiriladi → keshlash katta foyda.
     // 60 soniyaga keshlanadi. E'lon o'zgarsa (create/toggle/delete) — kesh tozalanadi (pastda).
+    // .lean() ISHLATMAYMIZ — Mongoose defaultlarini saqlash uchun (non-nullable maydonlar).
     return this.redis.remember('announcements:active', 60, () =>
-      this.announcementModel.find({ isActive: true }).sort({ createdAt: -1 }).limit(20).lean().exec() as any,
+      this.announcementModel.find({ isActive: true }).sort({ createdAt: -1 }).limit(20).exec(),
     );
   }
 

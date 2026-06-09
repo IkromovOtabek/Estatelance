@@ -104,13 +104,16 @@ export class JobService {
     }
 
     const skip = (input.page - 1) * input.limit;
+    // DIQQAT: .lean() ISHLATMAYMIZ — u Mongoose default qiymatlarini qo'llamaydi.
+    // Eski ishlarda viewCount maydoni yo'q → lean null qaytaradi → GraphQL non-nullable
+    // xato beradi. Mongoose hujjatlari esa default (viewCount=0) qo'llaydi va JSON.stringify
+    // ham defaultlarni saqlaydi — kesh muammosiz ishlaydi.
     const jobs = await this.jobModel
       .find(filter)
       .sort({ bumpedAt: -1, createdAt: -1 })
       .skip(skip)
       .limit(input.limit)
-      .lean()       // kesh uchun toza JS obyektlar (Mongoose hujjati emas)
-      .exec() as any;
+      .exec();
 
     // Faol boostlar har doim tepada (bumpedAt null bo'lsa ham)
     return [...jobs].sort((a, b) => {
