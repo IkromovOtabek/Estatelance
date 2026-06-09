@@ -182,8 +182,8 @@ export default function MapRouteModal({ open, onClose, destinationAddress, desti
       PaperProps={{
         sx: {
           borderRadius: 3,
-          bgcolor: isDark ? '#1e293b' : '#ffffff',
-          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+          bgcolor: isDark ? '#16161F' : '#ffffff',
+          border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
           overflow: 'hidden',
           m: 2,
         },
@@ -211,7 +211,7 @@ export default function MapRouteModal({ open, onClose, destinationAddress, desti
           <Box sx={{
             display: 'flex', alignItems: 'center', gap: 2, px: 2.5, py: 1.5,
             bgcolor: isDark ? '#0f172a' : '#f8fafc',
-            borderBottom: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+            borderBottom: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
           }}>
             {/* A — user avatar */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -227,7 +227,7 @@ export default function MapRouteModal({ open, onClose, destinationAddress, desti
               <Typography fontSize={12} color={isDark ? '#94a3b8' : '#64748b'}>Sizning joyingiz</Typography>
             </Box>
 
-            <ArrowRight size={14} color={isDark ? '#475569' : '#94a3b8'} style={{ flexShrink: 0 }} />
+            <ArrowRight size={14} color={isDark ? '#3A3A48' : '#94a3b8'} style={{ flexShrink: 0 }} />
 
             {/* B — dest avatar */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
@@ -253,7 +253,7 @@ export default function MapRouteModal({ open, onClose, destinationAddress, desti
                     ? `${Math.round(displayKm * 1000)} m`
                     : `${displayKm.toFixed(1)} km`}
                 </Typography>
-                <Typography fontSize={10} color={isDark ? '#475569' : '#94a3b8'}>
+                <Typography fontSize={10} color={isDark ? '#3A3A48' : '#94a3b8'}>
                   {isRoad ? 'yo\'l masofasi' : 'to\'g\'ri chiziq'}
                 </Typography>
               </Box>

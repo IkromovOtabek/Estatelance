@@ -43,7 +43,9 @@ import {
   UserSquare as FollowIcon,
   Sun,
   Moon,
+  BookmarkSimple as FavoriteIcon,
 } from '@phosphor-icons/react';
+import { useFavorites } from '../../hooks/useFavorites';
 import { userVar } from '../../../apollo/store';
 import { logout } from '../../../libs/auth';
 import { UserType } from '../../enums';
@@ -124,6 +126,37 @@ const Top = () => {
   // ── Navbar: barcha sahifalarda har doim glass (blur + shaffof), burchakli ──
   const overlay = false;     // overlay rejimi o'chirildi — nav doim glass
   const effDark = isDark;    // ranglar oddiy temaga qarab
+  const { count: favCount } = useFavorites();  // Sevimlilar soni (Favourite tugma badge)
+
+  // Favourite tugmasi (theme toggle oldida) — Sevimlilar sahifasiga o'tadi
+  const FavoriteButton = (
+    <Tooltip title="Sevimlilar">
+      <IconButton
+        size="small"
+        onClick={() => router.push('/favorites')}
+        sx={{
+          color: isDark ? '#A1A1AA' : '#64748b',
+          bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(100,116,139,0.08)',
+          border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
+          borderRadius: 2,
+          width: 34, height: 34,
+          position: 'relative',
+          '&:hover': { color: isDark ? '#818CF8' : '#4f46e5', borderColor: isDark ? '#818CF8' : '#c7d2fe', bgcolor: isDark ? 'rgba(99,102,241,0.12)' : '#eef2ff' },
+        }}
+      >
+        <FavoriteIcon size={18} weight={favCount > 0 ? 'fill' : 'regular'} />
+        {favCount > 0 && (
+          <Box sx={{
+            position: 'absolute', top: -5, right: -5, minWidth: 16, height: 16, px: 0.4,
+            borderRadius: 8, bgcolor: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 800,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {favCount > 9 ? '9+' : favCount}
+          </Box>
+        )}
+      </IconButton>
+    </Tooltip>
+  );
 
   const handleLogout = () => {
     logout();
@@ -178,7 +211,7 @@ const Top = () => {
       {/* Drawer header */}
       <Box sx={{
         px: 2.5, py: 2,
-        background: isDark ? 'linear-gradient(135deg, #A855F7 0%, #9333EA 100%)' : 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+        background: isDark ? 'linear-gradient(135deg, #818CF8 0%, #6366F1 100%)' : 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -211,7 +244,7 @@ const Top = () => {
 
       {/* User info (if logged in) */}
       {isLoggedIn && (
-        <Box sx={{ px: 2.5, py: 2, bgcolor: isDark ? '#1E293B' : '#f8fafc', borderBottom: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
+        <Box sx={{ px: 2.5, py: 2, bgcolor: isDark ? '#16161F' : '#f8fafc', borderBottom: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}` }}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
               src={fixAvatarUrl(user.profileImage)}
@@ -243,7 +276,7 @@ const Top = () => {
                   sx={{
                     mx: 1, borderRadius: 2,
                     bgcolor: isActive ? (isDark ? 'rgba(129,140,248,0.15)' : '#eef2ff') : 'transparent',
-                    color: isActive ? (isDark ? '#C084FC' : '#6366F1') : (isDark ? '#cbd5e1' : '#374151'),
+                    color: isActive ? (isDark ? '#A5B4FC' : '#6366F1') : (isDark ? '#cbd5e1' : '#374151'),
                     '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#FAFAFA' },
                     py: 1.2,
                   }}
@@ -282,7 +315,7 @@ const Top = () => {
       </List>
 
       {/* Bottom actions */}
-      <Box sx={{ p: 2, borderTop: `1px solid ${isDark ? '#1E293B' : '#e2e8f0'}` }}>
+      <Box sx={{ p: 2, borderTop: `1px solid ${isDark ? '#16161F' : '#e2e8f0'}` }}>
         {isLoggedIn ? (
           <Stack spacing={1}>
             <Button
@@ -325,14 +358,16 @@ const Top = () => {
         position="sticky"
         elevation={0}
         sx={{
-          bgcolor: 'transparent',
+          // Frosted tinted fon — nav har qanday bo'lim (to'q/rangli) ustida ham
+          // matn o'qiladigan bo'lib qoladi. To'liq shaffof emas.
+          bgcolor: isDark ? 'rgba(10,10,15,0.72)' : 'rgba(255,255,255,0.82)',
           backgroundImage: 'none',
-          backdropFilter: 'blur(5px) saturate(120%)',
-          WebkitBackdropFilter: 'blur(5px) saturate(120%)',
-          boxShadow: isDark ? '0 8px 28px rgba(0,0,0,0.38)' : '0 8px 24px rgba(15,23,42,0.08)',
+          backdropFilter: 'blur(14px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(14px) saturate(160%)',
+          boxShadow: 'none',
           borderRadius: 0,
-          borderBottom: 'none',
-          color: isDark ? '#FAFAFA' : '#18181B',
+          borderBottom: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(15,23,42,0.06)',
+          color: isDark ? '#F4F4F5' : '#0F172A',
         }}
       >
         <Toolbar sx={{ maxWidth: 1280, width: '100%', mx: 'auto', px: { xs: 2, lg: 4 }, minHeight: { xs: 56, sm: 64 } }}>
@@ -344,7 +379,7 @@ const Top = () => {
               display: { xs: 'flex', lg: 'none' },
               mr: 1,
               color: effDark ? '#e2e8f0' : '#374151',
-              border: `1px solid ${overlay ? 'rgba(255,255,255,0.25)' : (isDark ? '#334155' : '#e2e8f0')}`,
+              border: `1px solid ${overlay ? 'rgba(255,255,255,0.25)' : (isDark ? '#27272F' : '#e2e8f0')}`,
               borderRadius: 2,
               width: 36, height: 36,
               '&:hover': { bgcolor: effDark ? 'rgba(255,255,255,0.1)' : '#FAFAFA' },
@@ -376,14 +411,14 @@ const Top = () => {
               {/* Wordmark */}
               <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
                 <Typography sx={{ fontWeight: 800, fontSize: 17, lineHeight: 1, letterSpacing: -0.5 }}>
-                  <span style={{ color: effDark ? '#e0e7ff' : '#1e1b4b' }}>Bu</span><span style={{ color: effDark ? '#C084FC' : '#6366f1' }}>Fu</span>
+                  <span style={{ color: effDark ? '#e0e7ff' : '#1e1b4b' }}>Bu</span><span style={{ color: effDark ? '#A5B4FC' : '#6366f1' }}>Fu</span>
                 </Typography>
                 <Typography sx={{ fontSize: 9, color: '#8b5cf6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>
                   Build Future
                 </Typography>
               </Box>
               <Typography sx={{ display: { xs: 'block', sm: 'none' }, fontWeight: 800, fontSize: 17, letterSpacing: -0.5 }}>
-                <span style={{ color: effDark ? '#e0e7ff' : '#1e1b4b' }}>Bu</span><span style={{ color: effDark ? '#C084FC' : '#6366f1' }}>Fu</span>
+                <span style={{ color: effDark ? '#e0e7ff' : '#1e1b4b' }}>Bu</span><span style={{ color: effDark ? '#A5B4FC' : '#6366f1' }}>Fu</span>
               </Typography>
             </Stack>
           </Link>
@@ -410,7 +445,7 @@ const Top = () => {
                     }}
                   >
                     <Button size="small" sx={{
-                      color: isActive ? (effDark ? '#C084FC' : '#6366F1') : (effDark ? '#cbd5e1' : '#64748b'),
+                      color: isActive ? (effDark ? '#A5B4FC' : '#6366F1') : (effDark ? '#cbd5e1' : '#64748b'),
                       bgcolor: isActive ? (effDark ? 'rgba(129,140,248,0.15)' : '#eef2ff') : 'transparent',
                       fontWeight: isActive ? 700 : 500,
                       fontSize: 13, px: 1.5, borderRadius: 2,
@@ -442,6 +477,9 @@ const Top = () => {
           {isLoggedIn ? (
             <Stack direction="row" spacing={1} alignItems="center">
 
+              {/* ── Sevimlilar (Favourite) ── */}
+              {FavoriteButton}
+
               {/* ── Dark/Light toggle ── */}
               <Tooltip title={isDark ? "Yorug' rejim" : "Qorong'i rejim"}>
                 <IconButton
@@ -470,11 +508,11 @@ const Top = () => {
                     color: notifOpen ? '#6366F1' : unreadCount > 0 ? '#6366F1' : '#64748b',
                     bgcolor: notifOpen ? '#eef2ff' : unreadCount > 0 ? '#eef2ff' : 'transparent',
                     border: '1px solid',
-                    borderColor: notifOpen ? '#c7d2fe' : unreadCount > 0 ? '#c7d2fe' : (isDark ? '#334155' : '#e2e8f0'),
+                    borderColor: notifOpen ? '#c7d2fe' : unreadCount > 0 ? '#c7d2fe' : (isDark ? '#27272F' : '#e2e8f0'),
                     borderRadius: 2,
                     width: 36, height: 36,
                     transition: 'all 0.2s',
-                    '&:hover': { bgcolor: isDark ? '#1E293B' : '#FAFAFA', color: isDark ? '#C084FC' : '#6366F1', borderColor: '#c7d2fe' },
+                    '&:hover': { bgcolor: isDark ? '#16161F' : '#FAFAFA', color: isDark ? '#A5B4FC' : '#6366F1', borderColor: '#c7d2fe' },
                   }}
                 >
                   <NotificationsNoneIcon
@@ -527,8 +565,8 @@ const Top = () => {
                     width: 380, maxHeight: '80vh',
                     borderRadius: 3,
                     boxShadow: isDark ? '0 20px 60px rgba(0,0,0,0.5)' : '0 20px 60px rgba(0,0,0,0.15)',
-                    border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-                    bgcolor: isDark ? '#1E293B' : '#ffffff',
+                    border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
+                    bgcolor: isDark ? '#16161F' : '#ffffff',
                     overflow: 'hidden', mt: 1,
                   },
                 }}
@@ -536,7 +574,7 @@ const Top = () => {
                 {/* Panel Header */}
                 <Box sx={{
                   px: 2.5, py: 1.75,
-                  background: isDark ? 'linear-gradient(135deg, #A855F7 0%, #9333EA 100%)' : 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+                  background: isDark ? 'linear-gradient(135deg, #818CF8 0%, #6366F1 100%)' : 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 }}>
                   <Stack direction="row" spacing={1} alignItems="center">
@@ -562,11 +600,11 @@ const Top = () => {
                 </Box>
 
                 {/* Scrollable content */}
-                <Box sx={{ overflowY: 'auto', maxHeight: 'calc(80vh - 56px)', bgcolor: isDark ? '#1E293B' : '#ffffff' }}>
+                <Box sx={{ overflowY: 'auto', maxHeight: 'calc(80vh - 56px)', bgcolor: isDark ? '#16161F' : '#ffffff' }}>
                   {notifications.length === 0 && announcements.length === 0 ? (
                     <Box sx={{ py: 6, textAlign: 'center' }}>
                       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-                        <NotificationsNoneIcon size={40} color={isDark ? '#475569' : '#71717A'} />
+                        <NotificationsNoneIcon size={40} color={isDark ? '#3A3A48' : '#71717A'} />
                       </Box>
                       <Typography fontSize={13} color={isDark ? '#64748b' : 'text.secondary'}>Hozircha bildirishnoma yo&apos;q</Typography>
                     </Box>
@@ -581,7 +619,7 @@ const Top = () => {
                                 px: 2.5, py: 1.75,
                                 bgcolor: n.isRead ? 'transparent' : (isDark ? 'rgba(99,102,241,0.08)' : '#f8f7ff'),
                                 borderLeft: n.isRead ? '3px solid transparent' : '3px solid #6366f1',
-                                borderBottom: `1px solid ${isDark ? '#334155' : '#FAFAFA'}`,
+                                borderBottom: `1px solid ${isDark ? '#27272F' : '#FAFAFA'}`,
                                 transition: 'background 0.2s',
                                 '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc' },
                               }}
@@ -589,7 +627,7 @@ const Top = () => {
                               <Stack direction="row" spacing={1.5} alignItems="flex-start">
                                 <Box sx={{
                                   width: 36, height: 36, borderRadius: '50%',
-                                  bgcolor: n.isRead ? (isDark ? '#334155' : '#FAFAFA') : (isDark ? 'rgba(99,102,241,0.2)' : '#eef2ff'),
+                                  bgcolor: n.isRead ? (isDark ? '#27272F' : '#FAFAFA') : (isDark ? 'rgba(99,102,241,0.2)' : '#eef2ff'),
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                                   flexShrink: 0,
                                 }}>
@@ -599,7 +637,7 @@ const Top = () => {
                                   <Stack direction="row" justifyContent="space-between" alignItems="center">
                                     <Typography
                                       fontSize={13} fontWeight={n.isRead ? 500 : 700}
-                                      color={n.isRead ? (isDark ? '#71717A' : '#475569') : (isDark ? '#FAFAFA' : '#0F172A')} noWrap
+                                      color={n.isRead ? (isDark ? '#71717A' : '#3A3A48') : (isDark ? '#FAFAFA' : '#0F172A')} noWrap
                                     >
                                       {n.title}
                                     </Typography>
@@ -613,7 +651,7 @@ const Top = () => {
                                   }}>
                                     {n.description}
                                   </Typography>
-                                  <Typography fontSize={11} color={isDark ? '#475569' : '#71717A'} mt={0.25}>{timeAgo(n.createdAt)}</Typography>
+                                  <Typography fontSize={11} color={isDark ? '#3A3A48' : '#71717A'} mt={0.25}>{timeAgo(n.createdAt)}</Typography>
                                 </Box>
                               </Stack>
                             </Box>
@@ -626,7 +664,7 @@ const Top = () => {
                           <Box sx={{
                             px: 2.5, py: 1,
                             bgcolor: isDark ? 'rgba(217,119,6,0.1)' : '#fffbeb',
-                            borderTop: notifications.length > 0 ? `1px solid ${isDark ? '#334155' : '#e2e8f0'}` : 'none',
+                            borderTop: notifications.length > 0 ? `1px solid ${isDark ? '#27272F' : '#e2e8f0'}` : 'none',
                             borderBottom: `1px solid ${isDark ? 'rgba(217,119,6,0.3)' : '#fde68a'}`,
                           }}>
                             <Stack direction="row" spacing={1} alignItems="center">
@@ -641,7 +679,7 @@ const Top = () => {
                             return (
                               <Box key={ann._id} sx={{
                                 px: 2.5, py: 1.75,
-                                borderBottom: idx < announcements.length - 1 ? `1px solid ${isDark ? '#334155' : '#FAFAFA'}` : 'none',
+                                borderBottom: idx < announcements.length - 1 ? `1px solid ${isDark ? '#27272F' : '#FAFAFA'}` : 'none',
                                 '&:hover': { bgcolor: isDark ? 'rgba(217,119,6,0.06)' : '#fffbeb' },
                               }}>
                                 <Stack direction="row" spacing={1.5} alignItems="flex-start">
@@ -653,7 +691,7 @@ const Top = () => {
                                   }}>
                                     {isAd
                                       ? <CampaignIcon size={18} color="#d97706" />
-                                      : <NewsIcon size={18} color={isDark ? '#A855F7' : '#6366F1'} />}
+                                      : <NewsIcon size={18} color={isDark ? '#818CF8' : '#6366F1'} />}
                                   </Box>
                                   <Box flex={1} minWidth={0}>
                                     <Stack direction="row" spacing={0.75} alignItems="center" mb={0.25}>
@@ -663,10 +701,10 @@ const Top = () => {
                                         sx={{
                                           height: 16, fontSize: 9, fontWeight: 700, px: 0.5,
                                           bgcolor: isAd ? (isDark ? 'rgba(217,119,6,0.2)' : '#fef3c7') : (isDark ? 'rgba(99,102,241,0.2)' : '#eef2ff'),
-                                          color: isAd ? '#d97706' : (isDark ? '#A855F7' : '#6366F1'),
+                                          color: isAd ? '#d97706' : (isDark ? '#818CF8' : '#6366F1'),
                                         }}
                                       />
-                                      <Typography fontSize={11} color={isDark ? '#475569' : '#71717A'}>{timeAgo(ann.createdAt)}</Typography>
+                                      <Typography fontSize={11} color={isDark ? '#3A3A48' : '#71717A'}>{timeAgo(ann.createdAt)}</Typography>
                                     </Stack>
                                     <Typography fontSize={13} fontWeight={600} color={isDark ? '#FAFAFA' : '#0F172A'} noWrap>{ann.title}</Typography>
                                     <Typography fontSize={12} color={isDark ? '#71717A' : '#64748b'} sx={{
@@ -689,14 +727,14 @@ const Top = () => {
                 {/* Footer */}
                 <Box sx={{
                   px: 2.5, py: 1.5,
-                  borderTop: `1px solid ${isDark ? '#334155' : '#FAFAFA'}`,
+                  borderTop: `1px solid ${isDark ? '#27272F' : '#FAFAFA'}`,
                   bgcolor: isDark ? '#0F172A' : '#fafafa',
                   display: 'flex', gap: 1,
                 }}>
                   <Button
                     size="small" fullWidth
                     onClick={() => { setNotifAnchor(null); router.push('/notifications'); }}
-                    sx={{ fontSize: 12, color: isDark ? '#A855F7' : '#6366F1', textTransform: 'none' }}
+                    sx={{ fontSize: 12, color: isDark ? '#818CF8' : '#6366F1', textTransform: 'none' }}
                   >
                     Barcha bildirishnomalarni ko&apos;rish →
                   </Button>
@@ -736,7 +774,7 @@ const Top = () => {
                     minWidth: 200, mt: 1,
                     borderRadius: 2.5,
                     boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',
-                    border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                    border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
                   },
                 }}
               >
@@ -770,6 +808,9 @@ const Top = () => {
             </Stack>
           ) : (
             <Stack direction="row" spacing={1} alignItems="center">
+              {/* Sevimlilar (Favourite) — guest */}
+              {FavoriteButton}
+
               {/* Dark/Light toggle (guest) */}
               <Tooltip title={isDark ? "Yorug' rejim" : "Qorong'i rejim"}>
                 <IconButton

@@ -53,12 +53,12 @@ const DashboardPage = () => {
   const STATS = isFreelancer && analytics ? [
     { label: 'Jami takliflar',     value: analytics.totalBids,                           icon: <PaperPlaneTilt size={22} color="#f59e0b" />, bg: 'bg-amber-50',   delta: '' },
     { label: 'Qabul qilingan',     value: analytics.acceptedBids,                        icon: <CheckCircle size={22} color="#10b981" />,    bg: 'bg-emerald-50', delta: '' },
-    { label: 'Tugagan ishlar',     value: analytics.completedJobs,                       icon: <Star size={22} color="#a855f7" weight="fill" />, bg: 'bg-purple-50', delta: '' },
+    { label: 'Tugagan ishlar',     value: analytics.completedJobs,                       icon: <Star size={22} color="#818CF8" weight="fill" />, bg: 'bg-purple-50', delta: '' },
     { label: "Jami daromad ($)",   value: `$${analytics.totalEarned.toLocaleString()}`,  icon: <CurrencyDollar size={22} color="#4f46e5" />, bg: 'bg-indigo-50',  delta: '' },
   ] : [
     { label: 'Faol ishlar',        value: activeJobs.length,                             icon: <Briefcase size={22} color="#4f46e5" />,      bg: 'bg-indigo-50',  delta: '' },
     { label: "Kutilayotgan ishlar",value: pendingJobs.length,                            icon: <Clock size={22} color="#f59e0b" />,           bg: 'bg-amber-50',   delta: '' },
-    { label: 'Tugagan ishlar',     value: completedJobs.length,                          icon: <Star size={22} color="#a855f7" weight="fill" />, bg: 'bg-purple-50', delta: '' },
+    { label: 'Tugagan ishlar',     value: completedJobs.length,                          icon: <Star size={22} color="#818CF8" weight="fill" />, bg: 'bg-purple-50', delta: '' },
     { label: "Jami ishlar",        value: jobs.length,                                   icon: <ChartLineUp size={22} color="#10b981" />,    bg: 'bg-emerald-50', delta: '' },
   ];
 

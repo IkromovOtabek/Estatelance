@@ -40,6 +40,7 @@ import {
 import { DEFAULT_AVATAR_URL } from '../../libs/config';
 import { JobService } from '../job/job.service';
 import { UserService } from '../user/user.service';
+import { RedisService } from '../../libs/redis/redis.service';
 
 @Injectable()
 export class AdminService {
@@ -54,6 +55,7 @@ export class AdminService {
     private readonly authService: AuthService,
     private readonly jobService: JobService,
     private readonly userService: UserService,
+    private readonly redis: RedisService,   // tezkor kesh (e'lonlar uchun)
   ) {}
 
   private frontendJobUrl(jobId: string): string {
@@ -243,6 +245,7 @@ export class AdminService {
       await this.notificationModel.insertMany(notifications);
     }
 
+    await this.redis.del('announcements:active');  // kesh eskirdi — tozalaymiz
     return announcement;
   }
 
@@ -252,7 +255,9 @@ export class AdminService {
     if (!announcement) throw new NotFoundException('Announcement not found');
 
     announcement.isActive = !announcement.isActive;
-    return announcement.save();
+    const saved = await announcement.save();
+    await this.redis.del('announcements:active');  // faollik o'zgardi → kesh tozalansin
+    return saved;
   }
 
   // ─── Delete an Announcement ───────────────────────────────────────────────────
@@ -260,6 +265,7 @@ export class AdminService {
     const announcement = await this.announcementModel.findById(announcementId);
     if (!announcement) throw new NotFoundException('Announcement not found');
     await announcement.deleteOne();
+    await this.redis.del('announcements:active');  // o'chirildi → kesh tozalansin
     return true;
   }
 
@@ -606,7 +612,11 @@ export class AdminService {
 
   // ─── Get Active Announcements (public) ───────────────────────────────────────
   async getActiveAnnouncements(): Promise<Announcement[]> {
-    return this.announcementModel.find({ isActive: true }).sort({ createdAt: -1 }).limit(20);
+    // KESH: bu so'rov HAR sahifa yuklanishida banner uchun chaqiriladi → keshlash katta foyda.
+    // 60 soniyaga keshlanadi. E'lon o'zgarsa (create/toggle/delete) — kesh tozalanadi (pastda).
+    return this.redis.remember('announcements:active', 60, () =>
+      this.announcementModel.find({ isActive: true }).sort({ createdAt: -1 }).limit(20).lean().exec() as any,
+    );
   }
 
   // ─── Get All Users (paginated) ────────────────────────────────────────────────

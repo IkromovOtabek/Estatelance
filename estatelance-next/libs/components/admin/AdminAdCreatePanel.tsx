@@ -114,7 +114,7 @@ export default function AdminAdCreatePanel({ onCancel, onSuccess }: AdminAdCreat
       )}
       <form onSubmit={handleSubmit} className="space-y-6">
             {/* Ad Type */}
-            <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-6">
+            <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-6">
               <h3 className="text-sm font-bold text-slate-900 mb-4">Reklama turi</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {typeOptions.map(opt => (
@@ -137,7 +137,7 @@ export default function AdminAdCreatePanel({ onCancel, onSuccess }: AdminAdCreat
             </div>
 
             {/* Basic info */}
-            <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-6 space-y-4">
+            <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-6 space-y-4">
               <h3 className="text-sm font-bold text-slate-900">Asosiy ma'lumotlar</h3>
               <div>
                 <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Reklama sarlavhasi *</label>
@@ -173,14 +173,14 @@ export default function AdminAdCreatePanel({ onCancel, onSuccess }: AdminAdCreat
                   value={targetUrl}
                   onChange={e => setTargetUrl(e.target.value)}
                   placeholder="https://bufu.uz/jobs/..."
-                  className="w-full border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1e293b] text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="w-full border border-slate-200 dark:border-[#27272F] bg-white dark:bg-[#16161F] text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                 />
                 <p className="text-xs text-slate-400 mt-1">Bu havolani bosgan foydalanuvchilar soni statistikada &quot;kliklar&quot; sifatida hisoblanadi.</p>
               </div>
             </div>
 
             {/* Media Upload */}
-            <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-6">
+            <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-6">
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">Reklama mediya materyali</h3>
               <p className="text-xs text-slate-400 mb-4">Rasm yoki video yuklang, yoki URL kiriting</p>
               <div className="flex gap-2 mb-4">
@@ -196,7 +196,7 @@ export default function AdminAdCreatePanel({ onCancel, onSuccess }: AdminAdCreat
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                       mediaType === tab.key
                         ? 'bg-indigo-600 text-white border-indigo-600'
-                        : 'bg-white dark:bg-[#1e293b] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#334155] hover:border-indigo-300'
+                        : 'bg-white dark:bg-[#16161F] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#27272F] hover:border-indigo-300'
                     }`}
                   >
                     {tab.icon} {tab.label}
@@ -210,10 +210,10 @@ export default function AdminAdCreatePanel({ onCancel, onSuccess }: AdminAdCreat
                     value={mediaUrlInput}
                     onChange={e => { setMediaUrlInput(e.target.value); setMediaPreview(e.target.value); }}
                     placeholder="https://example.com/banner.jpg yoki video URL"
-                    className="w-full border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1e293b] text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    className="w-full border border-slate-200 dark:border-[#27272F] bg-white dark:bg-[#16161F] text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                   />
                   {mediaPreview && (
-                    <div className="mt-3 relative rounded-xl overflow-hidden border border-slate-200 dark:border-[#334155] bg-slate-100 dark:bg-[#1e293b] h-[200px]">
+                    <div className="mt-3 relative rounded-xl overflow-hidden border border-slate-200 dark:border-[#27272F] bg-slate-100 dark:bg-[#16161F] h-[200px]">
                       <img src={mediaPreview} alt="preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                       <button type="button" onClick={() => { setMediaPreview(''); setMediaUrlInput(''); }} className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black/80">
                         <X size={14} />
@@ -226,12 +226,12 @@ export default function AdminAdCreatePanel({ onCancel, onSuccess }: AdminAdCreat
                 <div>
                   <input ref={fileInputRef} type="file" accept={mediaType === 'image' ? 'image/*' : 'video/*'} onChange={handleFileChange} className="hidden" />
                   {!mediaPreview ? (
-                    <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full border-2 border-dashed border-slate-300 dark:border-[#334155] rounded-xl p-10 flex flex-col items-center gap-3 hover:border-indigo-400 text-slate-500">
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full border-2 border-dashed border-slate-300 dark:border-[#27272F] rounded-xl p-10 flex flex-col items-center gap-3 hover:border-indigo-400 text-slate-500">
                       <UploadSimple size={32} color="#94a3b8" />
                       <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{mediaType === 'image' ? 'Rasm yuklash' : 'Video yuklash'}</p>
                     </button>
                   ) : (
-                    <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-[#334155] max-h-[300px]">
+                    <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-[#27272F] max-h-[300px]">
                       {mediaType === 'image' ? (
                         <img src={mediaPreview} alt="preview" className="w-full object-cover max-h-72" />
                       ) : (
@@ -244,29 +244,29 @@ export default function AdminAdCreatePanel({ onCancel, onSuccess }: AdminAdCreat
               )}
             </div>
 
-            <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-6">
+            <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-6">
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4">Byudjet va jadval</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 block">Byudjet ($)</label>
-                  <input type="number" value={budget} onChange={e => setBudget(e.target.value)} placeholder="100" min={0} className="w-full border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1e293b] text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+                  <input type="number" value={budget} onChange={e => setBudget(e.target.value)} placeholder="100" min={0} className="w-full border border-slate-200 dark:border-[#27272F] bg-white dark:bg-[#16161F] text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 block">Boshlanish</label>
-                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1e293b] text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full border border-slate-200 dark:border-[#27272F] bg-white dark:bg-[#16161F] text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 block">Tugash</label>
-                  <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1e293b] text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+                  <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full border border-slate-200 dark:border-[#27272F] bg-white dark:bg-[#16161F] text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-6">
+            <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-6">
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4">Maqsadli auditoriya</h3>
               <div className="flex flex-wrap gap-2">
                 {audiences.map(a => (
-                  <button key={a} type="button" onClick={() => toggleAudience(a)} className={`text-sm px-3 py-1.5 rounded-lg border font-semibold transition-all ${targetAudience.includes(a) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-[#1e293b] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#334155]'}`}>
+                  <button key={a} type="button" onClick={() => toggleAudience(a)} className={`text-sm px-3 py-1.5 rounded-lg border font-semibold transition-all ${targetAudience.includes(a) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-[#16161F] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#27272F]'}`}>
                     {a}
                   </button>
                 ))}
@@ -278,7 +278,7 @@ export default function AdminAdCreatePanel({ onCancel, onSuccess }: AdminAdCreat
                 {loading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                 Reklama yaratish
               </button>
-              <button type="button" onClick={onCancel} className="px-6 py-2.5 border border-slate-200 dark:border-[#334155] text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-[#1e293b]">
+              <button type="button" onClick={onCancel} className="px-6 py-2.5 border border-slate-200 dark:border-[#27272F] text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-[#16161F]">
                 Bekor qilish
               </button>
             </div>

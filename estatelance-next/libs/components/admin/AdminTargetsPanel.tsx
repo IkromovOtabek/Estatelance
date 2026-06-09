@@ -128,15 +128,15 @@ export default function AdminTargetsPanel({ defaultStatusFilter = '' }: AdminTar
   return (
     <div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-4">
+        <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-4">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Faol targetlar</p>
           <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">{activeCount}</p>
         </div>
-        <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-4">
+        <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-4">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Jami</p>
           <p className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 mt-1">{ads.length}</p>
         </div>
-        <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-4 col-span-2 lg:col-span-2">
+        <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-4 col-span-2 lg:col-span-2">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Ma&apos;lumotlar API dan. Ikonkalar: pauza, start, to&apos;lovlar, o&apos;chirish.
           </p>
@@ -149,12 +149,12 @@ export default function AdminTargetsPanel({ defaultStatusFilter = '' }: AdminTar
           placeholder="Target qidirish..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-3 pr-4 py-2 border border-slate-200 dark:border-[#1e293b] rounded-xl text-sm bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[200px]"
+          className="pl-3 pr-4 py-2 border border-slate-200 dark:border-[#16161F] rounded-xl text-sm bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[200px]"
         />
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-3 py-2 border border-slate-200 dark:border-[#1e293b] rounded-xl text-sm bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-200"
+          className="px-3 py-2 border border-slate-200 dark:border-[#16161F] rounded-xl text-sm bg-white dark:bg-[#0f172a] text-slate-800 dark:text-slate-200"
         >
           {AD_STATUS_FILTER_OPTIONS.map((opt) => (
             <option key={opt.value || 'all'} value={opt.value}>
@@ -172,11 +172,11 @@ export default function AdminTargetsPanel({ defaultStatusFilter = '' }: AdminTar
         <AdminTargetQuickLinks className="ml-auto" />
       </div>
 
-      <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
-              <tr className="bg-slate-50 dark:bg-[#1e293b]/50 border-b border-slate-200 dark:border-[#1e293b]">
+              <tr className="bg-slate-50 dark:bg-[#16161F]/50 border-b border-slate-200 dark:border-[#16161F]">
                 <th className="px-5 py-3 text-xs font-bold text-slate-400 uppercase">Target</th>
                 <th className="px-4 py-3 text-xs font-bold text-slate-400 uppercase">Turi</th>
                 <th className="px-4 py-3 text-xs font-bold text-slate-400 uppercase">Status</th>
@@ -187,7 +187,7 @@ export default function AdminTargetsPanel({ defaultStatusFilter = '' }: AdminTar
                 <th className="px-4 py-3 text-xs font-bold text-slate-400 uppercase text-right">Boshqaruv</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-[#1e293b]">
+            <tbody className="divide-y divide-slate-100 dark:divide-[#16161F]">
               {filtered.map((ad) => {
                 const st = AD_STATUS_META[ad.status];
                 const typeKey = normalizeAdType(ad.type);
@@ -200,7 +200,7 @@ export default function AdminTargetsPanel({ defaultStatusFilter = '' }: AdminTar
                   <tr
                     key={ad.id}
                     id={ad.sourceId ? `admin-target-row-${ad.sourceId}` : undefined}
-                    className={`hover:bg-slate-50/80 dark:hover:bg-[#1e293b]/40 transition-colors ${
+                    className={`hover:bg-slate-50/80 dark:hover:bg-[#16161F]/40 transition-colors ${
                       isFocused ? 'bg-indigo-50/80 dark:bg-indigo-950/30 ring-1 ring-inset ring-indigo-400/50' : ''
                     }`}
                   >

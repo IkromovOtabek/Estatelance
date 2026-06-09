@@ -313,7 +313,7 @@ export default function ChatWidget() {
           boxShadow: isDark ? '0 8px 40px rgba(0,0,0,0.5)' : '0 8px 40px rgba(99,102,241,0.18)',
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
-          border: isDark ? '1px solid #1e293b' : '1px solid #c7d2fe',
+          border: isDark ? '1px solid #16161F' : '1px solid #c7d2fe',
         }}>
 
           {/* Header */}
@@ -339,7 +339,7 @@ export default function ChatWidget() {
                 </Stack>
               ) : view === 'ai' ? (
                 <Stack direction="row" alignItems="center" spacing={1}>
-                  <Box sx={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#a855f7,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Box sx={{ width: 26, height: 26, borderRadius: '50%', background: 'linear-gradient(135deg,#818CF8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Sparkle size={15} color="white" weight="fill" />
                   </Box>
                   <Box>
@@ -381,7 +381,7 @@ export default function ChatWidget() {
 
           {/* ── Tabs (AI / Jonli chat) ── */}
           {(view === 'ai' || view === 'public') && (
-            <Stack direction="row" sx={{ flexShrink: 0, bgcolor: isDark ? 'rgba(15,23,42,0.6)' : 'rgba(255,255,255,0.7)', borderBottom: `1px solid ${isDark ? '#1e293b' : '#c7d2fe'}` }}>
+            <Stack direction="row" sx={{ flexShrink: 0, bgcolor: isDark ? 'rgba(15,23,42,0.6)' : 'rgba(255,255,255,0.7)', borderBottom: `1px solid ${isDark ? '#16161F' : '#c7d2fe'}` }}>
               {[
                 { key: 'ai' as const, label: 'AI yordamchi', icon: <Sparkle size={15} weight="fill" /> },
                 { key: 'public' as const, label: 'Jonli chat', icon: <ChatCircle size={15} weight="fill" /> },
@@ -414,7 +414,7 @@ export default function ChatWidget() {
               <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5, background: 'transparent' }}>
                 {aiMsgs.length === 0 && !aiLoading && (
                   <Box sx={{ textAlign: 'center', py: 4, px: 1.5 }}>
-                    <Box sx={{ width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#a855f7,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 1.5 }}>
+                    <Box sx={{ width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#818CF8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 1.5 }}>
                       <Robot size={26} color="white" weight="fill" />
                     </Box>
                     <Typography fontWeight={800} fontSize={14} color={isDark ? '#e2e8f0' : '#0f172a'} mb={0.5}>
@@ -454,7 +454,7 @@ export default function ChatWidget() {
                         justifyContent={isMine ? 'flex-end' : 'flex-start'}
                         alignItems="flex-end" spacing={0.75}>
                         {!isMine && (
-                          <Box sx={{ width: 26, height: 26, flexShrink: 0, borderRadius: '50%', background: 'linear-gradient(135deg,#a855f7,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Box sx={{ width: 26, height: 26, flexShrink: 0, borderRadius: '50%', background: 'linear-gradient(135deg,#818CF8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Sparkle size={13} color="white" weight="fill" />
                           </Box>
                         )}
@@ -473,7 +473,7 @@ export default function ChatWidget() {
                   })}
                   {aiLoading && (
                     <Stack direction="row" alignItems="flex-end" spacing={0.75}>
-                      <Box sx={{ width: 26, height: 26, flexShrink: 0, borderRadius: '50%', background: 'linear-gradient(135deg,#a855f7,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Box sx={{ width: 26, height: 26, flexShrink: 0, borderRadius: '50%', background: 'linear-gradient(135deg,#818CF8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Sparkle size={13} color="white" weight="fill" />
                       </Box>
                       <Box sx={{
@@ -490,7 +490,7 @@ export default function ChatWidget() {
                 </Stack>
               </Box>
 
-              <Box sx={{ p: 1.5, bgcolor: isDark ? 'rgba(15,23,42,0.7)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', borderTop: `1px solid ${isDark ? '#1e293b' : '#c7d2fe'}`, flexShrink: 0 }}>
+              <Box sx={{ p: 1.5, bgcolor: isDark ? 'rgba(15,23,42,0.7)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', borderTop: `1px solid ${isDark ? '#16161F' : '#c7d2fe'}`, flexShrink: 0 }}>
                 <Stack direction="row" spacing={1} alignItems="flex-end">
                   <TextField
                     size="small" fullWidth multiline maxRows={3}
@@ -498,7 +498,7 @@ export default function ChatWidget() {
                     value={aiInput}
                     onChange={e => setAiInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAi(); } }}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: isDark ? 'rgba(30,41,59,0.8)' : 'rgba(255,255,255,0.9)', fontSize: 13, '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? '#334155' : '#c7d2fe' }, '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1' } }, '& .MuiInputBase-input': { color: isDark ? '#e2e8f0' : '#0f172a' } }}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: isDark ? 'rgba(30,41,59,0.8)' : 'rgba(255,255,255,0.9)', fontSize: 13, '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? '#27272F' : '#c7d2fe' }, '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1' } }, '& .MuiInputBase-input': { color: isDark ? '#e2e8f0' : '#0f172a' } }}
                   />
                   <IconButton onClick={sendAi} disabled={!aiInput.trim() || aiLoading}
                     sx={{ bgcolor: aiInput.trim() && !aiLoading ? '#4f46e5' : '#e2e8f0', color: aiInput.trim() && !aiLoading ? 'white' : '#94a3b8', width: 36, height: 36, borderRadius: 2, flexShrink: 0, '&:hover': { bgcolor: aiInput.trim() && !aiLoading ? '#4338ca' : '#e2e8f0' }, transition: 'all 0.15s' }}>
@@ -594,7 +594,7 @@ export default function ChatWidget() {
                 </Stack>
               </Box>
 
-              <Box sx={{ p: 1.5, bgcolor: isDark ? 'rgba(15,23,42,0.7)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', borderTop: `1px solid ${isDark ? '#1e293b' : '#c7d2fe'}`, flexShrink: 0 }}>
+              <Box sx={{ p: 1.5, bgcolor: isDark ? 'rgba(15,23,42,0.7)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', borderTop: `1px solid ${isDark ? '#16161F' : '#c7d2fe'}`, flexShrink: 0 }}>
                 <Stack direction="row" spacing={1} alignItems="flex-end">
                   <TextField
                     size="small" fullWidth multiline maxRows={3}
@@ -602,7 +602,7 @@ export default function ChatWidget() {
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPublic(); } }}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: isDark ? 'rgba(30,41,59,0.8)' : 'rgba(255,255,255,0.9)', fontSize: 13, '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? '#334155' : '#c7d2fe' }, '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1' } }, '& .MuiInputBase-input': { color: isDark ? '#e2e8f0' : '#0f172a' } }}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: isDark ? 'rgba(30,41,59,0.8)' : 'rgba(255,255,255,0.9)', fontSize: 13, '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? '#27272F' : '#c7d2fe' }, '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1' } }, '& .MuiInputBase-input': { color: isDark ? '#e2e8f0' : '#0f172a' } }}
                   />
                   <IconButton onClick={sendPublic} disabled={!input.trim()}
                     sx={{ bgcolor: input.trim() ? '#4f46e5' : '#e2e8f0', color: input.trim() ? 'white' : '#94a3b8', width: 36, height: 36, borderRadius: 2, flexShrink: 0, '&:hover': { bgcolor: input.trim() ? '#4338ca' : '#e2e8f0' }, transition: 'all 0.15s' }}>
@@ -660,14 +660,14 @@ export default function ChatWidget() {
                   <div ref={dmBottom} />
                 </Stack>
               </Box>
-              <Box sx={{ p: 1.5, bgcolor: isDark ? 'rgba(15,23,42,0.7)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', borderTop: `1px solid ${isDark ? '#1e293b' : '#c7d2fe'}`, flexShrink: 0 }}>
+              <Box sx={{ p: 1.5, bgcolor: isDark ? 'rgba(15,23,42,0.7)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', borderTop: `1px solid ${isDark ? '#16161F' : '#c7d2fe'}`, flexShrink: 0 }}>
                 <Stack direction="row" spacing={1} alignItems="flex-end">
                   <TextField
                     size="small" fullWidth multiline maxRows={3}
                     placeholder="Xabar yozing..."
                     value={input} onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDm(); } }}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: isDark ? 'rgba(30,41,59,0.8)' : 'rgba(255,255,255,0.9)', fontSize: 13, '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? '#334155' : '#c7d2fe' }, '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1' } }, '& .MuiInputBase-input': { color: isDark ? '#e2e8f0' : '#0f172a' } }}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: isDark ? 'rgba(30,41,59,0.8)' : 'rgba(255,255,255,0.9)', fontSize: 13, '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? '#27272F' : '#c7d2fe' }, '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366f1' } }, '& .MuiInputBase-input': { color: isDark ? '#e2e8f0' : '#0f172a' } }}
                   />
                   <IconButton onClick={sendDm} disabled={!input.trim()}
                     sx={{ bgcolor: input.trim() ? '#4f46e5' : '#e2e8f0', color: input.trim() ? 'white' : '#94a3b8', width: 36, height: 36, borderRadius: 2, flexShrink: 0, transition: 'all 0.15s' }}>

@@ -5,43 +5,46 @@
 // ─── Google Fonts ─────────────────────────────────────────────────────────────
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-// ─── CSS Custom Properties — LIGHT (Minimal & Clean) ─────────────────────────
+// ─── CSS Custom Properties — LIGHT (Professional · indigo + slate) ───────────
 :root {
-  // Primary — Indigo
-  --primary:        #6366F1;
-  --primary-dark:   #4F46E5;
-  --primary-light:  #818CF8;
-  --primary-bg:     #EEF2FF;
-  --primary-border: #C7D2FE;
+  // Primary — Indigo (Professional: 4F46E5 yetakchi)
+  --primary:        #4F46E5;          // indigo-600
+  --primary-dark:   #4338CA;          // indigo-700 — hover/press
+  --primary-light:  #6366F1;          // indigo-500
+  --primary-bg:     #EEF2FF;          // indigo-50
+  --primary-border: #C7D2FE;          // indigo-200
+  // Gradient — birlamchi CTA va hero urg'ulari uchun (yengil, did bilan)
+  --primary-grad:   linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
+  --accent-2:       #7C3AED;          // violet — ikkilamchi urg'u
 
   // Status
-  --success:      #22C55E;
-  --warning:      #F59E0B;
-  --danger:       #EF4444;
+  --success:      #16A34A;
+  --warning:      #D97706;
+  --danger:       #DC2626;
   --info:         #0EA5E9;
 
-  // Typography — Zinc palette (colder & sharper than Slate)
-  --text-1:  #18181B;   // zinc-900
-  --text-2:  #3F3F46;   // zinc-700
-  --text-3:  #71717A;   // zinc-500
-  --text-4:  #A1A1AA;   // zinc-400
+  // Typography — Slate palette (sovuq, professional, SaaS tus)
+  --text-1:  #0F172A;   // slate-900 — sarlavha
+  --text-2:  #334155;   // slate-700 — asosiy matn
+  --text-3:  #64748B;   // slate-500 — ikkilamchi
+  --text-4:  #94A3B8;   // slate-400 — meta/placeholder
 
   // Surfaces
   --surface:    #FFFFFF;
-  --surface-2:  #FAFAFA;   // zinc-50 — almost-white
-  --surface-3:  #F4F4F5;   // zinc-100
+  --surface-2:  #F8FAFC;   // slate-50 — yumshoq fon
+  --surface-3:  #F1F5F9;   // slate-100 — ko'tarilgan
 
-  // Borders — subtle, not distracting
-  --border:     #E4E4E7;   // zinc-200
-  --border-2:   #F4F4F5;   // zinc-100
+  // Borders — nozik, chalg'itmaydi
+  --border:     #E2E8F0;   // slate-200
+  --border-2:   #F1F5F9;   // slate-100
 
-  // Shadows — very light
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-  --shadow-lg: 0 10px 32px rgba(0,0,0,0.08);
-  --shadow-xl: 0 20px 56px rgba(0,0,0,0.10);
+  // Shadows — yumshoq, indigo tusли (Professional)
+  --shadow-sm: 0 1px 2px rgba(15,23,42,0.05);
+  --shadow-md: 0 4px 16px rgba(15,23,42,0.07), 0 1px 3px rgba(15,23,42,0.04);
+  --shadow-lg: 0 12px 36px rgba(79,70,229,0.10), 0 4px 12px rgba(15,23,42,0.05);
+  --shadow-xl: 0 24px 60px rgba(79,70,229,0.14);
 
-  // Radii — slightly tighter than before
+  // Radii
   --radius-sm:  10px;
   --radius-md:  16px;
   --radius-lg:  22px;
@@ -54,8 +57,8 @@
   --transition:      0.18s var(--ease-out);
   --transition-slow: 0.28s var(--ease-out);
 
-  // Focus ring — derived from primary so it tracks the theme
-  --ring: 0 0 0 3px rgba(99, 102, 241, 0.28);
+  // Focus ring — primary'dan kelib chiqadi, temani kuzatadi
+  --ring: 0 0 0 3px rgba(79, 70, 229, 0.26);
 
   // Autofill fon rangi (transition emas — inset shadow, qaltirishsiz)
   --autofill-bg: #ffffff;
@@ -124,18 +127,18 @@ html {
 // Har bir bo'lim foni navbat bilan A/B rangda. Bo'lim tepasidagi gradient oldingi
 // bo'lim rangidan o'ziniki rangiga singib o'tadi → seam'lar bir-biriga ulanadi.
 .home-sections {
-  --band-a: #ffffff; // toq bo'limlar (oq)
-  --band-b: #f3f2fc; // juft bo'limlar (och lavanda)
-  --hero-bg: #f2f1fb; // hero foni (light)
-  --footer-bg: #f8fafc; // footer foni (light)
+  --band-a: #ffffff;   // toq bo'limlar (oq)
+  --band-b: #F5F7FE;   // juft bo'limlar (juda nozik indigo tus)
+  --hero-bg: #F3F5FF;  // hero foni (light — yengil indigo)
+  --footer-bg: #F8FAFC;// footer foni (slate-50)
   // LayoutBasic dagi main py:4 (pastki 32px) ni bekor qilib, oxirgi bo'lim footerga ulanadi
   margin-bottom: -32px;
 }
 .home-sections.is-dark {
-  --band-a: #0b0f1d;
-  --band-b: #121a30;
-  --hero-bg: #0b0b14;
-  --footer-bg: #0f172a;
+  --band-a: #0A0A0F;   // deyarli qora (Premium Dark)
+  --band-b: #0E0E17;   // nozik ko'tarilish
+  --hero-bg: #0A0A0F;  // hero foni (dark)
+  --footer-bg: #0C0C13;// footer foni (dark)
 }
 // Toq bo'limlar: tepada B'dan A'ga o'tadi, pasti A
 .home-sections > section:nth-of-type(odd) {
@@ -152,6 +155,18 @@ html {
 // Oxirgi bo'lim: pasti footer rangiga singib, footerga silliq ulanadi
 .home-sections > section:last-of-type {
   background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 16%, var(--band-b) 80%, var(--footer-bg) 100%) !important;
+}
+
+// ─── Jonli ko'ruvchilar nuqtasi (job card) ────────────────────────────────────
+.live-ping {
+  animation: livePing 2s var(--ease-out) infinite;
+}
+@keyframes livePing {
+  0%   { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-ping { animation: none; }
 }
 
 // ─── AI yordamchi spinner ─────────────────────────────────────────────────────
@@ -217,62 +232,65 @@ body {
 }
 
 // ─── DARK MODE — Dark Premium ──────────────────────────────────────────────────
-// Fon: #09090B (zinc-950), Accent: #A855F7 (purple-500)
+// Fon: #09090B (zinc-950), Accent: #818CF8 (purple-500)
 // Karta: #111111 / #18181B, Border: #27272A (zinc-800)
 .dark {
-  // ── CSS Custom Properties override ───────────────────────────────────────────
-  --primary:        #A855F7;          // purple-500
-  --primary-dark:   #9333EA;          // purple-600
-  --primary-light:  #C084FC;          // purple-400
-  --primary-bg:     rgba(168,85,247,0.12);
-  --primary-border: rgba(168,85,247,0.25);
+  // ── CSS Custom Properties override — PREMIUM DARK (indigo→violet) ────────────
+  --primary:        #818CF8;          // indigo-400 — matn/havola/ikonkalar (qorong'uda o'qiluvchan)
+  --primary-dark:   #6366F1;          // indigo-500 — press
+  --primary-light:  #A5B4FC;          // indigo-300
+  --primary-bg:     rgba(99,102,241,0.14);
+  --primary-border: rgba(129,140,248,0.28);
+  // Gradient — birlamchi CTA, hero, urg'ular (did bilan)
+  --primary-grad:   linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  --accent-2:       #A78BFA;          // violet — ikkilamchi urg'u
 
-  --text-1:    #F1F5F9;               // slate-100
-  --text-2:    #CBD5E1;               // slate-300
-  --text-3:    #94A3B8;               // slate-400
-  --text-4:    #64748B;               // slate-500
+  --text-1:    #F4F4F5;               // deyarli oq — sarlavha
+  --text-2:    #D4D4D8;               // zinc-300 — asosiy matn
+  --text-3:    #A1A1AA;               // zinc-400 — ikkilamchi
+  --text-4:    #71717A;               // zinc-500 — meta
 
-  --surface:    #1E293B;              // slate-800 — card
-  --surface-2:  #0F172A;              // slate-900 — page bg
-  --surface-3:  #293548;              // elevated card
+  --surface:    #16161F;              // karta — deyarli qora, salqin tus
+  --surface-2:  #0A0A0F;              // sahifa foni — deyarli qora
+  --surface-3:  #1E1E29;              // ko'tarilgan karta
 
-  --border:     #334155;              // slate-700
-  --border-2:   #1E293B;              // subtle border
+  --border:     #27272F;              // nozik chegara
+  --border-2:   #1A1A22;              // juda nozik
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md: 0 4px 20px rgba(0,0,0,0.5);
-  --shadow-lg: 0 12px 48px rgba(0,0,0,0.6);
-  --shadow-xl: 0 20px 64px rgba(0,0,0,0.7);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 6px 24px rgba(0,0,0,0.55);
+  --shadow-lg: 0 16px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02);
+  --shadow-xl: 0 28px 70px rgba(0,0,0,0.7);
 
-  --autofill-bg: #0f172a;
-  --ring: 0 0 0 3px rgba(168, 85, 247, 0.32);
+  --autofill-bg: #0A0A0F;
+  --ring: 0 0 0 3px rgba(129, 140, 248, 0.32);
 
   // ── Page background ───────────────────────────────────────────────────────────
   body {
-    background-color: #0F172A;
-    color: #F1F5F9;
+    background-color: #0A0A0F;
+    color: #F4F4F5;
   }
 
   // ── Scrollbar ─────────────────────────────────────────────────────────────────
-  ::-webkit-scrollbar-track  { background: #0F172A; }
-  ::-webkit-scrollbar-thumb  { background: #334155; &:hover { background: #475569; } }
+  ::-webkit-scrollbar-track  { background: #0A0A0F; }
+  ::-webkit-scrollbar-thumb  { background: #2A2A35; &:hover { background: #3A3A48; } }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // TAILWIND BACKGROUND CLASSES → Dark Premium remap
   // ─────────────────────────────────────────────────────────────────────────────
-  .bg-white          { background-color: #1E293B  !important; }
-  .bg-slate-50       { background-color: #0F172A  !important; }
-  .bg-slate-100      { background-color: #1E293B  !important; }
-  .bg-slate-200      { background-color: #293548  !important; }
-  .bg-gray-50        { background-color: #0F172A  !important; }
-  .bg-gray-100       { background-color: #1E293B  !important; }
+  .bg-white          { background-color: #16161F  !important; }
+  .bg-slate-50       { background-color: #0A0A0F  !important; }
+  .bg-slate-100      { background-color: #16161F  !important; }
+  .bg-slate-200      { background-color: #1E1E29  !important; }
+  .bg-gray-50        { background-color: #0A0A0F  !important; }
+  .bg-gray-100       { background-color: #16161F  !important; }
 
-  // Badge / chip ranglari — purple glow
-  .bg-indigo-50      { background-color: rgba(168,85,247,0.12)  !important; }
-  .bg-indigo-100     { background-color: rgba(168,85,247,0.18)  !important; }
-  .bg-indigo-600     { background-color: #9333EA                !important; }
-  .bg-purple-50      { background-color: rgba(168,85,247,0.12)  !important; }
-  .bg-purple-100     { background-color: rgba(168,85,247,0.18)  !important; }
+  // Badge / chip ranglari — indigo glow (Premium Dark)
+  .bg-indigo-50      { background-color: rgba(99,102,241,0.14)  !important; }
+  .bg-indigo-100     { background-color: rgba(99,102,241,0.20)  !important; }
+  .bg-indigo-600     { background-color: #6366F1                !important; }
+  .bg-purple-50      { background-color: rgba(139,92,246,0.14)  !important; }
+  .bg-purple-100     { background-color: rgba(139,92,246,0.20)  !important; }
   .bg-emerald-50     { background-color: rgba(16,185,129,0.12)  !important; }
   .bg-emerald-100    { background-color: rgba(16,185,129,0.18)  !important; }
   .bg-amber-50       { background-color: rgba(245,158,11,0.12)  !important; }
@@ -297,10 +315,10 @@ body {
   .text-gray-500     { color: #71717A   !important; }
 
   // Accent — purple based
-  .text-indigo-600   { color: #C084FC !important; }
-  .text-indigo-700   { color: #A855F7 !important; }
-  .text-indigo-500   { color: #C084FC !important; }
-  .text-purple-700   { color: #D8B4FE !important; }
+  .text-indigo-600   { color: #A5B4FC !important; }
+  .text-indigo-700   { color: #818CF8 !important; }
+  .text-indigo-500   { color: #A5B4FC !important; }
+  .text-purple-700   { color: #C7D2FE !important; }
   .text-emerald-700  { color: #6EE7B7 !important; }
   .text-amber-700    { color: #FCD34D !important; }
   .text-blue-700     { color: #93C5FD !important; }
@@ -310,19 +328,19 @@ body {
   // ─────────────────────────────────────────────────────────────────────────────
   // TAILWIND BORDER CLASSES
   // ─────────────────────────────────────────────────────────────────────────────
-  .border-slate-200  { border-color: #334155 !important; }
-  .border-slate-100  { border-color: #1E293B !important; }
-  .border-gray-200   { border-color: #334155 !important; }
-  .divide-slate-100  > * + * { border-color: #1E293B !important; }
-  .divide-slate-200  > * + * { border-color: #334155 !important; }
-  hr { border-color: #334155 !important; }
+  .border-slate-200  { border-color: #27272F !important; }
+  .border-slate-100  { border-color: #16161F !important; }
+  .border-gray-200   { border-color: #27272F !important; }
+  .divide-slate-100  > * + * { border-color: #16161F !important; }
+  .divide-slate-200  > * + * { border-color: #27272F !important; }
+  hr { border-color: #27272F !important; }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // HOVER STATES
   // ─────────────────────────────────────────────────────────────────────────────
   .hover\:bg-slate-50:hover   { background-color: rgba(255,255,255,0.05)  !important; }
-  .hover\:bg-slate-100:hover  { background-color: #1E293B                 !important; }
-  .hover\:bg-white:hover      { background-color: #1E293B                 !important; }
+  .hover\:bg-slate-100:hover  { background-color: #16161F                 !important; }
+  .hover\:bg-white:hover      { background-color: #16161F                 !important; }
   .hover\:shadow-md:hover     { box-shadow: 0 4px 24px rgba(0,0,0,0.5)   !important; }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -335,20 +353,20 @@ body {
     // (qora #111 dog'lar to'q-ko'k formalarda ko'rinmasligi uchun)
     background-color: transparent !important;
     color: #F1F5F9 !important;
-    border-color: #334155 !important;
+    border-color: #27272F !important;
     color-scheme: dark;
     &::placeholder { color: #64748B !important; }
     &:focus, &:focus-visible {
-      border-color: rgba(168,85,247,0.5) !important;
+      border-color: rgba(129,140,248,0.5) !important;
       outline: none !important;
-      box-shadow: 0 0 0 3px rgba(168,85,247,0.12) !important;
+      box-shadow: 0 0 0 3px rgba(129,140,248,0.12) !important;
     }
     &:-webkit-autofill,
     &:-webkit-autofill:hover,
     &:-webkit-autofill:focus,
     &:-webkit-autofill:active {
       // Login/forma maydonlari fonsiz (transparent) bo'lib, sahifa foniga
-      // (--autofill-bg = #0f172a) singadi. Avval #1E293B (karta rangi) edi —
+      // (--autofill-bg = #0f172a) singadi. Avval #16161F (karta rangi) edi —
       // u sahifa fonidan ochroq bo'lib, autofill'da ochiq "yamoq" ko'rinardi.
       -webkit-box-shadow: 0 0 0 1000px var(--autofill-bg) inset !important;
       -webkit-text-fill-color: #F1F5F9 !important;
@@ -369,29 +387,29 @@ body {
   // CARD CLASSES
   // ─────────────────────────────────────────────────────────────────────────────
   .card-base {
-    background-color: #1E293B !important;
-    border-color: #334155 !important;
+    background-color: #16161F !important;
+    border-color: #27272F !important;
     &:hover {
-      border-color: rgba(168,85,247,0.35) !important;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(168,85,247,0.12) !important;
+      border-color: rgba(129,140,248,0.35) !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(129,140,248,0.12) !important;
     }
   }
-  .card-flat     { background-color: #1E293B !important; border-color: #334155 !important; }
+  .card-flat     { background-color: #16161F !important; border-color: #27272F !important; }
   .card-glass    {
     background: rgba(15,23,42,0.85) !important;
-    border-color: rgba(168,85,247,0.15) !important;
+    border-color: rgba(129,140,248,0.15) !important;
     backdrop-filter: blur(20px);
   }
-  .card-elevated { background-color: #293548 !important; }
+  .card-elevated { background-color: #1E1E29 !important; }
 
   .rounded-2xl.border.border-slate-200,
   .rounded-2xl.border.border-slate-100 {
-    background-color: #1E293B !important;
-    border-color: #334155 !important;
+    background-color: #16161F !important;
+    border-color: #27272F !important;
   }
 
   .skeleton, .skeleton-text, .skeleton-title, .skeleton-card {
-    background: linear-gradient(90deg, #1E293B 25%, #293548 50%, #1E293B 75%) !important;
+    background: linear-gradient(90deg, #16161F 25%, #1E1E29 50%, #16161F 75%) !important;
     background-size: 200% 100% !important;
     animation: shimmer 1.5s infinite;
   }
@@ -406,36 +424,36 @@ body {
   // ─────────────────────────────────────────────────────────────────────────────
   .badge {
     &.badge-open    { background: rgba(34,197,94,0.12);   color: #86EFAC; border-color: rgba(34,197,94,0.25);   }
-    &.badge-active  { background: rgba(168,85,247,0.12);  color: #D8B4FE; border-color: rgba(168,85,247,0.25);  }
+    &.badge-active  { background: rgba(129,140,248,0.12);  color: #C7D2FE; border-color: rgba(129,140,248,0.25);  }
     &.badge-done    { background: rgba(82,82,91,0.15);    color: #A1A1AA; border-color: rgba(82,82,91,0.3);     }
     &.badge-pending { background: rgba(245,158,11,0.12);  color: #FCD34D; border-color: rgba(245,158,11,0.25);  }
     &.badge-spam    { background: rgba(239,68,68,0.12);   color: #FCA5A5; border-color: rgba(239,68,68,0.25);   }
-    &.badge-new     { background: rgba(168,85,247,0.15);  color: #C084FC; border-color: rgba(168,85,247,0.3);   }
+    &.badge-new     { background: rgba(129,140,248,0.15);  color: #A5B4FC; border-color: rgba(129,140,248,0.3);   }
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // SELECTION
   // ─────────────────────────────────────────────────────────────────────────────
-  ::selection { background: rgba(168,85,247,0.25); color: #D8B4FE; }
+  ::selection { background: rgba(129,140,248,0.25); color: #C7D2FE; }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // FOCUS RING — purple instead of indigo
   // ─────────────────────────────────────────────────────────────────────────────
   .focus\:ring-indigo-300:focus,
   .focus\:ring-2:focus {
-    --tw-ring-color: rgba(168,85,247,0.35) !important;
+    --tw-ring-color: rgba(129,140,248,0.35) !important;
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // PRIMARY BUTTONS — purple in dark mode
   // ─────────────────────────────────────────────────────────────────────────────
   .bg-indigo-600 {
-    background-color: #9333EA !important;
+    background-color: #6366F1 !important;
     &:hover { background-color: #7C3AED !important; }
   }
   button.bg-indigo-600,
   a.bg-indigo-600 {
-    background-color: #9333EA !important;
+    background-color: #6366F1 !important;
     box-shadow: 0 4px 16px rgba(147,51,234,0.35) !important;
     &:hover { background-color: #7C3AED !important; }
   }
@@ -678,6 +696,19 @@ input, select, textarea {
   &:active { transform: translateY(0) scale(0.98); box-shadow: 0 1px 4px rgba(79, 70, 229, 0.3); }
 }
 
+// Dark: birlamchi tugma — indigo→violet gradient + nozik glow (Premium Dark urg'u)
+.dark .btn-primary {
+  background: var(--primary-grad);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.38);
+  &:hover {
+    background: var(--primary-grad);
+    filter: brightness(1.08);
+    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5);
+  }
+  &:active { filter: brightness(0.96); box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4); }
+}
+
 .btn-outline {
   display: inline-flex;
   align-items: center;
@@ -738,6 +769,23 @@ input, select, textarea {
 // ─── Gradient Text ────────────────────────────────────────────────────────────
 .gradient-text {
   background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Hero brend so'zi ("BuFu") — qator bo'linganda ham to'g'ri ishlashi uchun
+// inline-block + clip. Light: indigo→violet · Dark: indigo→lavanda.
+.hero-brand {
+  display: inline-block;
+  background: linear-gradient(120deg, #4F46E5, #7C3AED);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+.dark .hero-brand {
+  background: linear-gradient(120deg, #818CF8, #C4B5FD);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

@@ -6,8 +6,8 @@ import {
 
 type Tab = 'general' | 'commission' | 'notifications' | 'security' | 'maintenance' | 'integrations';
 
-const cardCls = 'bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl';
-const inputCls = 'w-full border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1e293b] text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30';
+const cardCls = 'bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl';
+const inputCls = 'w-full border border-slate-200 dark:border-[#27272F] bg-white dark:bg-[#16161F] text-slate-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30';
 const labelCls = 'text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block';
 
 export default function AdminSettingsPanel() {
@@ -93,10 +93,10 @@ export default function AdminSettingsPanel() {
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`flex items-center gap-2.5 w-full px-4 py-3 text-sm font-semibold text-left transition-colors border-b border-slate-100 dark:border-[#1e293b] last:border-0 ${
+                    className={`flex items-center gap-2.5 w-full px-4 py-3 text-sm font-semibold text-left transition-colors border-b border-slate-100 dark:border-[#16161F] last:border-0 ${
                       activeTab === tab.key
                         ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#1e293b]'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#16161F]'
                     }`}
                   >
                     {tab.icon}
@@ -205,7 +205,7 @@ export default function AdminSettingsPanel() {
                       { icon: <Phone size={16} color="#10b981" />, label: 'SMS bildirishnomalari', sub: 'Eskiz yoki Playmobile SMS gateway', val: smsNotifs, set: setSmsNotifs },
                       { icon: <ChatTeardropText size={16} color="#0ea5e9" />, label: 'Telegram bot', sub: '@buildfuture_bot orqali', val: telegramNotifs, set: setTelegramNotifs },
                     ].map(item => (
-                      <div key={item.label} className="flex items-center justify-between p-3 border border-slate-100 dark:border-[#1e293b] rounded-xl hover:bg-slate-50 dark:hover:bg-[#1e293b]">
+                      <div key={item.label} className="flex items-center justify-between p-3 border border-slate-100 dark:border-[#16161F] rounded-xl hover:bg-slate-50 dark:hover:bg-[#16161F]">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">{item.icon}</div>
                           <div>
@@ -269,7 +269,7 @@ export default function AdminSettingsPanel() {
                   <div className={`${cardCls} p-6 space-y-4`}>
                     <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2"><Shield size={16} color="#ef4444" /> Xavfsizlik sozlamalari</h3>
 
-                    <div className="flex items-center justify-between p-3 border border-slate-100 dark:border-[#1e293b] rounded-xl">
+                    <div className="flex items-center justify-between p-3 border border-slate-100 dark:border-[#16161F] rounded-xl">
                       <div>
                         <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Ikki faktorli autentifikatsiya (Admin)</p>
                         <p className="text-xs text-slate-400">Admin paneliga kirish uchun OTP talab qilinadi</p>
@@ -282,7 +282,7 @@ export default function AdminSettingsPanel() {
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 border border-slate-100 dark:border-[#1e293b] rounded-xl">
+                    <div className="flex items-center justify-between p-3 border border-slate-100 dark:border-[#16161F] rounded-xl">
                       <div>
                         <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Avtomatik moderatsiya</p>
                         <p className="text-xs text-slate-400">AI yordamida spam va noo'rin kontent aniqlanadi</p>
@@ -295,7 +295,7 @@ export default function AdminSettingsPanel() {
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 border border-slate-100 dark:border-[#1e293b] rounded-xl">
+                    <div className="flex items-center justify-between p-3 border border-slate-100 dark:border-[#16161F] rounded-xl">
                       <div>
                         <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Spam filtri</p>
                         <p className="text-xs text-slate-400">Xabarlarda spam havolalari blokirovka qilinadi</p>
@@ -364,7 +364,7 @@ export default function AdminSettingsPanel() {
                       { label: 'Yangi ro\'yxatdan o\'tish', sub: 'Yangi foydalanuvchilar saytga qo\'shila oladi', val: newRegistrations, set: setNewRegistrations },
                       { label: 'Mehmon ko\'rish', sub: 'Kirmagan foydalanuvchilar sahifalarni ko\'ra oladi', val: allowGuestBrowse, set: setAllowGuestBrowse },
                     ].map(item => (
-                      <div key={item.label} className="flex items-center justify-between p-3 border border-slate-100 dark:border-[#1e293b] rounded-xl">
+                      <div key={item.label} className="flex items-center justify-between p-3 border border-slate-100 dark:border-[#16161F] rounded-xl">
                         <div>
                           <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{item.label}</p>
                           <p className="text-xs text-slate-400">{item.sub}</p>
@@ -390,7 +390,7 @@ export default function AdminSettingsPanel() {
                       { label: 'Payme', sub: "O'zbekiston raqamli to'lov tizimi", val: paymeActive, set: setPaymeActive, color: 'bg-blue-50' },
                       { label: 'Click', sub: "Click.uz to'lov tizimi", val: clickActive, set: setClickActive, color: 'bg-green-50' },
                     ].map(item => (
-                      <div key={item.label} className={`flex items-center justify-between p-4 ${item.color} border border-slate-100 dark:border-[#1e293b] rounded-xl`}>
+                      <div key={item.label} className={`flex items-center justify-between p-4 ${item.color} border border-slate-100 dark:border-[#16161F] rounded-xl`}>
                         <div>
                           <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{item.label}</p>
                           <p className="text-xs text-slate-500 dark:text-slate-400">{item.sub}</p>

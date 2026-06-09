@@ -57,7 +57,7 @@ export default function AdminNotificationsDropdown() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-[#1e293b] text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#334155] transition-colors"
+        className="relative w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-[#16161F] text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#27272F] transition-colors"
         aria-label="Bildirishnomalar"
       >
         <span className="material-symbols-outlined text-[20px]">notifications</span>
@@ -71,8 +71,8 @@ export default function AdminNotificationsDropdown() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 w-96 max-h-[420px] overflow-hidden z-50 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl shadow-xl flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-[#1e293b]">
+          <div className="absolute right-0 top-full mt-2 w-96 max-h-[420px] overflow-hidden z-50 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl shadow-xl flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-[#16161F]">
               <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Bildirishnomalar</p>
               {unread > 0 && (
                 <button
@@ -97,7 +97,7 @@ export default function AdminNotificationsDropdown() {
                     key={n._id}
                     type="button"
                     onClick={() => handleClick(n)}
-                    className={`w-full text-left px-4 py-3 border-b border-slate-50 dark:border-[#1e293b] hover:bg-slate-50 dark:hover:bg-[#1e293b]/60 transition-colors ${
+                    className={`w-full text-left px-4 py-3 border-b border-slate-50 dark:border-[#16161F] hover:bg-slate-50 dark:hover:bg-[#16161F]/60 transition-colors ${
                       !n.isRead ? 'bg-indigo-50/50 dark:bg-indigo-950/20' : ''
                     }`}
                   >

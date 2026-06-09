@@ -1,10 +1,18 @@
 import { makeVar } from '@apollo/client';
 
-// ─── Global User State ────────────────────────────────────────────────────────
-// This stores the currently logged-in user's basic info.
-// Components read this with: const user = useReactiveVar(userVar)
-// When the user logs in, call setUserFromToken() to populate it.
-// When the user logs out, call clearUser() to reset it.
+// ═══════════════════════════════════════════════════════════════════════════
+//  Global foydalanuvchi holati (Apollo reactive var)
+//  ───────────────────────────────────────────────────────────────────────────
+//  makeVar — Apollo'ning yengil global state mexanizmi (Redux'siz).
+//  userVar butun ilova bo'ylab joriy (login qilgan) foydalanuvchini saqlaydi.
+//
+//  Qanday ishlatiladi:
+//   • O'qish:  const user = useReactiveVar(userVar)   ← komponentda
+//   • Login:   setUserFromToken() → userVar to'ladi
+//   • Logout:  clearUser() → userVar tozalanadi
+//
+//  userVar o'zgarsa — uni o'qiyotgan BARCHA komponent avtomatik qayta render bo'ladi.
+// ═══════════════════════════════════════════════════════════════════════════
 
 export interface LoggedInUser {
   _id: string;

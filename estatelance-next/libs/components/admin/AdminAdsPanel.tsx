@@ -29,9 +29,9 @@ const statusMeta: Record<AdStatus, { label: string; color: string; icon: React.R
 };
 
 const typeLabel = AD_TYPE_LABEL;
-const cardCls = 'bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl';
+const cardCls = 'bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl';
 const inputCls =
-  'border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1e293b] text-slate-800 dark:text-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30';
+  'border border-slate-200 dark:border-[#27272F] bg-white dark:bg-[#16161F] text-slate-800 dark:text-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30';
 
 interface AdminAdsPanelProps {
   onCreate?: () => void;
@@ -124,12 +124,12 @@ export default function AdminAdsPanel({ onCreate }: AdminAdsPanelProps) {
         {[
           { label: 'Faol reklamalar', value: totalActive, color: 'text-emerald-600', icon: <CheckCircle size={18} color="#10b981" /> },
           { label: 'Jami kliklar', value: totalClicks.toLocaleString(), color: 'text-indigo-600', icon: <CursorClick size={18} color="#4f46e5" /> },
-          { label: "Ko'rishlar", value: `${(totalImpressions / 1000).toFixed(1)}K`, color: 'text-purple-600', icon: <Eye size={18} color="#a855f7" /> },
+          { label: "Ko'rishlar", value: `${(totalImpressions / 1000).toFixed(1)}K`, color: 'text-purple-600', icon: <Eye size={18} color="#818CF8" /> },
           { label: 'Jami targetlar', value: ads.length, color: 'text-amber-600', icon: <TrendUp size={18} color="#f59e0b" /> },
         ].map((s) => (
           <div key={s.label} className={`${cardCls} p-4`}>
             <div className="flex items-center justify-between mb-2">
-              <div className="w-8 h-8 bg-slate-50 dark:bg-[#1e293b] rounded-lg flex items-center justify-center">{s.icon}</div>
+              <div className="w-8 h-8 bg-slate-50 dark:bg-[#16161F] rounded-lg flex items-center justify-center">{s.icon}</div>
               <ArrowUp size={12} color="#10b981" />
             </div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-0.5">{s.label}</p>
@@ -175,7 +175,7 @@ export default function AdminAdsPanel({ onCreate }: AdminAdsPanelProps) {
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-[#1e293b] bg-slate-50 dark:bg-[#1e293b]/50">
+              <tr className="border-b border-slate-100 dark:border-[#16161F] bg-slate-50 dark:bg-[#16161F]/50">
                 <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-5 py-3">Reklama</th>
                 <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-4 py-3">Turi</th>
                 <th className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider px-4 py-3">Status</th>
@@ -186,11 +186,11 @@ export default function AdminAdsPanel({ onCreate }: AdminAdsPanelProps) {
                 <th className="text-center text-xs font-bold text-slate-500 uppercase tracking-wider px-4 py-3">Amal</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-[#1e293b]">
+            <tbody className="divide-y divide-slate-100 dark:divide-[#16161F]">
               {filtered.map((ad) => {
                 const st = statusMeta[ad.status];
                 return (
-                  <tr key={ad.id} className="hover:bg-slate-50 dark:hover:bg-[#1e293b]/40 transition-colors">
+                  <tr key={ad.id} className="hover:bg-slate-50 dark:hover:bg-[#16161F]/40 transition-colors">
                     <td className="px-5 py-3">
                       <p className="font-semibold text-slate-900 dark:text-slate-100">{ad.title}</p>
                       <p className="text-xs text-slate-400">{ad.advertiser}</p>
@@ -233,12 +233,12 @@ export default function AdminAdsPanel({ onCreate }: AdminAdsPanelProps) {
                         <button
                           type="button"
                           onClick={() => setMenuOpenId(menuOpenId === ad.id ? null : ad.id)}
-                          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#1e293b] text-slate-500"
+                          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#16161F] text-slate-500"
                         >
                           <DotsThreeVertical size={16} />
                         </button>
                         {menuOpenId === ad.id && (
-                          <div className="absolute right-0 top-full mt-1 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-xl shadow-lg z-10 w-44 overflow-hidden">
+                          <div className="absolute right-0 top-full mt-1 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-xl shadow-lg z-10 w-44 overflow-hidden">
                             {ad.manageable && (
                               <button
                                 type="button"

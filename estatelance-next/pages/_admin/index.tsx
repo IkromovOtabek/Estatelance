@@ -102,11 +102,11 @@ const Sidebar = ({
     className="h-screen w-64 fixed left-0 top-0 flex flex-col z-50 shadow-sm"
     style={{
       backgroundColor: isDark ? '#0f172a' : '#ffffff',
-      borderRight: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
+      borderRight: `1px solid ${isDark ? '#16161F' : '#e2e8f0'}`,
     }}
   >
     {/* Logo */}
-    <div className="px-6 py-6" style={{ borderBottom: `1px solid ${isDark ? '#1e293b' : '#f1f5f9'}` }}>
+    <div className="px-6 py-6" style={{ borderBottom: `1px solid ${isDark ? '#16161F' : '#f1f5f9'}` }}>
       <span className="text-2xl font-black text-indigo-500 tracking-tight">BuFu</span>
       <p className="text-xs mt-0.5" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Admin Panel</p>
     </div>
@@ -127,7 +127,7 @@ const Sidebar = ({
               color: isDark ? '#94a3b8' : '#64748b',
               backgroundColor: 'transparent',
             }}
-            onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.backgroundColor = isDark ? '#1e293b' : '#f1f5f9'; (e.currentTarget as HTMLElement).style.color = isDark ? '#e2e8f0' : '#1e293b'; } }}
+            onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.backgroundColor = isDark ? '#16161F' : '#f1f5f9'; (e.currentTarget as HTMLElement).style.color = isDark ? '#e2e8f0' : '#16161F'; } }}
             onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = isDark ? '#94a3b8' : '#64748b'; } }}
           >
             <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
@@ -138,14 +138,14 @@ const Sidebar = ({
     </nav>
 
     {/* User info + logout */}
-    <div className="px-3 pb-4 pt-4" style={{ borderTop: `1px solid ${isDark ? '#1e293b' : '#f1f5f9'}` }}>
+    <div className="px-3 pb-4 pt-4" style={{ borderTop: `1px solid ${isDark ? '#16161F' : '#f1f5f9'}` }}>
       <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-2"
-        style={{ backgroundColor: isDark ? '#1e293b' : '#f8fafc' }}>
+        style={{ backgroundColor: isDark ? '#16161F' : '#f8fafc' }}>
         <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
           {username?.[0]?.toUpperCase() ?? 'A'}
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold truncate" style={{ color: isDark ? '#e2e8f0' : '#1e293b' }}>@{username}</p>
+          <p className="text-sm font-semibold truncate" style={{ color: isDark ? '#e2e8f0' : '#16161F' }}>@{username}</p>
           <p className="text-xs" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Bosh administrator</p>
         </div>
       </div>
@@ -196,7 +196,7 @@ const StatCard = ({
       className="rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
       style={{
         backgroundColor: dark ? '#0f172a' : '#ffffff',
-        border: `1px solid ${dark ? '#1e293b' : '#e2e8f0'}`,
+        border: `1px solid ${dark ? '#16161F' : '#e2e8f0'}`,
         cursor: onClick ? 'pointer' : 'default',
       }}
     >
@@ -227,9 +227,9 @@ const VisitorChart = ({
   todayStr: string;
 }) => {
   const [hovered, setHovered] = React.useState<number | null>(null);
-  const gridColor  = isDark ? '#1e293b' : '#f1f5f9';
+  const gridColor  = isDark ? '#16161F' : '#f1f5f9';
   const labelColor = isDark ? '#64748b' : '#94a3b8';
-  const textColor  = isDark ? '#e2e8f0' : '#1e293b';
+  const textColor  = isDark ? '#e2e8f0' : '#16161F';
 
   const maxVal = Math.max(...stats.flatMap((s) => [s.visits, s.registrations, s.logins]), 1);
   const rows   = 5;
@@ -293,7 +293,7 @@ const VisitorChart = ({
               {hovered === i && (
                 <div
                   className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-20 rounded-xl px-3 py-2 shadow-xl text-xs whitespace-nowrap"
-                  style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', border: `1px solid ${gridColor}`, color: textColor }}
+                  style={{ backgroundColor: isDark ? '#16161F' : '#ffffff', border: `1px solid ${gridColor}`, color: textColor }}
                 >
                   <p className="font-bold mb-1">{s.date}</p>
                   {lines.map((l) => (
@@ -369,7 +369,7 @@ const ProgressBar = ({ label, value, color }: { label: string; value: number; co
       <span>{label}</span>
       <span>{value}%</span>
     </div>
-    <div className="w-full bg-slate-100 dark:bg-[#1e293b] h-2 rounded-full overflow-hidden">
+    <div className="w-full bg-slate-100 dark:bg-[#16161F] h-2 rounded-full overflow-hidden">
       <div
         className={`${color} h-full rounded-full transition-all duration-700`}
         style={{ width: `${value}%` }}
@@ -389,11 +389,11 @@ const AdminPage = () => {
   // ─── Dark mode tokens ──────────────────────────────────────────────────────
   const pageBg     = isDark ? '#0a0f1a' : '#f8fafc';
   const cardBg     = isDark ? '#0f172a' : '#ffffff';
-  const cardBorder = isDark ? '#1e293b' : '#e2e8f0';
+  const cardBorder = isDark ? '#16161F' : '#e2e8f0';
   const textPrim   = isDark ? '#f1f5f9' : '#0f172a';
   const textSec    = isDark ? '#94a3b8' : '#64748b';
-  const inputBg    = isDark ? '#1e293b' : '#ffffff';
-  const inputBorder = isDark ? '#334155' : '#e2e8f0';
+  const inputBg    = isDark ? '#16161F' : '#ffffff';
+  const inputBorder = isDark ? '#27272F' : '#e2e8f0';
   const headerBg   = isDark ? 'rgba(10,15,26,0.9)' : 'rgba(255,255,255,0.85)';
 
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -1015,7 +1015,7 @@ const AdminPage = () => {
                         <div
                           key={s.label}
                           onClick={() => setActiveSection(s.section)}
-                          className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-xl p-4 cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 hover:-translate-y-0.5 transition-all duration-200"
+                          className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-xl p-4 cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 hover:-translate-y-0.5 transition-all duration-200"
                         >
                           <p className="text-xs text-slate-400 mb-1">{s.label}</p>
                           <p className={`text-2xl font-extrabold ${s.color}`}>{s.value ?? 0}</p>
@@ -1052,7 +1052,7 @@ const AdminPage = () => {
                       <VisitorChart stats={visitorStats.slice(-chartDays)} isDark={isDark} todayStr={todayStr} />
                     ) : (
                       <div className="h-48 flex flex-col items-center justify-center gap-2 rounded-xl"
-                        style={{ backgroundColor: isDark ? '#1e293b' : '#f8fafc' }}>
+                        style={{ backgroundColor: isDark ? '#16161F' : '#f8fafc' }}>
                         <span className="material-symbols-outlined text-3xl text-slate-400">bar_chart</span>
                         <p className="text-xs text-slate-400">Ma&apos;lumot mavjud emas</p>
                       </div>
@@ -1060,7 +1060,7 @@ const AdminPage = () => {
                   </div>
 
                   {/* Visitor stats mini card */}
-                  <div className="col-span-12 lg:col-span-4 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-6 shadow-sm">
+                  <div className="col-span-12 lg:col-span-4 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-6 shadow-sm">
                     <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-4">Bugungi statistika</h2>
                     {todayStat ? (
                       <div className="space-y-4">
@@ -1108,8 +1108,8 @@ const AdminPage = () => {
                   </div>
 
                   {/* Recent transactions / activity */}
-                  <div className="col-span-12 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl shadow-sm overflow-hidden">
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-[#1e293b]">
+                  <div className="col-span-12 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-[#16161F]">
                       <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">So'nggi faollik</h2>
                       <button
                         onClick={() => setActiveSection('users')}
@@ -1121,16 +1121,16 @@ const AdminPage = () => {
                     <div className="overflow-x-auto">
                       <table className="w-full text-left">
                         <thead>
-                          <tr className="border-b border-slate-100 dark:border-[#1e293b] bg-slate-50/60 dark:bg-[#1e293b]/40">
+                          <tr className="border-b border-slate-100 dark:border-[#16161F] bg-slate-50/60 dark:bg-[#16161F]/40">
                             <th className="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Foydalanuvchi</th>
                             <th className="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Tur</th>
                             <th className="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Holat</th>
                             <th className="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Sana</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-[#1e293b]">
+                        <tbody className="divide-y divide-slate-100 dark:divide-[#16161F]">
                           {allUsers.slice(0, 5).map((u) => (
-                            <tr key={u._id} className="hover:bg-slate-100/60 dark:hover:bg-[#1e293b]/50 transition-colors">
+                            <tr key={u._id} className="hover:bg-slate-100/60 dark:hover:bg-[#16161F]/50 transition-colors">
                               <td className="px-6 py-3">
                                 <div className="flex items-center gap-2.5">
                                   <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0 overflow-hidden">
@@ -1181,7 +1181,7 @@ const AdminPage = () => {
                   </div>
 
                   {/* Audience analysis */}
-                  <div className="col-span-12 lg:col-span-6 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-6 shadow-sm">
+                  <div className="col-span-12 lg:col-span-6 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-6 shadow-sm">
                     <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-4">Foydalanuvchilar taqsimoti</h2>
                     <div className="space-y-4">
                       <ProgressBar
@@ -1206,7 +1206,7 @@ const AdminPage = () => {
                   </div>
 
                   {/* Quick actions */}
-                  <div className="col-span-12 lg:col-span-6 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-6 shadow-sm">
+                  <div className="col-span-12 lg:col-span-6 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-6 shadow-sm">
                     <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-4">Tezkor amallar</h2>
                     <div className="grid grid-cols-2 gap-3">
                       <button
@@ -1218,21 +1218,21 @@ const AdminPage = () => {
                       </button>
                       <button
                         onClick={() => setNotifDialog({ open: true, userId: '', username: '', broadcast: true })}
-                        className="flex items-center gap-2 px-3 py-3 bg-slate-50 dark:bg-[#0a0f1a] text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-[#1e293b] transition-colors border border-slate-200 dark:border-[#1e293b]"
+                        className="flex items-center gap-2 px-3 py-3 bg-slate-50 dark:bg-[#0a0f1a] text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-[#16161F] transition-colors border border-slate-200 dark:border-[#16161F]"
                       >
                         <span className="material-symbols-outlined text-[20px]">notifications</span>
                         Broadcast
                       </button>
                       <button
                         onClick={() => setActiveSection('users')}
-                        className="flex items-center gap-2 px-3 py-3 bg-slate-50 dark:bg-[#0a0f1a] text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-[#1e293b] transition-colors border border-slate-200 dark:border-[#1e293b]"
+                        className="flex items-center gap-2 px-3 py-3 bg-slate-50 dark:bg-[#0a0f1a] text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-[#16161F] transition-colors border border-slate-200 dark:border-[#16161F]"
                       >
                         <span className="material-symbols-outlined text-[20px]">group</span>
                         Foydalanuvchilar
                       </button>
                       <button
                         onClick={() => setActiveSection('jobs')}
-                        className="flex items-center gap-2 px-3 py-3 bg-slate-50 dark:bg-[#0a0f1a] text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-[#1e293b] transition-colors border border-slate-200 dark:border-[#1e293b]"
+                        className="flex items-center gap-2 px-3 py-3 bg-slate-50 dark:bg-[#0a0f1a] text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-[#16161F] transition-colors border border-slate-200 dark:border-[#16161F]"
                       >
                         <span className="material-symbols-outlined text-[20px]">work</span>
                         Ish e'lonlari
@@ -1257,7 +1257,7 @@ const AdminPage = () => {
 
                 {/* Visitor stats panel */}
                 {showVisitorStats && (
-                  <div className="bg-white border border-slate-200 dark:border-[#1e293b] rounded-2xl p-6 shadow-sm">
+                  <div className="bg-white border border-slate-200 dark:border-[#16161F] rounded-2xl p-6 shadow-sm">
                     {/* Session filter */}
                     <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                       <div className="flex items-center gap-2">
@@ -1282,7 +1282,7 @@ const AdminPage = () => {
                             setSessionDate(e.target.value);
                             setTimeout(() => refetchSessions(), 0);
                           }}
-                          className="text-xs border border-slate-200 dark:border-[#1e293b] rounded-lg px-3 py-1.5 outline-none focus:border-indigo-400"
+                          className="text-xs border border-slate-200 dark:border-[#16161F] rounded-lg px-3 py-1.5 outline-none focus:border-indigo-400"
                         />
                         {sessionDate && (
                           <button
@@ -1308,7 +1308,7 @@ const AdminPage = () => {
                       <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
                           <thead>
-                            <tr className="border-b border-slate-100 dark:border-[#1e293b] bg-slate-50 dark:bg-[#0a0f1a]">
+                            <tr className="border-b border-slate-100 dark:border-[#16161F] bg-slate-50 dark:bg-[#0a0f1a]">
                               <th className="px-4 py-3 font-bold text-slate-500 dark:text-slate-400">Holat</th>
                               <th className="px-4 py-3 font-bold text-slate-500 dark:text-slate-400">Foydalanuvchi</th>
                               <th className="px-4 py-3 font-bold text-slate-500 dark:text-slate-400">Qurilma</th>
@@ -1318,14 +1318,14 @@ const AdminPage = () => {
                               <th className="px-4 py-3 font-bold text-slate-500 dark:text-slate-400">Chiqdi</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-[#1e293b]">
+                          <tbody className="divide-y divide-slate-100 dark:divide-[#16161F]">
                             {[...todaySessions]
                               .sort((a, b) => (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0))
                               .map((s) => (
                                 <tr
                                   key={s.sessionId}
                                   onClick={() => setSelectedSession(s)}
-                                  className={`cursor-pointer hover:bg-slate-50 dark:hover:bg-[#1e293b] transition-colors ${s.isOnline ? 'dark:bg-green-900/10 bg-green-50/50' : ''}`}
+                                  className={`cursor-pointer hover:bg-slate-50 dark:hover:bg-[#16161F] transition-colors ${s.isOnline ? 'dark:bg-green-900/10 bg-green-50/50' : ''}`}
                                 >
                                   <td className="px-4 py-3">
                                     <div className="flex items-center gap-1.5">
@@ -1371,16 +1371,16 @@ const AdminPage = () => {
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs text-left">
                             <thead>
-                              <tr className="border-b border-slate-200 dark:border-[#1e293b] bg-slate-50 dark:bg-[#0a0f1a]">
+                              <tr className="border-b border-slate-200 dark:border-[#16161F] bg-slate-50 dark:bg-[#0a0f1a]">
                                 <th className="px-4 py-3 font-bold text-slate-500 dark:text-slate-400">Sana</th>
                                 <th className="px-4 py-3 font-bold text-indigo-500 text-center">Tashriflar</th>
                                 <th className="px-4 py-3 font-bold text-green-500 text-center">Ro'yxatdan</th>
                                 <th className="px-4 py-3 font-bold text-amber-500 text-center">Login</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-[#1e293b]">
+                            <tbody className="divide-y divide-slate-100 dark:divide-[#16161F]">
                               {[...visitorStats].reverse().map((s) => (
-                                <tr key={s.date} className={`hover:bg-slate-50 dark:hover:bg-[#1e293b]/50 ${s.date === todayStr ? 'dark:bg-green-900/10 bg-green-50/50' : ''}`}>
+                                <tr key={s.date} className={`hover:bg-slate-50 dark:hover:bg-[#16161F]/50 ${s.date === todayStr ? 'dark:bg-green-900/10 bg-green-50/50' : ''}`}>
                                   <td className="px-4 py-2.5 font-mono font-semibold text-slate-600 dark:text-slate-400">
                                     {s.date}
                                     {s.date === todayStr && (
@@ -1450,7 +1450,7 @@ const AdminPage = () => {
                     { label: 'Faolsiz foydalanuvchilar', value: allUsers.filter((u) => u.userStatus !== UserStatus.ACTIVE && u.userStatus !== UserStatus.SPAM).length, dot: '#94a3b8', dotLabel: 'faolsiz' },
                     { label: 'Spam / Bloklangan', value: allUsers.filter((u) => u.userStatus === UserStatus.SPAM).length, dot: '#ef4444', dotLabel: 'spam' },
                   ].map((s) => (
-                    <div key={s.label} className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-4 flex items-center gap-3">
+                    <div key={s.label} className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-4 flex items-center gap-3">
                       <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: `${s.dot}20` }}>
                         <span className="w-4 h-4 rounded-full" style={{ backgroundColor: s.dot }} />
@@ -1464,13 +1464,13 @@ const AdminPage = () => {
                 </div>
 
                 {/* Filter bar */}
-                <div className="bg-white border border-slate-200 dark:border-[#1e293b] rounded-2xl p-4 mb-4 flex flex-col lg:flex-row gap-3 items-center">
+                <div className="bg-white border border-slate-200 dark:border-[#16161F] rounded-2xl p-4 mb-4 flex flex-col lg:flex-row gap-3 items-center">
                   <div className="relative w-full lg:w-80">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
                     <input
                       value={userSearch}
                       onChange={(e) => setUserSearch(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 dark:bg-[#0a0f1a] border border-slate-200 dark:border-[#1e293b] rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"
+                      className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 dark:bg-[#0a0f1a] border border-slate-200 dark:border-[#16161F] rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all"
                       placeholder="Ism yoki username bo'yicha qidirish..."
                       type="text"
                     />
@@ -1493,7 +1493,7 @@ const AdminPage = () => {
                 </div>
 
                 {/* Table */}
-                <div className="bg-white border border-slate-200 dark:border-[#1e293b] rounded-2xl overflow-hidden shadow-sm">
+                <div className="bg-white border border-slate-200 dark:border-[#16161F] rounded-2xl overflow-hidden shadow-sm">
                   {usersLoading ? (
                     <div className="flex justify-center py-12">
                       <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -1503,7 +1503,7 @@ const AdminPage = () => {
                       <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                           <thead>
-                            <tr className="bg-slate-50 border-b border-slate-200 dark:border-[#1e293b]">
+                            <tr className="bg-slate-50 border-b border-slate-200 dark:border-[#16161F]">
                               <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Foydalanuvchi</th>
                               <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Email</th>
                               <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Rol</th>
@@ -1513,11 +1513,11 @@ const AdminPage = () => {
                               <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Amallar</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-[#1e293b]">
+                          <tbody className="divide-y divide-slate-100 dark:divide-[#16161F]">
                             {filteredUsers.map((u, idx) => (
                               <tr
                                 key={u._id}
-                                className={`hover:bg-slate-100/60 dark:hover:bg-[#1e293b]/50 transition-colors ${u.userStatus === UserStatus.SPAM ? 'bg-red-50/30 dark:bg-red-900/20' : ''}`}
+                                className={`hover:bg-slate-100/60 dark:hover:bg-[#16161F]/50 transition-colors ${u.userStatus === UserStatus.SPAM ? 'bg-red-50/30 dark:bg-red-900/20' : ''}`}
                               >
                                 <td className="px-6 py-4">
                                   <div className="flex items-center gap-3">
@@ -1551,7 +1551,7 @@ const AdminPage = () => {
                                     <select
                                       value={u.userType}
                                       onChange={(e) => handleChangeRole(u._id, e.target.value as UserType)}
-                                      className="text-xs border border-slate-200 dark:border-[#1e293b] rounded-lg px-2 py-1 bg-white dark:bg-[#0f172a] outline-none focus:border-indigo-400"
+                                      className="text-xs border border-slate-200 dark:border-[#16161F] rounded-lg px-2 py-1 bg-white dark:bg-[#0f172a] outline-none focus:border-indigo-400"
                                     >
                                       <option value={UserType.AGENT}>Agent</option>
                                       <option value={UserType.FREELANCER}>Frilanser</option>
@@ -1565,7 +1565,7 @@ const AdminPage = () => {
                                     <select
                                       value={u.userStatus}
                                       onChange={(e) => handleStatusChange(u._id, u.username, e.target.value as UserStatus)}
-                                      className="text-xs border border-slate-200 dark:border-[#1e293b] rounded-lg px-2 py-1 bg-white dark:bg-[#0f172a] outline-none focus:border-indigo-400"
+                                      className="text-xs border border-slate-200 dark:border-[#16161F] rounded-lg px-2 py-1 bg-white dark:bg-[#0f172a] outline-none focus:border-indigo-400"
                                       style={{ color: STATUS_COLOR[u.userStatus] }}
                                     >
                                       <option value={UserStatus.ACTIVE} style={{ color: '#16a34a' }}>Faol</option>
@@ -1616,7 +1616,7 @@ const AdminPage = () => {
                         </table>
                       </div>
                       {/* Pagination indicator */}
-                      <div className="px-6 py-4 border-t border-slate-100 dark:border-[#1e293b] dark:bg-[#1e293b]/30 flex items-center justify-between">
+                      <div className="px-6 py-4 border-t border-slate-100 dark:border-[#16161F] dark:bg-[#16161F]/30 flex items-center justify-between">
                         <span className="text-sm text-slate-400">
                           {filteredUsers.length} ta foydalanuvchi ko'rsatilmoqda
                         </span>
@@ -1637,18 +1637,18 @@ const AdminPage = () => {
                   </div>
                 </div>
                 {/* Search */}
-                <div className="bg-white border border-slate-200 dark:border-[#1e293b] rounded-2xl p-4 mb-4">
+                <div className="bg-white border border-slate-200 dark:border-[#16161F] rounded-2xl p-4 mb-4">
                   <div className="relative w-full lg:w-80">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
                     <input
                       value={jobSearch}
                       onChange={(e) => setJobSearch(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 dark:bg-[#0a0f1a] border border-slate-200 dark:border-[#1e293b] rounded-xl outline-none focus:border-indigo-400"
+                      className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 dark:bg-[#0a0f1a] border border-slate-200 dark:border-[#16161F] rounded-xl outline-none focus:border-indigo-400"
                       placeholder="E'lon nomini qidirish..."
                     />
                   </div>
                 </div>
-                <div className="bg-white border border-slate-200 dark:border-[#1e293b] rounded-2xl overflow-hidden shadow-sm">
+                <div className="bg-white border border-slate-200 dark:border-[#16161F] rounded-2xl overflow-hidden shadow-sm">
                   {jobsLoading ? (
                     <div className="flex justify-center py-12">
                       <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -1657,7 +1657,7 @@ const AdminPage = () => {
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-slate-50 border-b border-slate-200 dark:border-[#1e293b]">
+                          <tr className="bg-slate-50 border-b border-slate-200 dark:border-[#16161F]">
                             <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">#</th>
                             <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Sarlavha</th>
                             <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Kategoriya</th>
@@ -1669,9 +1669,9 @@ const AdminPage = () => {
                             <th className="px-6 py-4"></th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-[#1e293b]">
+                        <tbody className="divide-y divide-slate-100 dark:divide-[#16161F]">
                           {filteredJobs.map((j, idx) => (
-                            <tr key={j._id} className="hover:bg-slate-100/60 dark:hover:bg-[#1e293b]/50 transition-colors">
+                            <tr key={j._id} className="hover:bg-slate-100/60 dark:hover:bg-[#16161F]/50 transition-colors">
                               <td className="px-6 py-3 text-xs text-slate-400">{idx + 1}</td>
                               <td className="px-6 py-3">
                                 <Link href={`/jobs/${j._id}`}>
@@ -1681,7 +1681,7 @@ const AdminPage = () => {
                                 </Link>
                               </td>
                               <td className="px-6 py-3">
-                                <span className="px-2.5 py-1 bg-slate-100 dark:bg-[#1e293b] text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-full">
+                                <span className="px-2.5 py-1 bg-slate-100 dark:bg-[#16161F] text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-full">
                                   {j.category}
                                 </span>
                               </td>
@@ -1735,7 +1735,7 @@ const AdminPage = () => {
                   <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Maqolalar</h2>
                   <p className="text-sm text-slate-400 mt-0.5">Platformadagi barcha maqolalar.</p>
                 </div>
-                <div className="bg-white border border-slate-200 dark:border-[#1e293b] rounded-2xl overflow-hidden shadow-sm">
+                <div className="bg-white border border-slate-200 dark:border-[#16161F] rounded-2xl overflow-hidden shadow-sm">
                   {postsLoading ? (
                     <div className="flex justify-center py-12">
                       <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -1744,7 +1744,7 @@ const AdminPage = () => {
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-slate-50 border-b border-slate-200 dark:border-[#1e293b]">
+                          <tr className="bg-slate-50 border-b border-slate-200 dark:border-[#16161F]">
                             <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">#</th>
                             <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Sarlavha</th>
                             <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Muallif</th>
@@ -1754,9 +1754,9 @@ const AdminPage = () => {
                             <th className="px-6 py-4"></th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-[#1e293b]">
+                        <tbody className="divide-y divide-slate-100 dark:divide-[#16161F]">
                           {allPosts.map((p, idx) => (
-                            <tr key={p._id} className="hover:bg-slate-100/60 dark:hover:bg-[#1e293b]/50 transition-colors">
+                            <tr key={p._id} className="hover:bg-slate-100/60 dark:hover:bg-[#16161F]/50 transition-colors">
                               <td className="px-6 py-3 text-xs text-slate-400">{idx + 1}</td>
                               <td className="px-6 py-3">
                                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 max-w-[240px] truncate">{p.title}</p>
@@ -1862,7 +1862,7 @@ const AdminPage = () => {
                           <div className="flex items-center gap-2 ml-4 flex-shrink-0">
                             <button
                               onClick={() => handleToggleAnn(a._id)}
-                              className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-[#1e293b] rounded-xl hover:bg-slate-50 dark:hover:bg-[#1e293b] transition-colors"
+                              className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-[#16161F] rounded-xl hover:bg-slate-50 dark:hover:bg-[#16161F] transition-colors"
                             >
                               {a.isActive ? 'Yashirish' : "Ko'rsatish"}
                             </button>
@@ -1877,7 +1877,7 @@ const AdminPage = () => {
                       </div>
                     ))}
                     {allAnn.length === 0 && (
-                      <div className="text-center py-12 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl">
+                      <div className="text-center py-12 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl">
                         <span className="material-symbols-outlined text-4xl text-slate-300">campaign</span>
                         <p className="text-slate-400 mt-2">Hali e'lon yo'q. Birinchi e'lonni yarating!</p>
                       </div>
@@ -1902,7 +1902,7 @@ const AdminPage = () => {
                     className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
                       paymentsSubTab === 'pending'
                         ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-100 dark:bg-[#1e293b] text-slate-600 dark:text-slate-400'
+                        : 'bg-slate-100 dark:bg-[#16161F] text-slate-600 dark:text-slate-400'
                     }`}
                   >
                     Kutilmoqda
@@ -1916,7 +1916,7 @@ const AdminPage = () => {
                     className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
                       paymentsSubTab === 'history'
                         ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-100 dark:bg-[#1e293b] text-slate-600 dark:text-slate-400'
+                        : 'bg-slate-100 dark:bg-[#16161F] text-slate-600 dark:text-slate-400'
                     }`}
                   >
                     Tarix
@@ -1926,7 +1926,7 @@ const AdminPage = () => {
                 {paymentsSubTab === 'pending' && boostPayLoading ? (
                   <div className="text-center py-16 text-slate-400">Yuklanmoqda...</div>
                 ) : paymentsSubTab === 'pending' && pendingBoostPayments.length === 0 ? (
-                  <div className="text-center py-20 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl">
+                  <div className="text-center py-20 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl">
                     <span className="material-symbols-outlined text-5xl text-slate-300">receipt_long</span>
                     <h3 className="text-lg font-bold text-slate-600 dark:text-slate-400 mt-4">Kutilayotgan chek yo&apos;q</h3>
                     <p className="text-slate-400 text-sm mt-1">Yangi to&apos;lovlar shu yerda paydo bo&apos;ladi</p>
@@ -1958,10 +1958,10 @@ const AdminPage = () => {
                           className={`bg-white dark:bg-[#0f172a] border rounded-2xl overflow-hidden transition-shadow ${
                             highlighted
                               ? 'border-indigo-500 ring-2 ring-indigo-500/40'
-                              : 'border-slate-200 dark:border-[#1e293b]'
+                              : 'border-slate-200 dark:border-[#16161F]'
                           }`}
                         >
-                          <div className="p-5 border-b border-slate-100 dark:border-[#1e293b]">
+                          <div className="p-5 border-b border-slate-100 dark:border-[#16161F]">
                             <div className="flex justify-between gap-3 items-start">
                               <div>
                                 <p className="text-xs font-bold text-indigo-600 uppercase tracking-wide">
@@ -2002,7 +2002,7 @@ const AdminPage = () => {
                               <img
                                 src={receipt}
                                 alt="To'lov cheki"
-                                className="w-full max-h-64 object-contain rounded-lg border border-slate-200 dark:border-[#1e293b]"
+                                className="w-full max-h-64 object-contain rounded-lg border border-slate-200 dark:border-[#16161F]"
                               />
                             </a>
                           )}
@@ -2051,7 +2051,7 @@ const AdminPage = () => {
                 ) : boostHistoryLoading ? (
                   <div className="text-center py-16 text-slate-400">Yuklanmoqda...</div>
                 ) : boostPaymentHistory.length === 0 ? (
-                  <div className="text-center py-20 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl">
+                  <div className="text-center py-20 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl">
                     <span className="material-symbols-outlined text-5xl text-slate-300">history</span>
                     <h3 className="text-lg font-bold text-slate-600 dark:text-slate-400 mt-4">Tarix bo&apos;sh</h3>
                     <p className="text-slate-400 text-sm mt-1">Tasdiqlangan va rad etilgan to&apos;lovlar shu yerda saqlanadi</p>
@@ -2083,9 +2083,9 @@ const AdminPage = () => {
                       return (
                         <div
                           key={`${item.boostKind}-${entityId}`}
-                          className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl overflow-hidden"
+                          className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl overflow-hidden"
                         >
-                          <div className="p-5 border-b border-slate-100 dark:border-[#1e293b]">
+                          <div className="p-5 border-b border-slate-100 dark:border-[#16161F]">
                             <div className="flex justify-between gap-3 items-start">
                               <div>
                                 <p className="text-xs font-bold text-indigo-600 uppercase tracking-wide">
@@ -2132,7 +2132,7 @@ const AdminPage = () => {
                               <img
                                 src={receipt}
                                 alt="To'lov cheki"
-                                className="w-full max-h-48 object-contain rounded-lg border border-slate-200 dark:border-[#1e293b]"
+                                className="w-full max-h-48 object-contain rounded-lg border border-slate-200 dark:border-[#16161F]"
                               />
                             </a>
                           )}
@@ -2178,7 +2178,7 @@ const AdminPage = () => {
                   </button>
                   <button
                     onClick={() => setActiveSection('users')}
-                    className="flex items-center gap-2 px-5 py-3 bg-slate-100 dark:bg-[#1e293b] text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl hover:bg-slate-200 transition-colors"
+                    className="flex items-center gap-2 px-5 py-3 bg-slate-100 dark:bg-[#16161F] text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl hover:bg-slate-200 transition-colors"
                   >
                     <span className="material-symbols-outlined text-[18px]">group</span>
                     Foydalanuvchilar sahifasiga o'tish
@@ -2189,7 +2189,7 @@ const AdminPage = () => {
           </div>
 
           {/* Footer */}
-          <footer className="border-t border-slate-200 dark:border-[#1e293b] px-8 py-6 mt-auto bg-white/60 dark:bg-[#0f172a]/60">
+          <footer className="border-t border-slate-200 dark:border-[#16161F] px-8 py-6 mt-auto bg-white/60 dark:bg-[#0f172a]/60">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
                 <span className="text-lg font-black text-indigo-600">BuFu</span>
@@ -2222,7 +2222,7 @@ const AdminPage = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteDialog({ open: false, userId: '', username: '' })}
-                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#1e293b] rounded-xl hover:bg-slate-200 transition-colors"
+                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#16161F] rounded-xl hover:bg-slate-200 transition-colors"
               >
                 Bekor qilish
               </button>
@@ -2248,7 +2248,7 @@ const AdminPage = () => {
               onChange={(e) => setRejectBoostReason(e.target.value)}
               placeholder="Masalan: Chek summasi mos kelmaydi yoki o'qilmaydi"
               rows={3}
-              className="w-full text-sm border border-slate-200 dark:border-[#1e293b] rounded-xl p-3 outline-none focus:border-red-400 resize-none mb-4 dark:bg-[#1e293b] dark:text-slate-200"
+              className="w-full text-sm border border-slate-200 dark:border-[#16161F] rounded-xl p-3 outline-none focus:border-red-400 resize-none mb-4 dark:bg-[#16161F] dark:text-slate-200"
             />
             <div className="flex gap-3">
               <button
@@ -2307,12 +2307,12 @@ const AdminPage = () => {
               onChange={(e) => setSpamReason(e.target.value)}
               placeholder="Masalan: Soxta ish e'lonlari joylash. Platforma qoidalarini ko'p marta buzish."
               rows={3}
-              className="w-full text-sm border border-slate-200 dark:border-[#1e293b] rounded-xl p-3 outline-none focus:border-amber-400 resize-none mb-4"
+              className="w-full text-sm border border-slate-200 dark:border-[#16161F] rounded-xl p-3 outline-none focus:border-amber-400 resize-none mb-4"
             />
             <div className="flex gap-3">
               <button
                 onClick={() => setSpamDialog({ open: false, userId: '', username: '' })}
-                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#1e293b] rounded-xl hover:bg-slate-200 transition-colors"
+                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#16161F] rounded-xl hover:bg-slate-200 transition-colors"
               >
                 Bekor qilish
               </button>
@@ -2369,26 +2369,26 @@ const AdminPage = () => {
                 value={annTitle}
                 onChange={(e) => setAnnTitle(e.target.value)}
                 placeholder="Sarlavha"
-                className="w-full text-sm border border-slate-200 dark:border-[#1e293b] rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400"
+                className="w-full text-sm border border-slate-200 dark:border-[#16161F] rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400"
               />
               <textarea
                 value={annBody}
                 onChange={(e) => setAnnBody(e.target.value)}
                 placeholder="E'lon matni..."
                 rows={4}
-                className="w-full text-sm border border-slate-200 dark:border-[#1e293b] rounded-xl px-4 py-3 outline-none focus:border-indigo-400 resize-none"
+                className="w-full text-sm border border-slate-200 dark:border-[#16161F] rounded-xl px-4 py-3 outline-none focus:border-indigo-400 resize-none"
               />
               <input
                 value={annImageUrl}
                 onChange={(e) => setAnnImageUrl(e.target.value)}
                 placeholder="Rasm URL (ixtiyoriy)"
-                className="w-full text-sm border border-slate-200 dark:border-[#1e293b] rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400"
+                className="w-full text-sm border border-slate-200 dark:border-[#16161F] rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400"
               />
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => setAnnouncementDialog(false)}
-                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#1e293b] rounded-xl hover:bg-slate-200 transition-colors"
+                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#16161F] rounded-xl hover:bg-slate-200 transition-colors"
               >
                 Bekor qilish
               </button>
@@ -2437,20 +2437,20 @@ const AdminPage = () => {
                 value={notifTitle}
                 onChange={(e) => setNotifTitle(e.target.value)}
                 placeholder="Sarlavha"
-                className="w-full text-sm border border-slate-200 dark:border-[#1e293b] rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400"
+                className="w-full text-sm border border-slate-200 dark:border-[#16161F] rounded-xl px-4 py-2.5 outline-none focus:border-indigo-400"
               />
               <textarea
                 value={notifBody}
                 onChange={(e) => setNotifBody(e.target.value)}
                 placeholder="Xabar matni..."
                 rows={3}
-                className="w-full text-sm border border-slate-200 dark:border-[#1e293b] rounded-xl px-4 py-3 outline-none focus:border-indigo-400 resize-none"
+                className="w-full text-sm border border-slate-200 dark:border-[#16161F] rounded-xl px-4 py-3 outline-none focus:border-indigo-400 resize-none"
               />
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => setNotifDialog({ open: false, userId: '', username: '', broadcast: false })}
-                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#1e293b] rounded-xl hover:bg-slate-200 transition-colors"
+                className="flex-1 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#16161F] rounded-xl hover:bg-slate-200 transition-colors"
               >
                 Bekor qilish
               </button>
@@ -2540,10 +2540,10 @@ const AdminPage = () => {
                 </div>
               </div>
             </div>
-            <div className="pt-4 flex-shrink-0 border-t border-slate-100 dark:border-[#1e293b]">
+            <div className="pt-4 flex-shrink-0 border-t border-slate-100 dark:border-[#16161F]">
               <button
                 onClick={() => setSelectedSession(null)}
-                className="w-full py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#1e293b] rounded-xl hover:bg-slate-200 transition-colors"
+                className="w-full py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#16161F] rounded-xl hover:bg-slate-200 transition-colors"
               >
                 Yopish
               </button>
@@ -2579,13 +2579,13 @@ const AdminPage = () => {
               ) : (
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 dark:border-[#1e293b]">
+                    <tr className="bg-slate-50 border-b border-slate-200 dark:border-[#16161F]">
                       <th className="px-4 py-3 font-bold text-slate-500 dark:text-slate-400">Foydalanuvchi</th>
                       <th className="px-4 py-3 font-bold text-slate-500 dark:text-slate-400">Tur</th>
                       <th className="px-4 py-3 font-bold text-slate-500 dark:text-slate-400">Vaqt</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-[#1e293b]">
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#16161F]">
                     {detailUsers.map((u: any, i: number) => (
                       <tr key={i} className="hover:bg-slate-50">
                         <td className="px-4 py-3">
@@ -2623,10 +2623,10 @@ const AdminPage = () => {
                 </table>
               )}
             </div>
-            <div className="pt-4 flex-shrink-0 border-t border-slate-100 dark:border-[#1e293b]">
+            <div className="pt-4 flex-shrink-0 border-t border-slate-100 dark:border-[#16161F]">
               <button
                 onClick={() => setDetailModal({ open: false, date: '', event: '', label: '' })}
-                className="w-full py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#1e293b] rounded-xl hover:bg-slate-200 transition-colors"
+                className="w-full py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#16161F] rounded-xl hover:bg-slate-200 transition-colors"
               >
                 Yopish
               </button>

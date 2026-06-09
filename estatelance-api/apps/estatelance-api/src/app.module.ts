@@ -1,3 +1,16 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  AppModule — BuFu backend'ining ILDIZ moduli (NestJS)
+//  ───────────────────────────────────────────────────────────────────────────
+//  NestJS modulli arxitekturada ishlaydi: har bir biznes-soha alohida modul
+//  (job, bid, user, message...). Bu fayl ularning HAMMASINI bir joyga ulaydi.
+//
+//  Bu yerda nima sodir bo'ladi:
+//   1. ConfigModule  → .env o'qiydi (global, hamma joyda process.env ishlaydi)
+//   2. ThrottlerModule → rate-limit (60s ichida 120 so'rov) — DDoS/brute-force himoyasi
+//   3. GraphQLModule → code-first GraphQL API (schema kod'dan avtomatik yaraladi)
+//   4. Database + barcha biznes modullar
+//   5. Global guard (rate-limit) va global filter (xato logging)
+// ═══════════════════════════════════════════════════════════════════════════
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -8,6 +21,7 @@ import { GqlThrottlerGuard } from './libs/guards/gql-throttler.guard';
 import { AllExceptionsFilter } from './libs/filters/all-exceptions.filter';
 import { HealthController } from './components/health/health.controller';
 import { DatabaseModule } from './database/database.module';
+import { RedisModule } from './libs/redis/redis.module';
 import { AuthModule } from './components/auth/auth.module';
 import { UserModule } from './components/user/user.module';
 import { JobModule } from './components/job/job.module';
@@ -46,6 +60,7 @@ const isProd = process.env.NODE_ENV === 'production';
     }),
 
     DatabaseModule,
+    RedisModule,        // Global tezkor kesh (Redis) — chidamli, bo'lmasa ilova baribir ishlaydi
     AuthModule,
     UserModule,
     JobModule,

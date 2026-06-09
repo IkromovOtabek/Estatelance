@@ -410,9 +410,9 @@ const ProfilePage = () => {
 
   // Loading
   if (loading || !userId) {
-    const skBg  = isDark ? '#1e293b' : '#f1f5f9';
+    const skBg  = isDark ? '#16161F' : '#f1f5f9';
     const skCard = isDark ? '#0f172a' : '#ffffff';
-    const skBorder = isDark ? '#1e293b' : '#e2e8f0';
+    const skBorder = isDark ? '#16161F' : '#e2e8f0';
     return (
       <div className="max-w-5xl mx-auto px-4 py-8 animate-pulse">
         {/* Header skeleton */}
@@ -561,14 +561,14 @@ const ProfilePage = () => {
             <svg className="absolute inset-0 w-full h-full" viewBox="0 0 900 260" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="ls1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#6366f1" stopOpacity="0"/><stop offset="40%" stopColor="#6366f1" stopOpacity="0.25"/><stop offset="100%" stopColor="#06b6d4" stopOpacity="0"/></linearGradient>
-                <linearGradient id="ls2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#a855f7" stopOpacity="0"/><stop offset="50%" stopColor="#a855f7" stopOpacity="0.2"/><stop offset="100%" stopColor="#6366f1" stopOpacity="0"/></linearGradient>
+                <linearGradient id="ls2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#818CF8" stopOpacity="0"/><stop offset="50%" stopColor="#818CF8" stopOpacity="0.2"/><stop offset="100%" stopColor="#6366f1" stopOpacity="0"/></linearGradient>
                 <linearGradient id="ls3" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#0891b2" stopOpacity="0"/><stop offset="55%" stopColor="#0891b2" stopOpacity="0.18"/><stop offset="100%" stopColor="#7c3aed" stopOpacity="0"/></linearGradient>
               </defs>
               <line x1="-50" y1="55" x2="950" y2="85" stroke="url(#ls1)" strokeWidth="1.5"/>
               <line x1="-50" y1="130" x2="950" y2="150" stroke="url(#ls2)" strokeWidth="1"/>
               <line x1="-50" y1="195" x2="950" y2="215" stroke="url(#ls3)" strokeWidth="1.2"/>
               {[100,250,430,600,780].map((x,i)=><circle key={i} cx={x} cy={55+(x/900)*30} r="2.5" fill="#6366f1" opacity="0.4"/>)}
-              {[60,210,390,560,740].map((x,i)=><circle key={i} cx={x} cy={130+(x/900)*20} r="2" fill="#a855f7" opacity="0.35"/>)}
+              {[60,210,390,560,740].map((x,i)=><circle key={i} cx={x} cy={130+(x/900)*20} r="2" fill="#818CF8" opacity="0.35"/>)}
             </svg>
             {/* Light: left role badge */}
             <div className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none select-none hidden sm:flex">
@@ -588,7 +588,7 @@ const ProfilePage = () => {
             </div>
             {/* Light: bottom gradient */}
             <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white/60 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: 'linear-gradient(90deg, transparent 0%, #6366f1 20%, #0891b2 50%, #a855f7 80%, transparent 100%)', opacity: 0.5 }} />
+            <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: 'linear-gradient(90deg, transparent 0%, #6366f1 20%, #0891b2 50%, #818CF8 80%, transparent 100%)', opacity: 0.5 }} />
           </>
         )}
 
@@ -601,7 +601,7 @@ const ProfilePage = () => {
         <div className="col-span-12 lg:col-span-8 space-y-5">
 
           {/* ── Profile Header Card ── */}
-          <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
+          <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: isDark ? '#16161F' : '#ffffff', border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}` }}>
             <div className="flex flex-col sm:flex-row gap-5 items-start">
 
               {/* Avatar */}
@@ -653,7 +653,7 @@ const ProfilePage = () => {
                 </div>
 
                 {/* Stats row */}
-                <div className="grid grid-cols-3 gap-4 py-4" style={{ borderTop: `1px solid ${isDark ? '#334155' : '#f1f5f9'}`, borderBottom: `1px solid ${isDark ? '#334155' : '#f1f5f9'}` }}>
+                <div className="grid grid-cols-3 gap-4 py-4" style={{ borderTop: `1px solid ${isDark ? '#27272F' : '#f1f5f9'}`, borderBottom: `1px solid ${isDark ? '#27272F' : '#f1f5f9'}` }}>
                   <div>
                     <div className="flex items-center gap-1 mb-0.5">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b">
@@ -681,20 +681,20 @@ const ProfilePage = () => {
 
             {/* Bio */}
             {profile.bio && (
-              <div className="mt-5 rounded-xl p-4" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}` }}>
+              <div className="mt-5 rounded-xl p-4" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', border: `1px solid ${isDark ? '#16161F' : '#e2e8f0'}` }}>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-1 h-4 rounded-full bg-indigo-500" />
                   <h3 className="text-sm font-bold" style={{ color: isDark ? '#a5b4fc' : '#4f46e5' }}>Men haqimda</h3>
                 </div>
-                <p className="text-sm leading-relaxed" style={{ color: isDark ? '#cbd5e1' : '#475569', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}>{profile.bio}</p>
+                <p className="text-sm leading-relaxed" style={{ color: isDark ? '#cbd5e1' : '#3A3A48', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}>{profile.bio}</p>
               </div>
             )}
           </div>
 
           {/* ── Tabs ── */}
-          <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
+          <div className="rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: isDark ? '#16161F' : '#ffffff', border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}` }}>
             {/* Tab nav */}
-            <div className="flex" style={{ borderBottom: `1px solid ${isDark ? '#334155' : '#f1f5f9'}` }}>
+            <div className="flex" style={{ borderBottom: `1px solid ${isDark ? '#27272F' : '#f1f5f9'}` }}>
               {TABS.map((tab) => (
                 <button
                   key={tab.key}
@@ -724,7 +724,7 @@ const ProfilePage = () => {
                       { label: "Ko'rishlar", value: profile.profileViewCount ?? 0, clr: '#7c3aed' },
                       { label: 'Bajarilgan', value: profile.completedJobCount ?? 0, clr: '#059669' },
                     ].map(({ label, value, clr }) => (
-                      <div key={label} className="rounded-xl p-3.5 text-center" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}` }}>
+                      <div key={label} className="rounded-xl p-3.5 text-center" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', border: `1px solid ${isDark ? '#16161F' : '#e2e8f0'}` }}>
                         <p className="text-2xl font-black leading-none mb-1" style={{ color: clr }}>{value}</p>
                         <p className="text-[11px] font-medium" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>{label}</p>
                       </div>
@@ -802,11 +802,11 @@ const ProfilePage = () => {
 
                   {/* Inline add form — after file uploaded */}
                   {isOwnProfile && showInlineForm && (
-                    <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', border: `1px solid ${isDark ? '#334155' : '#c7d2fe'}` }}>
+                    <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', border: `1px solid ${isDark ? '#27272F' : '#c7d2fe'}` }}>
                       {/* Preview */}
                       {inlinePortfolioUrl && (
                         inlinePortfolioUrl.toLowerCase().includes('.pdf') ? (
-                          <div className="flex items-center gap-3 p-3 rounded-lg" style={{ backgroundColor: isDark ? '#1e293b' : '#faf5ff' }}>
+                          <div className="flex items-center gap-3 p-3 rounded-lg" style={{ backgroundColor: isDark ? '#16161F' : '#faf5ff' }}>
                             <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#ef4444' }}>
                               <span className="text-white text-[10px] font-black">PDF</span>
                             </div>
@@ -830,8 +830,8 @@ const ProfilePage = () => {
                           maxLength={80}
                           className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-all"
                           style={{
-                            backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                            border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`,
+                            backgroundColor: isDark ? '#16161F' : '#ffffff',
+                            border: `1px solid ${isDark ? '#27272F' : '#d1d5db'}`,
                             color: isDark ? '#f1f5f9' : '#111827',
                           }}
                         />
@@ -848,8 +848,8 @@ const ProfilePage = () => {
                           maxLength={300}
                           className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none transition-all"
                           style={{
-                            backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                            border: `1px solid ${isDark ? '#334155' : '#d1d5db'}`,
+                            backgroundColor: isDark ? '#16161F' : '#ffffff',
+                            border: `1px solid ${isDark ? '#27272F' : '#d1d5db'}`,
                             color: isDark ? '#f1f5f9' : '#111827',
                           }}
                         />
@@ -872,7 +872,7 @@ const ProfilePage = () => {
                         <button
                           onClick={handleInlinePortfolioCancel}
                           className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-                          style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9', color: isDark ? '#94a3b8' : '#64748b', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}
+                          style={{ backgroundColor: isDark ? '#16161F' : '#f1f5f9', color: isDark ? '#94a3b8' : '#64748b', border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}` }}
                         >
                           Bekor
                         </button>
@@ -886,16 +886,16 @@ const ProfilePage = () => {
                         <div
                           key={idx}
                           className="group rounded-xl overflow-hidden transition-all duration-200"
-                          style={{ border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, backgroundColor: isDark ? '#0f172a' : '#ffffff' }}
+                          style={{ border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`, backgroundColor: isDark ? '#0f172a' : '#ffffff' }}
                         >
                           {item.imageUrl ? (
                             item.imageUrl.toLowerCase().includes('.pdf') ? (
-                              <div className="p-4" style={{ backgroundColor: isDark ? '#1e293b' : '#faf5ff' }}>
+                              <div className="p-4" style={{ backgroundColor: isDark ? '#16161F' : '#faf5ff' }}>
                                 <div className="flex items-center gap-3 mb-3">
                                   <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#ef4444' }}>
                                     <span className="text-white text-xs font-black">PDF</span>
                                   </div>
-                                  <p className="text-sm font-semibold leading-snug flex-1" style={{ color: isDark ? '#e2e8f0' : '#1e293b' }}>{item.title}</p>
+                                  <p className="text-sm font-semibold leading-snug flex-1" style={{ color: isDark ? '#e2e8f0' : '#16161F' }}>{item.title}</p>
                                 </div>
                                 <div className="flex gap-2">
                                   <a
@@ -921,7 +921,7 @@ const ProfilePage = () => {
                                       } catch { window.open(item.imageUrl, '_blank'); }
                                     }}
                                     className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all hover:opacity-90"
-                                    style={{ backgroundColor: isDark ? '#334155' : '#e0e7ff', color: isDark ? '#e2e8f0' : '#4338ca' }}
+                                    style={{ backgroundColor: isDark ? '#27272F' : '#e0e7ff', color: isDark ? '#e2e8f0' : '#4338ca' }}
                                   >
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                     Yuklash
@@ -945,7 +945,7 @@ const ProfilePage = () => {
                               </div>
                             ) : (
                               <div className="relative">
-                                <div className="h-44 overflow-hidden" style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9' }}>
+                                <div className="h-44 overflow-hidden" style={{ backgroundColor: isDark ? '#27272F' : '#f1f5f9' }}>
                                   <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                 </div>
                                 {isOwnProfile && (
@@ -966,13 +966,13 @@ const ProfilePage = () => {
                               </div>
                             )
                           ) : (
-                            <div className="h-32 flex items-center justify-center" style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9' }}>
-                              <ImageIcon size={36} color={isDark ? '#475569' : '#94a3b8'} />
+                            <div className="h-32 flex items-center justify-center" style={{ backgroundColor: isDark ? '#27272F' : '#f1f5f9' }}>
+                              <ImageIcon size={36} color={isDark ? '#3A3A48' : '#94a3b8'} />
                             </div>
                           )}
                           <div className="p-4 flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-sm font-bold mb-1" style={{ color: isDark ? '#f1f5f9' : '#1e293b' }}>{item.title}</h4>
+                              <h4 className="text-sm font-bold mb-1" style={{ color: isDark ? '#f1f5f9' : '#16161F' }}>{item.title}</h4>
                               {item.description && (
                                 <p className="text-xs leading-relaxed" style={{ color: isDark ? '#94a3b8' : '#64748b', wordBreak: 'break-word' }}>{item.description}</p>
                               )}
@@ -998,9 +998,9 @@ const ProfilePage = () => {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <ImageIcon size={40} color={isDark ? '#475569' : '#cbd5e1'} />
+                      <ImageIcon size={40} color={isDark ? '#3A3A48' : '#cbd5e1'} />
                       <p className="mt-3 text-sm" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Portfolio bo&apos;sh</p>
-                      {isOwnProfile && <p className="mt-1 text-xs" style={{ color: isDark ? '#475569' : '#cbd5e1' }}>Yuqoridagi tugmani bosib qo&apos;shing</p>}
+                      {isOwnProfile && <p className="mt-1 text-xs" style={{ color: isDark ? '#3A3A48' : '#cbd5e1' }}>Yuqoridagi tugmani bosib qo&apos;shing</p>}
                     </div>
                   )}
                 </div>
@@ -1105,7 +1105,7 @@ const ProfilePage = () => {
           <div className="sticky top-6 space-y-4">
 
             {/* Action card */}
-            <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
+            <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: isDark ? '#16161F' : '#ffffff', border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}` }}>
               {/* Availability */}
               <div className="mb-6">
                 <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Xizmat mavjudligi</p>
@@ -1177,10 +1177,10 @@ const ProfilePage = () => {
               )}
 
               {/* Meta info */}
-              <div className="mt-6 pt-5 space-y-3" style={{ borderTop: `1px solid ${isDark ? '#334155' : '#f1f5f9'}` }}>
+              <div className="mt-6 pt-5 space-y-3" style={{ borderTop: `1px solid ${isDark ? '#27272F' : '#f1f5f9'}` }}>
                 <div className="flex items-center justify-between">
                   <span className="text-sm" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Javob vaqti</span>
-                  <span className="text-sm font-semibold" style={{ color: isDark ? '#e2e8f0' : '#1e293b' }}>~2 soat</span>
+                  <span className="text-sm font-semibold" style={{ color: isDark ? '#e2e8f0' : '#16161F' }}>~2 soat</span>
                 </div>
                 {profile.location && (
                   <div>
@@ -1198,7 +1198,7 @@ const ProfilePage = () => {
                 {memberSince && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>A&apos;zo bo&apos;lgan</span>
-                    <span className="text-sm font-semibold flex items-center gap-1" style={{ color: isDark ? '#e2e8f0' : '#1e293b' }}>
+                    <span className="text-sm font-semibold flex items-center gap-1" style={{ color: isDark ? '#e2e8f0' : '#16161F' }}>
                       <CalendarBlank size={13} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
                       {memberSince}
                     </span>
@@ -1208,17 +1208,17 @@ const ProfilePage = () => {
             </div>
 
             {/* Share card */}
-            <div className="rounded-2xl p-4 flex items-center justify-between" style={{ backgroundColor: isDark ? '#1e293b' : '#f8fafc', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
+            <div className="rounded-2xl p-4 flex items-center justify-between" style={{ backgroundColor: isDark ? '#16161F' : '#f8fafc', border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}` }}>
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Profilni ulashish</p>
-                <p className="text-sm font-semibold truncate" style={{ color: isDark ? '#e2e8f0' : '#334155' }}>
+                <p className="text-sm font-semibold truncate" style={{ color: isDark ? '#e2e8f0' : '#27272F' }}>
                   bufu.uz/{profile.username}
                 </p>
               </div>
               <button
                 onClick={handleCopyProfile}
                 className="ml-3 flex-shrink-0 p-2.5 rounded-xl text-indigo-500 hover:bg-indigo-50 transition-colors"
-                style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}
+                style={{ backgroundColor: isDark ? '#16161F' : '#ffffff', border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}` }}
                 title="Nusxa olish"
               >
                 <CopyIcon size={18} />
@@ -1240,8 +1240,8 @@ const ProfilePage = () => {
         PaperProps={{
           sx: {
             borderRadius: 3,
-            bgcolor: isDark ? '#1e293b' : '#ffffff',
-            border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+            bgcolor: isDark ? '#16161F' : '#ffffff',
+            border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
             overflow: 'hidden',
           }
         }}
@@ -1277,13 +1277,13 @@ const ProfilePage = () => {
               <Box sx={{
                 display: 'flex', alignItems: 'center', gap: 2.5, p: 2, borderRadius: 2.5,
                 bgcolor: isDark ? '#0f172a' : '#f8fafc',
-                border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
               }}>
                 <Box sx={{ position: 'relative', flexShrink: 0 }}>
                   <Avatar
                     src={profileImage || undefined}
                     onClick={handleAvatarPick}
-                    sx={{ width: 72, height: 72, bgcolor: '#4f46e5', fontSize: 26, cursor: 'pointer', border: '3px solid', borderColor: isDark ? '#334155' : '#e2e8f0', transition: 'opacity 0.15s', '&:hover': { opacity: 0.85 } }}
+                    sx={{ width: 72, height: 72, bgcolor: '#4f46e5', fontSize: 26, cursor: 'pointer', border: '3px solid', borderColor: isDark ? '#27272F' : '#e2e8f0', transition: 'opacity 0.15s', '&:hover': { opacity: 0.85 } }}
                   >
                     {(fullName || currentUser.username)?.[0]?.toUpperCase()}
                   </Avatar>
@@ -1302,7 +1302,7 @@ const ProfilePage = () => {
                   </Typography>
                   <Button size="small" variant="outlined" startIcon={<PhotoCameraIcon size={15} />}
                     onClick={handleAvatarPick} disabled={avatarUploading}
-                    sx={{ fontSize: 11, borderColor: isDark ? '#334155' : '#e2e8f0', color: '#6366f1', borderRadius: 2, py: 0.4, textTransform: 'none' }}>
+                    sx={{ fontSize: 11, borderColor: isDark ? '#27272F' : '#e2e8f0', color: '#6366f1', borderRadius: 2, py: 0.4, textTransform: 'none' }}>
                     {avatarUploading ? 'Yuklanmoqda...' : 'Rasm tanlash'}
                   </Button>
                 </Box>
@@ -1354,18 +1354,18 @@ const ProfilePage = () => {
                         <Box sx={{
                           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 9999,
                           mt: 0.5, borderRadius: 2, overflow: 'hidden',
-                          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-                          bgcolor: isDark ? '#1e293b' : '#ffffff',
+                          border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
+                          bgcolor: isDark ? '#16161F' : '#ffffff',
                           boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
                         }}>
                           {locationSuggests.map((s, i) => (
                             <Box key={i} onClick={() => { setLocation(s); setLocationSuggests([]); }} sx={{
                               display: 'flex', alignItems: 'flex-start', gap: 1, px: 1.5, py: 1, cursor: 'pointer',
-                              borderBottom: i < locationSuggests.length - 1 ? `1px solid ${isDark ? '#334155' : '#f1f5f9'}` : 'none',
+                              borderBottom: i < locationSuggests.length - 1 ? `1px solid ${isDark ? '#27272F' : '#f1f5f9'}` : 'none',
                               '&:hover': { bgcolor: isDark ? '#0f172a' : '#f8fafc' },
                             }}>
                               <MapPin size={12} color="#6366f1" weight="fill" style={{ flexShrink: 0, marginTop: 2 }} />
-                              <Typography fontSize={12} color={isDark ? '#e2e8f0' : '#1e293b'} sx={{ lineHeight: 1.4 }}>{s}</Typography>
+                              <Typography fontSize={12} color={isDark ? '#e2e8f0' : '#16161F'} sx={{ lineHeight: 1.4 }}>{s}</Typography>
                             </Box>
                           ))}
                         </Box>
@@ -1445,7 +1445,7 @@ const ProfilePage = () => {
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSkill(); } }}
                         sx={{ flex: 1, '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: isDark ? '#0f172a' : '#ffffff' } }} />
                       <Button variant="outlined" onClick={addSkill} size="small"
-                        sx={{ borderColor: isDark ? '#334155' : '#e2e8f0', color: '#6366f1', borderRadius: 2, minWidth: 40 }}>
+                        sx={{ borderColor: isDark ? '#27272F' : '#e2e8f0', color: '#6366f1', borderRadius: 2, minWidth: 40 }}>
                         <AddIcon size={20} />
                       </Button>
                     </Stack>
@@ -1453,10 +1453,10 @@ const ProfilePage = () => {
                       {skills.map((s) => (
                         <Chip key={s} label={s} size="small"
                           onDelete={() => setSkills(prev => prev.filter(x => x !== s))}
-                          sx={{ fontSize: 11, bgcolor: isDark ? 'rgba(99,102,241,0.15)' : '#eef2ff', color: '#6366f1', border: `1px solid ${isDark ? '#334155' : '#c7d2fe'}` }} />
+                          sx={{ fontSize: 11, bgcolor: isDark ? 'rgba(99,102,241,0.15)' : '#eef2ff', color: '#6366f1', border: `1px solid ${isDark ? '#27272F' : '#c7d2fe'}` }} />
                       ))}
                       {skills.length === 0 && (
-                        <Typography fontSize={12} color={isDark ? '#475569' : '#94a3b8'}>Ko&apos;nikma qo&apos;shilmagan</Typography>
+                        <Typography fontSize={12} color={isDark ? '#3A3A48' : '#94a3b8'}>Ko&apos;nikma qo&apos;shilmagan</Typography>
                       )}
                     </Stack>
                   </Box>
@@ -1469,24 +1469,24 @@ const ProfilePage = () => {
                       </Typography>
                       <Button size="small" variant="outlined" startIcon={<AddIcon size={16} />}
                         onClick={addPortfolioItem}
-                        sx={{ fontSize: 11, borderColor: isDark ? '#334155' : '#e2e8f0', color: '#6366f1', py: 0.25, borderRadius: 1.5, textTransform: 'none' }}>
+                        sx={{ fontSize: 11, borderColor: isDark ? '#27272F' : '#e2e8f0', color: '#6366f1', py: 0.25, borderRadius: 1.5, textTransform: 'none' }}>
                         Qo&apos;shish
                       </Button>
                     </Stack>
 
                     {portfolio.length === 0 ? (
                       <Box onClick={addPortfolioItem} sx={{
-                        py: 4, textAlign: 'center', border: `2px dashed ${isDark ? '#334155' : '#e2e8f0'}`,
+                        py: 4, textAlign: 'center', border: `2px dashed ${isDark ? '#27272F' : '#e2e8f0'}`,
                         borderRadius: 2.5, cursor: 'pointer', transition: 'all 0.15s',
                         '&:hover': { borderColor: '#6366f1', bgcolor: isDark ? 'rgba(99,102,241,0.05)' : '#f5f3ff' },
                       }}>
-                        <ImageIcon size={28} color={isDark ? '#475569' : '#94a3b8'} style={{ margin: '0 auto 6px' }} />
-                        <Typography fontSize={13} color={isDark ? '#475569' : '#94a3b8'}>Portfel yo&apos;q. Qo&apos;shish uchun bosing.</Typography>
+                        <ImageIcon size={28} color={isDark ? '#3A3A48' : '#94a3b8'} style={{ margin: '0 auto 6px' }} />
+                        <Typography fontSize={13} color={isDark ? '#3A3A48' : '#94a3b8'}>Portfel yo&apos;q. Qo&apos;shish uchun bosing.</Typography>
                       </Box>
                     ) : (
                       <Stack spacing={2}>
                         {portfolio.map((item, idx) => (
-                          <Box key={idx} sx={{ p: 2, borderRadius: 2, border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, bgcolor: isDark ? '#0f172a' : '#f8fafc' }}>
+                          <Box key={idx} sx={{ p: 2, borderRadius: 2, border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`, bgcolor: isDark ? '#0f172a' : '#f8fafc' }}>
                             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.5}>
                               <Typography fontSize={12} fontWeight={600} color={isDark ? '#94a3b8' : '#64748b'}>#{idx + 1} element</Typography>
                               <IconButton size="small" onClick={() => removePortfolioItem(idx)}
@@ -1496,9 +1496,9 @@ const ProfilePage = () => {
                             </Stack>
                             <Box onClick={() => handlePortfolioImagePick(idx)} sx={{
                               height: 100, borderRadius: 2, mb: 1.5, overflow: 'hidden',
-                              border: `2px dashed ${isDark ? '#334155' : '#e2e8f0'}`,
+                              border: `2px dashed ${isDark ? '#27272F' : '#e2e8f0'}`,
                               cursor: 'pointer', position: 'relative',
-                              bgcolor: isDark ? '#1e293b' : '#f1f5f9',
+                              bgcolor: isDark ? '#16161F' : '#f1f5f9',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               '&:hover': { borderColor: '#6366f1' },
                             }}>
@@ -1513,8 +1513,8 @@ const ProfilePage = () => {
                                 </>
                               ) : (
                                 <Stack alignItems="center" spacing={0.5}>
-                                  <PhotoCameraIcon size={24} color={isDark ? '#475569' : '#94a3b8'} />
-                                  <Typography fontSize={11} color={isDark ? '#475569' : '#94a3b8'}>Fayl tanlash</Typography>
+                                  <PhotoCameraIcon size={24} color={isDark ? '#3A3A48' : '#94a3b8'} />
+                                  <Typography fontSize={11} color={isDark ? '#3A3A48' : '#94a3b8'}>Fayl tanlash</Typography>
                                 </Stack>
                               )}
                             </Box>
@@ -1522,12 +1522,12 @@ const ProfilePage = () => {
                               <Grid item xs={12}>
                                 <TextField fullWidth size="small" label="Sarlavha"
                                   value={item.title} onChange={(e) => updatePortfolioItem(idx, 'title', e.target.value)}
-                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5, bgcolor: isDark ? '#1e293b' : '#ffffff' } }} />
+                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5, bgcolor: isDark ? '#16161F' : '#ffffff' } }} />
                               </Grid>
                               <Grid item xs={12}>
                                 <TextField fullWidth size="small" label="Tavsif"
                                   value={item.description} onChange={(e) => updatePortfolioItem(idx, 'description', e.target.value)}
-                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5, bgcolor: isDark ? '#1e293b' : '#ffffff' } }} />
+                                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5, bgcolor: isDark ? '#16161F' : '#ffffff' } }} />
                               </Grid>
                             </Grid>
                           </Box>
@@ -1543,7 +1543,7 @@ const ProfilePage = () => {
 
         <Box sx={{
           px: 3, py: 2, display: 'flex', justifyContent: 'flex-end', gap: 1.5,
-          borderTop: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+          borderTop: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
           bgcolor: isDark ? '#0f172a' : '#f8fafc',
         }}>
           <Button onClick={() => setEditOpen(false)}

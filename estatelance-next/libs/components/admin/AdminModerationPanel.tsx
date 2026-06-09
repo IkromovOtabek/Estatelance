@@ -92,8 +92,8 @@ export default function AdminModerationPanel({ focusJobId, focusDisputeId }: Adm
   };
 
   return (
-    <div className="flex flex-col rounded-2xl border border-slate-200 dark:border-[#1e293b] overflow-hidden bg-white dark:bg-[#0f172a] min-h-[560px]">
-      <div className="bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-[#1e293b] px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+    <div className="flex flex-col rounded-2xl border border-slate-200 dark:border-[#16161F] overflow-hidden bg-white dark:bg-[#0f172a] min-h-[560px]">
+      <div className="bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-[#16161F] px-6 py-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Moderatsiya</h3>
           <div className="flex gap-4 mt-2">
@@ -134,15 +134,15 @@ export default function AdminModerationPanel({ focusJobId, focusDisputeId }: Adm
             placeholder="Qidirish..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 pr-4 py-2 border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1e293b] text-slate-800 dark:text-slate-200 rounded-xl text-sm w-52"
+            className="pl-8 pr-4 py-2 border border-slate-200 dark:border-[#27272F] bg-white dark:bg-[#16161F] text-slate-800 dark:text-slate-200 rounded-xl text-sm w-52"
           />
         </div>
       </div>
 
       {activeTab === 'jobs' && (
         <div className="flex flex-1 min-h-[480px] overflow-hidden">
-          <div className="w-96 flex-shrink-0 border-r border-slate-200 dark:border-[#1e293b] flex flex-col">
-            <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-[#1e293b]">
+          <div className="w-96 flex-shrink-0 border-r border-slate-200 dark:border-[#16161F] flex flex-col">
+            <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-[#16161F]">
               {jobsLoading && (
                 <p className="text-center py-12 text-sm text-slate-400">Yuklanmoqda...</p>
               )}
@@ -160,7 +160,7 @@ export default function AdminModerationPanel({ focusJobId, focusDisputeId }: Adm
                   className={`w-full text-left px-4 py-4 transition-colors border-l-2 ${
                     selectedJob?._id === job._id
                       ? 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-600'
-                      : 'hover:bg-slate-50 dark:hover:bg-[#1e293b]/40 border-transparent'
+                      : 'hover:bg-slate-50 dark:hover:bg-[#16161F]/40 border-transparent'
                   }`}
                 >
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{job.title}</p>
@@ -178,7 +178,7 @@ export default function AdminModerationPanel({ focusJobId, focusDisputeId }: Adm
               </div>
             ) : (
               <div className="max-w-2xl space-y-4">
-                <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-5">
+                <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-5">
                   <div className="flex justify-between gap-2 mb-3">
                     <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100">{selectedJob.title}</h4>
                     <span className={`text-xs font-bold px-2 py-1 rounded-full ${catColors[selectedJob.category] ?? 'bg-slate-100 text-slate-600'}`}>
@@ -219,7 +219,7 @@ export default function AdminModerationPanel({ focusJobId, focusDisputeId }: Adm
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div className="space-y-3">
               {disputes.length === 0 ? (
-                <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-10 text-center">
+                <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-10 text-center">
                   <Warning size={36} className="mx-auto mb-2 text-slate-300" />
                   <p className="text-slate-500 font-semibold">Nizolar yo&apos;q</p>
                 </div>
@@ -236,7 +236,7 @@ export default function AdminModerationPanel({ focusJobId, focusDisputeId }: Adm
                     className={`w-full text-left bg-white dark:bg-[#0f172a] border rounded-2xl p-4 hover:shadow-sm transition-all ${
                       selectedDispute?._id === d._id
                         ? 'border-red-400 ring-1 ring-red-300'
-                        : 'border-slate-200 dark:border-[#1e293b]'
+                        : 'border-slate-200 dark:border-[#16161F]'
                     }`}
                   >
                     <div className="flex justify-between gap-2">
@@ -263,10 +263,10 @@ export default function AdminModerationPanel({ focusJobId, focusDisputeId }: Adm
             </div>
 
             {selectedDispute && selectedDispute.status === 'OPEN' && (
-              <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#1e293b] rounded-2xl p-5 sticky top-6 h-fit">
+              <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-[#16161F] rounded-2xl p-5 sticky top-6 h-fit">
                 <h4 className="text-base font-extrabold text-slate-900 dark:text-slate-100 mb-4">Nizo hal qilish</h4>
                 <form onSubmit={handleResolveDispute} className="space-y-4">
-                  <div className="bg-slate-50 dark:bg-[#1e293b] rounded-xl p-3 text-sm text-slate-700 dark:text-slate-300">
+                  <div className="bg-slate-50 dark:bg-[#16161F] rounded-xl p-3 text-sm text-slate-700 dark:text-slate-300">
                     {selectedDispute.reason}
                   </div>
                   <div className="space-y-2">
@@ -293,13 +293,13 @@ export default function AdminModerationPanel({ focusJobId, focusDisputeId }: Adm
                     value={disputeAdminNote}
                     onChange={(e) => setDisputeAdminNote(e.target.value)}
                     placeholder="Admin izohi..."
-                    className="w-full border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1e293b] rounded-xl px-3 py-2 text-sm resize-none"
+                    className="w-full border border-slate-200 dark:border-[#27272F] bg-white dark:bg-[#16161F] rounded-xl px-3 py-2 text-sm resize-none"
                   />
                   <div className="flex gap-3">
                     <button
                       type="button"
                       onClick={() => setSelectedDispute(null)}
-                      className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-[#334155] text-sm font-semibold"
+                      className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-[#27272F] text-sm font-semibold"
                     >
                       Bekor
                     </button>

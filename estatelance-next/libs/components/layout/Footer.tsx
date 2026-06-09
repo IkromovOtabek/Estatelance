@@ -32,7 +32,7 @@ const Footer = () => {
   const border   = isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0';
   const heading  = isDark ? '#ffffff' : '#0f172a';
   const body     = isDark ? '#64748b' : '#64748b';
-  const subtle   = isDark ? '#94a3b8' : '#475569';
+  const subtle   = isDark ? '#94a3b8' : '#3A3A48';
   const accent   = isDark ? '#818cf8' : '#6366f1';
 
   return (

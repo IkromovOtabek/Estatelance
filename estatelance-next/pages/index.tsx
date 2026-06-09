@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useTheme } from 'next-themes';
+import { useFavorites } from '../libs/hooks/useFavorites';
 import { useQuery, useReactiveVar } from '@apollo/client';
 import {
   MagnifyingGlass,
@@ -27,11 +29,16 @@ import {
   CaretDown,
   ChatCircle,
   Buildings,
+  MapPin,
+  SealCheck,
+  TrendUp as TrendUpIcon,
 } from '@phosphor-icons/react';
+
 import { GET_JOBS, GET_FREELANCERS } from '../apollo/user/query';
 import { compareBoostFirst } from '../libs/utils/boost';
 import { userVar } from '../apollo/store';
 import withLayoutBasic from '../libs/components/layout/LayoutBasic';
+import JobCard from '../libs/components/common/JobCard';
 import { Job, User } from '../libs/types';
 import { JobStatus, UserType } from '../libs/enums';
 import { getCatIcon } from '../libs/utils/jobCategoryIcons';
@@ -52,7 +59,7 @@ const CAT: Record<string, { label: string; bg: string; text: string; darkBg: str
   MOVING:      { label: "Ko'chish & Yuk",        bg: '#fefce8', text: '#713f12', darkBg: 'rgba(202,138,4,0.15)',  darkText: '#fde047' },
   ACCOUNTING:  { label: 'Buxgalteriya',          bg: '#f0fdf4', text: '#14532d', darkBg: 'rgba(22,163,74,0.15)',  darkText: '#86efac' },
   SECURITY:    { label: "Qo'riqlash",            bg: '#eff6ff', text: '#1e3a8a', darkBg: 'rgba(59,130,246,0.15)', darkText: '#93c5fd' },
-  OTHER:       { label: 'Boshqa xizmatlar',      bg: '#f1f5f9', text: '#475569', darkBg: 'rgba(100,116,139,0.18)',darkText: '#94a3b8' },
+  OTHER:       { label: 'Boshqa xizmatlar',      bg: '#f1f5f9', text: '#3A3A48', darkBg: 'rgba(100,116,139,0.18)',darkText: '#94a3b8' },
 };
 
 const CATEGORIES_DISPLAY = [
@@ -128,55 +135,6 @@ function timeAgo(dateStr?: string): string {
   return `${Math.floor(h / 24)} kun oldin`;
 }
 
-// ─── Job Card ─────────────────────────────────────────────────────────────────
-const JobCard = ({ job, hot, isDark }: { job: Job; hot?: boolean; isDark?: boolean }) => {
-  const cat = CAT[job.category] ?? CAT.OTHER;
-  return (
-    <Link href={`/jobs/${job._id}`} className="no-underline block group">
-      <div
-        className="rounded-2xl p-6 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer border"
-        style={{
-          backgroundColor: isDark ? '#1e293b' : '#ffffff',
-          borderColor: isDark ? '#334155' : '#e2e8f0',
-          boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.4)' : undefined,
-        }}
-      >
-        <div className="flex justify-between items-start mb-4">
-          <h3 className={`font-semibold text-sm group-hover:text-indigo-600 transition-colors leading-snug flex-1 pr-2 line-clamp-2 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
-            {job.title}
-          </h3>
-          <BookmarkSimple size={20} className="text-slate-400 shrink-0" />
-        </div>
-        <div className="flex flex-wrap gap-2 mb-5">
-          <span
-            className="px-3 py-1 rounded-full text-xs font-semibold"
-            style={{ backgroundColor: isDark ? cat.darkBg : cat.bg, color: isDark ? cat.darkText : cat.text }}
-          >
-            {cat.label}
-          </span>
-          {hot && job.bidCount > 0 && (
-            <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${isDark ? 'bg-red-900/40 text-red-400' : 'bg-red-50 text-red-600'}`}>
-              <Fire size={12} weight="fill" />
-              {job.bidCount} ta taklif
-            </span>
-          )}
-          {!hot && (
-            <span className="flex items-center gap-1 text-xs text-slate-400">
-              <Clock size={12} />
-              {timeAgo(job.createdAt)}
-            </span>
-          )}
-        </div>
-        <div className={`flex items-center justify-between border-t pt-4 ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
-          <span className="font-bold text-indigo-600">${job.budget}</span>
-          <button className={`text-sm font-semibold hover:text-indigo-600 transition-colors ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Ariza yuborish
-          </button>
-        </div>
-      </div>
-    </Link>
-  );
-};
 
 // ─── Freelancer Card ──────────────────────────────────────────────────────────
 const FreelancerCard = ({ freelancer, isDark }: { freelancer: User; isDark?: boolean }) => {
@@ -187,8 +145,8 @@ const FreelancerCard = ({ freelancer, isDark }: { freelancer: User; isDark?: boo
       <div
         className="rounded-2xl p-6 hover:shadow-lg hover:border-indigo-200 transition-all cursor-pointer border"
         style={{
-          backgroundColor: isDark ? '#1e293b' : '#ffffff',
-          borderColor: isDark ? '#334155' : '#f1f5f9',
+          backgroundColor: isDark ? '#16161F' : '#ffffff',
+          borderColor: isDark ? '#27272F' : '#f1f5f9',
           boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.05)',
         }}
       >
@@ -208,7 +166,7 @@ const FreelancerCard = ({ freelancer, isDark }: { freelancer: User; isDark?: boo
             className="absolute -bottom-1 -right-1 w-5 h-5 border-[3px] rounded-full"
             style={{
               backgroundColor: freelancer.availability === 'AVAILABLE' ? '#22c55e' : '#f59e0b',
-              borderColor: isDark ? '#1e293b' : '#ffffff',
+              borderColor: isDark ? '#16161F' : '#ffffff',
             }}
           />
         </div>
@@ -251,7 +209,7 @@ const FaqItem = ({ question, answer, isDark }: { question: string; answer: strin
   return (
     <div
       className="rounded-xl overflow-hidden border"
-      style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', borderColor: isDark ? '#334155' : '#e2e8f0' }}
+      style={{ backgroundColor: isDark ? '#16161F' : '#ffffff', borderColor: isDark ? '#27272F' : '#e2e8f0' }}
     >
       <button
         onClick={() => setOpen((p) => !p)}
@@ -330,12 +288,12 @@ const HomePage = () => {
         return cy - cx;
       }),
     )
-    .slice(0, 6);
+    .slice(0, 8);   // 4 ustun × 2 qator = 8 ta
   const popularJobs = [...allJobs]
     .sort((a, b) =>
       compareBoostFirst(a, b, (x, y) => (y.bidCount ?? 0) - (x.bidCount ?? 0)),
     )
-    .slice(0, 6);
+    .slice(0, 4);   // faqat 1 qator (4 ta)
   const allFreelancers: User[] = freelancersData?.getFreelancers ?? [];
   const topFreelancers: User[] = [...allFreelancers]
     .sort((a, b) =>
@@ -352,6 +310,14 @@ const HomePage = () => {
   const heroAvgRating = ratedFreelancers.length
     ? (ratedFreelancers.reduce((sum, f) => sum + (f.averageRating ?? 0), 0) / ratedFreelancers.length).toFixed(1)
     : null;
+
+  // Trust pill DOIMO ko'rinsin — ma'lumot yuklanmasa fallback (gradient avatarlar + 10+ + 5.0)
+  const trustCount  = freelancerCount > 0 ? freelancerCount : 10;
+  const trustRating = heroAvgRating ?? '5.0';
+  // Avatarlar: haqiqiy frilanserlar bo'lsa — ular; bo'lmasa 5 ta gradient placeholder
+  const trustAvatars: (User | null)[] = heroAvatars.length > 0
+    ? heroAvatars
+    : [null, null, null, null, null];
 
   return (
     <div ref={revealRef} className={`home-sections${isDark ? ' is-dark' : ''}`}>
@@ -382,40 +348,36 @@ const HomePage = () => {
           marginTop: '-112px', // nav + main pt + zaxira — tepada oq bo'shliq HECH QANDAY brauzerda qolmaydi (rasm overflow:hidden bilan kesiladi)
         }}
       >
-        {/* Rasm foni (statik) */}
-        <div className="hero-slides">
-          <div
-            className="hero-slide"
-            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1600&q=80&auto=format&fit=crop')" }}
-          />
-        </div>
-        {/* To'q qoplama (matn o'qilishi uchun) */}
-        <div className="hero-ov" />
-        {/* Pastki fade — keyingi bo'lim rangiga silliq ulanadi */}
+        {/* Toza temali fon — Light: indigo mesh · Dark: grid + glow */}
         <div
-          className="hero-fade-b"
-          style={{ background: `linear-gradient(180deg, transparent 0%, ${isDark ? '#0b0f1d' : '#ffffff'} 100%)` }}
+          className="hero-bg"
+          style={{
+            background: isDark
+              ? 'radial-gradient(ellipse 60% 50% at 50% -8%, rgba(99,102,241,0.22), transparent 60%), radial-gradient(ellipse 40% 40% at 85% 30%, rgba(139,92,246,0.12), transparent 55%)'
+              : 'radial-gradient(ellipse 62% 52% at 50% -6%, rgba(99,102,241,0.16), transparent 62%), radial-gradient(ellipse 42% 42% at 88% 24%, rgba(124,58,237,0.08), transparent 58%)',
+          }}
         />
-
-        {/* Scroll indikatori (pastki shadow ustida) */}
-        <div className="hero-scroll" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
+        {/* Scroll indikatori */}
+        <div className="hero-scroll" style={{ color: isDark ? '#71717A' : '#94a3b8' }}>
           <span className="hero-scroll-txt">Scroll</span>
           <CaretDown size={18} weight="bold" />
         </div>
 
         {/* Kontent (markazda) */}
         <div className="relative z-10 hw text-center flex flex-col items-center" style={{ paddingTop: 48, paddingBottom: 64 }}>
-          <div className="hero-eyebrow">✦ O'zbekistonning №1 frilanser platformasi</div>
+          <div className="hero-eyebrow" style={{
+            color: isDark ? '#A5B4FC' : '#4F46E5',
+            background: isDark ? 'rgba(99,102,241,0.12)' : '#EEF2FF',
+            border: `1px solid ${isDark ? 'rgba(129,140,248,0.28)' : '#C7D2FE'}`,
+          }}>✦ O'zbekistonning №1 frilanser platformasi</div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-[3.7rem] font-black leading-[1.04] tracking-tight mt-6 mb-4 text-white max-w-3xl">
+          <h1 className="text-4xl sm:text-5xl lg:text-[3.7rem] font-black leading-[1.04] tracking-tight mt-6 mb-4 max-w-3xl"
+              style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}>
             Orzuingizdagi ishni{' '}
-            <span style={{ background: 'linear-gradient(120deg, #818CF8, #C084FC)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              BuFu
-            </span>
-            da toping
+            <span className="hero-brand">BuFu</span>da toping
           </h1>
 
-          <p className="text-lg leading-relaxed mb-8 max-w-2xl text-slate-300">
+          <p className="text-lg leading-relaxed mb-8 max-w-2xl" style={{ color: isDark ? '#A1A1AA' : '#64748B' }}>
             O'zbekistonning eng ishonchli freelancer platformasi. Mutaxassis yollang yoki o'z mahoratingiz bilan daromad olishni bugundan boshlang.
           </p>
 
@@ -439,7 +401,7 @@ const HomePage = () => {
                 <Link
                   href="/browse"
                   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm transition-all no-underline"
-                  style={{ backgroundColor: '#A855F7', boxShadow: '0 10px 24px rgba(168,85,247,0.32)' }}
+                  style={{ backgroundColor: isDark ? '#818CF8' : '#7C3AED', boxShadow: isDark ? '0 10px 24px rgba(99,102,241,0.4)' : '0 10px 24px rgba(124,58,237,0.3)' }}
                 >
                   <MagnifyingGlass size={18} weight="bold" /> Ishchi izlash
                 </Link>
@@ -455,7 +417,7 @@ const HomePage = () => {
                 <Link
                   href="/account"
                   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm transition-all no-underline"
-                  style={{ backgroundColor: '#A855F7', boxShadow: '0 10px 24px rgba(168,85,247,0.32)' }}
+                  style={{ backgroundColor: isDark ? '#818CF8' : '#7C3AED', boxShadow: isDark ? '0 10px 24px rgba(99,102,241,0.4)' : '0 10px 24px rgba(124,58,237,0.3)' }}
                 >
                   <Briefcase size={18} weight="bold" /> Ishchi izlayapman
                 </Link>
@@ -463,62 +425,70 @@ const HomePage = () => {
             )}
           </div>
 
-          {/* Trust — HAQIQIY frilanserlar (glass pill) */}
-          {heroAvatars.length > 0 && (
-            <div
-              className="inline-flex items-center gap-3.5 px-5 py-2.5 rounded-full"
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.13)', backdropFilter: 'blur(12px)' }}
-            >
-              <div className="flex -space-x-3">
-                {heroAvatars.map((f, i) => {
-                  const name = f.fullName ?? f.username ?? 'U';
-                  return (
-                    <div
-                      key={f._id}
-                      className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold"
-                      style={{
-                        zIndex: heroAvatars.length - i,
-                        background: 'linear-gradient(135deg,#6366F1,#A855F7)',
-                        border: '2px solid #0b1020',
-                      }}
-                      title={name}
-                    >
-                      {f.profileImage ? (
-                        <img src={f.profileImage} alt={name} className="w-full h-full object-cover" />
-                      ) : (
-                        name[0]?.toUpperCase()
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="text-left">
-                <div className="text-sm font-semibold text-white">
-                  <span className="font-black" style={{ color: '#C084FC' }}>{freelancerCount}+</span> frilanser bizga ishonadi
-                </div>
-                {heroAvgRating && (
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <span className="flex items-center gap-0.5">
-                      {[0, 1, 2, 3, 4].map((n) => (
-                        <Star key={n} size={13} weight="fill" color="#F59E0B" />
-                      ))}
-                    </span>
-                    <span className="text-xs font-bold text-slate-200">{heroAvgRating}</span>
-                    <span className="text-xs text-slate-400">o'rtacha reyting</span>
+          {/* Trust pill — DOIMO ko'rinadi (frilanserlar + soni + reyting) */}
+          <div
+            className="inline-flex items-center gap-3.5 px-5 py-2.5 rounded-full"
+            style={{
+              background: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#E2E8F0'}`,
+              boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.45)' : '0 4px 16px rgba(15,23,42,0.06)',
+              backdropFilter: 'blur(14px)',
+            }}
+          >
+            <div className="flex -space-x-3">
+              {trustAvatars.map((f, i) => {
+                const name = f?.fullName ?? f?.username ?? 'U';
+                // Fallback avatarlar uchun turli gradientlar (chiroyli ko'rinish)
+                const grads = [
+                  'linear-gradient(135deg,#6366F1,#818CF8)',
+                  'linear-gradient(135deg,#0891B2,#22D3EE)',
+                  'linear-gradient(135deg,#7C3AED,#C084FC)',
+                  'linear-gradient(135deg,#16A34A,#4ADE80)',
+                  'linear-gradient(135deg,#D97706,#FBBF24)',
+                ];
+                return (
+                  <div
+                    key={f?._id ?? `ph-${i}`}
+                    className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold"
+                    style={{
+                      zIndex: trustAvatars.length - i,
+                      background: grads[i % grads.length],
+                      border: `2px solid ${isDark ? '#0A0A0F' : '#FFFFFF'}`,
+                    }}
+                    title={name}
+                  >
+                    {f?.profileImage ? (
+                      <img src={f.profileImage} alt={name} className="w-full h-full object-cover" />
+                    ) : f ? (
+                      name[0]?.toUpperCase()
+                    ) : (
+                      <UserIcon size={18} weight="fill" className="text-white/90" />
+                    )}
                   </div>
-                )}
+                );
+              })}
+            </div>
+            <div className="text-left">
+              <div className="text-sm font-semibold" style={{ color: isDark ? '#F4F4F5' : '#0F172A' }}>
+                <span className="font-black" style={{ color: isDark ? '#A5B4FC' : '#4F46E5' }}>{trustCount}+</span> frilanser bizga ishonadi
+              </div>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="flex items-center gap-0.5">
+                  {[0, 1, 2, 3, 4].map((n) => (
+                    <Star key={n} size={13} weight="fill" color="#F59E0B" />
+                  ))}
+                </span>
+                <span className="text-xs font-bold" style={{ color: isDark ? '#D4D4D8' : '#334155' }}>{trustRating}</span>
+                <span className="text-xs" style={{ color: isDark ? '#A1A1AA' : '#64748B' }}>o'rtacha reyting</span>
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         <style jsx>{`
-          .bufu-hero { min-height: 100vh; display: flex; align-items: center; background: #0b1020; }
-          .hero-slides { position: absolute; inset: 0; z-index: 0; }
-          .hero-slide {
-            position: absolute; inset: 0; background-size: cover; background-position: center;
-            opacity: 1;
-          }
+          .bufu-hero { min-height: 92vh; display: flex; align-items: center; }
+          /* Temali fon overlay (mesh / glow) — z-0 */
+          .hero-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
           .hero-scroll {
             position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 11;
             display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -529,22 +499,12 @@ const HomePage = () => {
             0%, 100% { transform: translate(-50%, 0); opacity: 0.75; }
             50% { transform: translate(-50%, 7px); opacity: 1; }
           }
-          @media (prefers-reduced-motion: reduce) {
-            .hero-scroll { animation: none; }
-          }
-          .hero-ov {
-            position: absolute; inset: 0; z-index: 1;
-            background: linear-gradient(180deg, rgba(11,16,32,0.84) 0%, rgba(11,16,32,0.68) 45%, rgba(11,16,32,0.82) 100%);
-          }
-          .hero-fade-b { position: absolute; left: 0; right: 0; bottom: 0; height: 170px; z-index: 2; pointer-events: none; }
           .hero-eyebrow {
             display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700;
-            color: #d6c2f5; background: rgba(168,85,247,0.14); border: 1px solid rgba(168,85,247,0.3);
             padding: 7px 16px; border-radius: 999px;
           }
           @media (prefers-reduced-motion: reduce) {
-            .hero-slide { animation: none; opacity: 1; }
-            .hero-slide:not(:first-child) { display: none; }
+            .hero-scroll { animation: none; }
           }
         `}</style>
       </section>
@@ -571,7 +531,7 @@ const HomePage = () => {
               className="hidden md:block absolute top-8 left-[12.5%] right-[12.5%] h-0.5"
               style={{
                 background: isDark
-                  ? 'linear-gradient(90deg, #6366f1, #a855f7)'
+                  ? 'linear-gradient(90deg, #6366f1, #818CF8)'
                   : 'linear-gradient(90deg, #c7d2fe, #e9d5ff)',
               }}
             />
@@ -605,7 +565,7 @@ const HomePage = () => {
                 <div
                   className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 relative z-10 text-white"
                   style={{
-                    background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                    background: 'linear-gradient(135deg, #6366f1, #818CF8)',
                     boxShadow: '0 12px 28px rgba(99,102,241,0.35)',
                   }}
                 >
@@ -655,8 +615,8 @@ const HomePage = () => {
                   <div
                     className="p-5 rounded-2xl flex flex-col items-center text-center hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer border"
                     style={{
-                      backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                      borderColor: isDark ? '#334155' : '#e2e8f0',
+                      backgroundColor: isDark ? '#16161F' : '#ffffff',
+                      borderColor: isDark ? '#27272F' : '#e2e8f0',
                       boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.4)' : undefined,
                     }}
                   >
@@ -695,12 +655,12 @@ const HomePage = () => {
             <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
           </div>
         ) : latestJobs.length === 0 ? (
-          <div className="text-center py-16 rounded-2xl border" style={{ backgroundColor: isDark ? '#1e293b' : '#fff', borderColor: isDark ? '#334155' : '#e2e8f0' }}>
+          <div className="text-center py-16 rounded-2xl border" style={{ backgroundColor: isDark ? '#16161F' : '#fff', borderColor: isDark ? '#27272F' : '#e2e8f0' }}>
             <ClipboardText size={48} className="text-slate-300 mx-auto mb-3" />
             <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Hozircha ish e'lonlari yo'q</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
             {latestJobs.map((job) => (
               <JobCard key={job._id} job={job} isDark={isDark} />
             ))}
@@ -728,12 +688,12 @@ const HomePage = () => {
             <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
           </div>
         ) : popularJobs.length === 0 ? (
-          <div className="text-center py-16 rounded-2xl border" style={{ backgroundColor: isDark ? '#1e293b' : '#fff', borderColor: isDark ? '#334155' : '#e2e8f0' }}>
+          <div className="text-center py-16 rounded-2xl border" style={{ backgroundColor: isDark ? '#16161F' : '#fff', borderColor: isDark ? '#27272F' : '#e2e8f0' }}>
             <Fire size={48} className="text-slate-300 mx-auto mb-3" />
             <p className="text-slate-500 text-sm">Hozircha ma'lumot yo'q</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
             {popularJobs.map((job) => (
               <JobCard key={job._id} job={job} hot isDark={isDark} />
             ))}
@@ -757,7 +717,7 @@ const HomePage = () => {
               <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
             </div>
           ) : topFreelancers.length === 0 ? (
-            <div className="text-center py-16 rounded-2xl border" style={{ backgroundColor: isDark ? '#1e293b' : '#fff', borderColor: isDark ? '#334155' : '#e2e8f0' }}>
+            <div className="text-center py-16 rounded-2xl border" style={{ backgroundColor: isDark ? '#16161F' : '#fff', borderColor: isDark ? '#27272F' : '#e2e8f0' }}>
               <UserIcon size={48} className="text-slate-300 mx-auto mb-3" />
               <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Hozircha frilanserlar yo'q</p>
             </div>
@@ -794,8 +754,8 @@ const HomePage = () => {
                 plan.popular ? 'shadow-xl md:-translate-y-4' : 'hover:shadow-xl'
               }`}
               style={{
-                backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                borderColor: plan.popular ? '#6366f1' : (isDark ? '#334155' : '#e2e8f0'),
+                backgroundColor: isDark ? '#16161F' : '#ffffff',
+                borderColor: plan.popular ? '#6366f1' : (isDark ? '#27272F' : '#e2e8f0'),
                 borderTopWidth: plan.popular ? '4px' : '1px',
                 boxShadow: isDark ? '0 4px 24px rgba(0,0,0,0.5)' : undefined,
               }}

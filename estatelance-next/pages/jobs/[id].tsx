@@ -58,7 +58,7 @@ function timeAgo(dateStr?: string | number | null): string {
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
   [JobStatus.OPEN]:      { label: 'Ochiq',           color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
   [JobStatus.ACTIVE]:    { label: 'Jarayonda',       color: '#0891b2', bg: '#ecfeff', border: '#a5f3fc' },
-  [JobStatus.COMPLETED]: { label: 'Yakunlandi',      color: '#475569', bg: '#f1f5f9', border: '#e2e8f0' },
+  [JobStatus.COMPLETED]: { label: 'Yakunlandi',      color: '#3A3A48', bg: '#f1f5f9', border: '#e2e8f0' },
   [JobStatus.CANCELLED]: { label: 'Bekor qilindi',   color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
 };
 
@@ -82,13 +82,13 @@ function SimilarJobs({ jobs, isDark }: { jobs: Job[]; isDark: boolean }) {
   const prev = () => setIdx(i => Math.max(0, i - 1));
   const next = () => setIdx(i => Math.min(max, i + 1));
 
-  const cardBg     = isDark ? '#1e293b' : '#ffffff';
-  const cardBorder = isDark ? '#334155' : '#e2e8f0';
+  const cardBg     = isDark ? '#16161F' : '#ffffff';
+  const cardBorder = isDark ? '#27272F' : '#e2e8f0';
   const textPrim   = isDark ? '#f1f5f9' : '#0f172a';
   const textSec    = isDark ? '#94a3b8' : '#64748b';
   const pageBg     = isDark ? '#0f172a' : '#f8f7ff';
-  const tagBg      = isDark ? '#334155' : '#f1f5f9';
-  const tagClr     = isDark ? '#cbd5e1' : '#475569';
+  const tagBg      = isDark ? '#27272F' : '#f1f5f9';
+  const tagClr     = isDark ? '#cbd5e1' : '#3A3A48';
 
   return (
     <div className="mt-10 rounded-2xl px-6 py-8" style={{ backgroundColor: pageBg }}>

@@ -226,7 +226,7 @@ const NotificationsPage = () => {
                           </Typography>
                           <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#4f46e5', flexShrink: 0, mt: 0.6, ml: 1 }} />
                         </Stack>
-                        <Typography fontSize={13} color="#475569" mt={0.4} lineHeight={1.5}>
+                        <Typography fontSize={13} color="#3A3A48" mt={0.4} lineHeight={1.5}>
                           {n.description}
                         </Typography>
                         <Stack direction="row" spacing={1} alignItems="center" mt={0.75}>

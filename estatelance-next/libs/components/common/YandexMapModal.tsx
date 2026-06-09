@@ -215,8 +215,8 @@ export default function MapModal({ open, onClose, onSelect, initialAddress }: Pr
       PaperProps={{
         sx: {
           borderRadius: 3,
-          bgcolor: isDark ? '#1e293b' : '#ffffff',
-          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+          bgcolor: isDark ? '#16161F' : '#ffffff',
+          border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
           overflow: 'hidden',
           m: 2,
         },
@@ -247,14 +247,14 @@ export default function MapModal({ open, onClose, onSelect, initialAddress }: Pr
         <Box sx={{
           px: 2, py: 1.5, position: 'relative', zIndex: 20,
           bgcolor: isDark ? '#0f172a' : '#f8fafc',
-          borderBottom: suggests.length === 0 ? `1px solid ${isDark ? '#334155' : '#e2e8f0'}` : 'none',
+          borderBottom: suggests.length === 0 ? `1px solid ${isDark ? '#27272F' : '#e2e8f0'}` : 'none',
         }}>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Box sx={{
               flex: 1, display: 'flex', alignItems: 'center', gap: 1,
               px: 1.5, py: 0.8, borderRadius: 2,
-              bgcolor: isDark ? '#1e293b' : '#ffffff',
-              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+              bgcolor: isDark ? '#16161F' : '#ffffff',
+              border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
             }}>
               <MagnifyingGlass size={16} color={isDark ? '#64748b' : '#94a3b8'} />
               <input
@@ -297,19 +297,19 @@ export default function MapModal({ open, onClose, onSelect, initialAddress }: Pr
           {suggests.length > 0 && (
             <Box sx={{
               mt: 0.5, borderRadius: 2, overflow: 'hidden',
-              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-              bgcolor: isDark ? '#1e293b' : '#ffffff',
+              border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
+              bgcolor: isDark ? '#16161F' : '#ffffff',
               boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
             }}>
               {suggests.map((s, i) => (
                 <Box key={i} onClick={() => selectSuggest(s)} sx={{
                   display: 'flex', alignItems: 'flex-start', gap: 1.5,
                   px: 2, py: 1.2, cursor: 'pointer',
-                  borderBottom: i < suggests.length - 1 ? `1px solid ${isDark ? '#334155' : '#f1f5f9'}` : 'none',
+                  borderBottom: i < suggests.length - 1 ? `1px solid ${isDark ? '#27272F' : '#f1f5f9'}` : 'none',
                   '&:hover': { bgcolor: isDark ? '#0f172a' : '#f8fafc' },
                 }}>
                   <MapPin size={13} color="#6366f1" weight="fill" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <Typography fontSize={12} color={isDark ? '#e2e8f0' : '#1e293b'} sx={{ lineHeight: 1.4 }}>{s}</Typography>
+                  <Typography fontSize={12} color={isDark ? '#e2e8f0' : '#16161F'} sx={{ lineHeight: 1.4 }}>{s}</Typography>
                 </Box>
               ))}
             </Box>
@@ -323,7 +323,7 @@ export default function MapModal({ open, onClose, onSelect, initialAddress }: Pr
         {/* Map */}
         <Box sx={{
           position: 'relative', height: 380,
-          borderTop: suggests.length > 0 ? `1px solid ${isDark ? '#334155' : '#e2e8f0'}` : 'none',
+          borderTop: suggests.length > 0 ? `1px solid ${isDark ? '#27272F' : '#e2e8f0'}` : 'none',
         }}>
           {loading && (
             <Box sx={{
@@ -364,15 +364,15 @@ export default function MapModal({ open, onClose, onSelect, initialAddress }: Pr
         {/* Footer */}
         <Box sx={{
           px: 2.5, py: 1.5,
-          borderTop: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+          borderTop: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
           bgcolor: isDark ? '#0f172a' : '#f8fafc',
           display: 'flex', alignItems: 'center', gap: 2,
         }}>
           <Box sx={{ flex: 1, display: 'flex', alignItems: 'flex-start', gap: 1, minWidth: 0 }}>
-            <MapPin size={15} color={selectedAddress ? '#6366f1' : (isDark ? '#475569' : '#94a3b8')}
+            <MapPin size={15} color={selectedAddress ? '#6366f1' : (isDark ? '#3A3A48' : '#94a3b8')}
               weight="fill" style={{ flexShrink: 0, marginTop: 2 }} />
             <Typography fontSize={12}
-              color={selectedAddress ? (isDark ? '#e2e8f0' : '#1e293b') : (isDark ? '#475569' : '#94a3b8')}
+              color={selectedAddress ? (isDark ? '#e2e8f0' : '#16161F') : (isDark ? '#3A3A48' : '#94a3b8')}
               sx={{ wordBreak: 'break-word', lineHeight: 1.5 }}>
               {selectedAddress || 'Xaritada nuqta bosing yoki yuqoridan qidiring'}
             </Typography>
@@ -383,8 +383,8 @@ export default function MapModal({ open, onClose, onSelect, initialAddress }: Pr
             style={{
               flexShrink: 0, padding: '9px 20px', borderRadius: 10, border: 'none',
               cursor: selectedAddress ? 'pointer' : 'not-allowed',
-              background: selectedAddress ? 'linear-gradient(135deg, #6366f1, #818cf8)' : (isDark ? '#1e293b' : '#e2e8f0'),
-              color: selectedAddress ? 'white' : (isDark ? '#475569' : '#94a3b8'),
+              background: selectedAddress ? 'linear-gradient(135deg, #6366f1, #818cf8)' : (isDark ? '#16161F' : '#e2e8f0'),
+              color: selectedAddress ? 'white' : (isDark ? '#3A3A48' : '#94a3b8'),
               fontWeight: 700, fontSize: 13,
               display: 'flex', alignItems: 'center', gap: 6,
             }}

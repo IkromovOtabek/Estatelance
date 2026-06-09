@@ -28,7 +28,7 @@ export default function AdminSubSidebar({
   const router = useRouter();
 
   return (
-    <aside className="w-64 bg-white dark:bg-[#0f172a] border-r border-slate-200 dark:border-[#1e293b] fixed top-0 left-0 h-full flex flex-col py-6 px-3 z-30">
+    <aside className="w-64 bg-white dark:bg-[#0f172a] border-r border-slate-200 dark:border-[#16161F] fixed top-0 left-0 h-full flex flex-col py-6 px-3 z-30">
       <div className="px-3 mb-8">
         <h1 className="text-xl font-black text-indigo-700 dark:text-indigo-400">BuFu Admin</h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Marketplace Controller</p>
@@ -44,7 +44,7 @@ export default function AdminSubSidebar({
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                 active
                   ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 border-r-4 border-indigo-600'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#1e293b] hover:text-slate-900 dark:hover:text-slate-100'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#16161F] hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
               {NAV_ICONS[item.icon] ?? <MegaphoneSimple size={20} />}
@@ -54,7 +54,7 @@ export default function AdminSubSidebar({
         })}
       </nav>
 
-      <div className="px-3 pt-4 border-t border-slate-100 dark:border-[#1e293b] space-y-1">
+      <div className="px-3 pt-4 border-t border-slate-100 dark:border-[#16161F] space-y-1">
         <button
           type="button"
           onClick={() => router.push(backHref)}
@@ -65,7 +65,7 @@ export default function AdminSubSidebar({
         </button>
         <Link
           href="/"
-          className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#1e293b] rounded-xl transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#16161F] rounded-xl transition-colors"
         >
           <House size={20} />
           Bosh sahifaga

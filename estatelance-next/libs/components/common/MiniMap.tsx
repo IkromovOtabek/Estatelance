@@ -143,7 +143,7 @@ export default function MiniMap({ address, height = 160, isDark = false, destina
           </svg>
           <span style={{
             fontSize: 12, lineHeight: 1.5,
-            color: isDark ? '#e2e8f0' : '#1e293b',
+            color: isDark ? '#e2e8f0' : '#16161F',
             fontWeight: 500,
             wordBreak: 'break-word',
           }}>
@@ -183,7 +183,7 @@ export default function MiniMap({ address, height = 160, isDark = false, destina
         onClick={() => setRouteOpen(true)}
         style={{
           position: 'relative', borderRadius: 12, overflow: 'hidden',
-          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+          border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
           cursor: 'pointer',
         }}
       >
@@ -191,7 +191,7 @@ export default function MiniMap({ address, height = 160, isDark = false, destina
           <div style={{
             position: 'absolute', inset: 0, zIndex: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: isDark ? '#1e293b' : '#f8fafc',
+            background: isDark ? '#16161F' : '#f8fafc',
             borderRadius: 12,
           }}>
             <div style={{

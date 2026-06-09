@@ -63,7 +63,7 @@ export default function SpamModal() {
       </Box>
 
       <DialogContent sx={{ px: 3, pt: 3, pb: 2, textAlign: 'center' }}>
-        <Typography variant="body1" sx={{ color: '#1e293b', mb: 2, lineHeight: 1.7 }}>
+        <Typography variant="body1" sx={{ color: '#16161F', mb: 2, lineHeight: 1.7 }}>
           Sizning hisobingiz <strong>spam</strong> sifatida belgilangan. Siz hech qanday amal bajara olmaysiz.
         </Typography>
 

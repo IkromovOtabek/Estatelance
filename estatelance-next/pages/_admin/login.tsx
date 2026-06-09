@@ -86,10 +86,10 @@ const AdminLoginPage = () => {
           sx={{
             width: '100%',
             maxWidth: 420,
-            bgcolor: '#1e293b',
+            bgcolor: '#16161F',
             borderRadius: 3,
             p: 4,
-            border: '1px solid #334155',
+            border: '1px solid #27272F',
           }}
         >
           {/* Logo area */}
@@ -138,7 +138,7 @@ const AdminLoginPage = () => {
                     '& .MuiOutlinedInput-root': {
                       bgcolor: '#0f172a',
                       color: 'white',
-                      '& fieldset': { borderColor: '#334155' },
+                      '& fieldset': { borderColor: '#27272F' },
                       '&:hover fieldset': { borderColor: '#4f46e5' },
                       '&.Mui-focused fieldset': { borderColor: '#4f46e5' },
                     },
@@ -176,7 +176,7 @@ const AdminLoginPage = () => {
                     '& .MuiOutlinedInput-root': {
                       bgcolor: '#0f172a',
                       color: 'white',
-                      '& fieldset': { borderColor: '#334155' },
+                      '& fieldset': { borderColor: '#27272F' },
                       '&:hover fieldset': { borderColor: '#4f46e5' },
                       '&.Mui-focused fieldset': { borderColor: '#4f46e5' },
                     },
@@ -203,7 +203,7 @@ const AdminLoginPage = () => {
             </Stack>
           </form>
 
-          <Typography fontSize={12} color="#475569" textAlign="center" mt={3}>
+          <Typography fontSize={12} color="#3A3A48" textAlign="center" mt={3}>
             This area is restricted to authorized administrators.
           </Typography>
         </Box>

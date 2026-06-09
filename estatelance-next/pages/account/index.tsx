@@ -185,21 +185,21 @@ const AccountPage = () => {
 
   const isDark = resolvedTheme === 'dark';
   const pageBg    = isDark ? '#0f172a' : '#faf8ff';
-  const panelBg   = isDark ? '#1e293b' : '#ffffff';
+  const panelBg   = isDark ? '#16161F' : '#ffffff';
   const textPrim  = isDark ? '#f1f5f9' : '#131b2e';
   const textSec   = isDark ? '#94a3b8' : '#464555';
   const textMuted = isDark ? '#64748b' : '#777587';
-  const borderClr = isDark ? '#334155' : '#e2e8f0';
-  const tabBarBg  = isDark ? '#1e293b' : '#eaedff';
+  const borderClr = isDark ? '#27272F' : '#e2e8f0';
+  const tabBarBg  = isDark ? '#16161F' : '#eaedff';
   const inputBg   = pageBg;
-  const divider   = isDark ? '#334155' : '#e2e8f0';
+  const divider   = isDark ? '#27272F' : '#e2e8f0';
 
   const inputSx = useMemo(() => ({
     '& .MuiOutlinedInput-root': {
       backgroundColor: isDark ? 'transparent' : '#ffffff',
       borderRadius: 2,
       '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: isDark ? '#334155' : borderClr,
+        borderColor: isDark ? '#27272F' : borderClr,
       },
       '&:hover .MuiOutlinedInput-notchedOutline': {
         borderColor: isDark ? '#6366f1' : '#3525cd',
@@ -255,7 +255,7 @@ const AccountPage = () => {
     py: 1.3,
     fontWeight: 600,
     minWidth: 100,
-    '&:hover': { borderColor: '#3525cd', color: '#3525cd', bgcolor: isDark ? '#1e293b' : '#f2f3ff' },
+    '&:hover': { borderColor: '#3525cd', color: '#3525cd', bgcolor: isDark ? '#16161F' : '#f2f3ff' },
   };
 
   const botName = process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME ?? '';
@@ -540,12 +540,12 @@ const AccountPage = () => {
         }}
       >
         <DialogContent sx={{ p: 0, overflow: 'hidden', bgcolor: isDark ? '#0f172a' : '#ffffff' }}>
-          <Box sx={{ height: 4, bgcolor: isDark ? '#1e293b' : '#e2e8f0' }}>
+          <Box sx={{ height: 4, bgcolor: isDark ? '#16161F' : '#e2e8f0' }}>
             <Box sx={{ height: '100%', bgcolor: '#3525cd', width: onboardingStep === 1 ? '50%' : '100%', transition: 'width 0.4s ease' }} />
           </Box>
           <Stack direction="row" justifyContent="center" spacing={1} pt={2.5} px={4}>
             {[1, 2].map((s) => (
-              <Box key={s} sx={{ width: s === onboardingStep ? 24 : 8, height: 8, borderRadius: 4, bgcolor: s <= onboardingStep ? '#3525cd' : (isDark ? '#1e293b' : '#e2e8f0'), transition: 'all 0.3s ease' }} />
+              <Box key={s} sx={{ width: s === onboardingStep ? 24 : 8, height: 8, borderRadius: 4, bgcolor: s <= onboardingStep ? '#3525cd' : (isDark ? '#16161F' : '#e2e8f0'), transition: 'all 0.3s ease' }} />
             ))}
           </Stack>
 
@@ -561,8 +561,8 @@ const AccountPage = () => {
                 ].map(({ role, icon, title, desc }) => (
                   <Box key={role} onClick={() => setOnboardingRole(role)} sx={{
                     p: 2,
-                    border: `2px solid ${onboardingRole === role ? '#3525cd' : (isDark ? '#334155' : '#e2e8f0')}`,
-                    bgcolor: onboardingRole === role ? (isDark ? 'rgba(53,37,205,0.15)' : '#f2f3ff') : (isDark ? '#1e293b' : '#ffffff'),
+                    border: `2px solid ${onboardingRole === role ? '#3525cd' : (isDark ? '#27272F' : '#e2e8f0')}`,
+                    bgcolor: onboardingRole === role ? (isDark ? 'rgba(53,37,205,0.15)' : '#f2f3ff') : (isDark ? '#16161F' : '#ffffff'),
                     borderRadius: 2.5,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
@@ -570,7 +570,7 @@ const AccountPage = () => {
                     '&:hover': { borderColor: '#3525cd', bgcolor: isDark ? 'rgba(53,37,205,0.12)' : '#f2f3ff' },
                   }}>
                     <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Box sx={{ width: 44, height: 44, bgcolor: onboardingRole === role ? (isDark ? 'rgba(53,37,205,0.3)' : '#c3c0ff') : (isDark ? '#334155' : '#e2dfff'), borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>{icon}</Box>
+                      <Box sx={{ width: 44, height: 44, bgcolor: onboardingRole === role ? (isDark ? 'rgba(53,37,205,0.3)' : '#c3c0ff') : (isDark ? '#27272F' : '#e2dfff'), borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>{icon}</Box>
                       <Box>
                         <Typography fontWeight={700} fontSize={14} color={textPrim}>{title}</Typography>
                         <Typography fontSize={12} color={textSec}>{desc}</Typography>
@@ -585,11 +585,11 @@ const AccountPage = () => {
             </Box>
 
             {/* Step 2 */}
-            <Box sx={{ p: 3, pt: 2, transform: onboardingStep === 2 ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)', position: onboardingStep === 2 ? 'relative' : 'absolute', top: 0, left: 0, width: '100%', maxHeight: '70vh', overflowY: 'auto', bgcolor: isDark ? '#0f172a' : '#ffffff', '&::-webkit-scrollbar': { width: 4 }, '&::-webkit-scrollbar-thumb': { bgcolor: isDark ? '#334155' : '#e2e8f0', borderRadius: 2 } }}>
+            <Box sx={{ p: 3, pt: 2, transform: onboardingStep === 2 ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)', position: onboardingStep === 2 ? 'relative' : 'absolute', top: 0, left: 0, width: '100%', maxHeight: '70vh', overflowY: 'auto', bgcolor: isDark ? '#0f172a' : '#ffffff', '&::-webkit-scrollbar': { width: 4 }, '&::-webkit-scrollbar-thumb': { bgcolor: isDark ? '#27272F' : '#e2e8f0', borderRadius: 2 } }}>
               <Typography variant="h6" fontWeight={800} color={textPrim} mb={0.25} textAlign="center">Profilingizni to&apos;ldiring</Typography>
               <Typography fontSize={12} color={textSec} textAlign="center" mb={2.5}>Bu ma&apos;lumotlar boshqa foydalanuvchilarga ko&apos;rinadi</Typography>
               <Stack spacing={1.75}>
-                <Box component="label" sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1.5, border: `1px dashed ${isDark ? '#334155' : '#c7c4d8'}`, bgcolor: isDark ? '#1e293b' : 'transparent', borderRadius: 2, cursor: 'pointer', transition: 'all 0.15s', '&:hover': { borderColor: '#3525cd', bgcolor: isDark ? 'rgba(53,37,205,0.1)' : '#f2f3ff' } }}>
+                <Box component="label" sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1.5, border: `1px dashed ${isDark ? '#27272F' : '#c7c4d8'}`, bgcolor: isDark ? '#16161F' : 'transparent', borderRadius: 2, cursor: 'pointer', transition: 'all 0.15s', '&:hover': { borderColor: '#3525cd', bgcolor: isDark ? 'rgba(53,37,205,0.1)' : '#f2f3ff' } }}>
                   <input type="file" accept="image/*" hidden onChange={handleOnboardingImageChange} />
                   <Avatar src={onboardingImage || undefined} sx={{ width: 48, height: 48, bgcolor: '#3525cd', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>
                     {getInitials(onboardingImage ? '' : (userVar().fullName || userVar().username || ''))}
@@ -641,11 +641,11 @@ const AccountPage = () => {
                     sx={inputSx}
                   />
                   {onboardingLocationSuggests.length > 0 && (
-                    <Box sx={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, mt: 0.5, borderRadius: 2, overflow: 'hidden', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, bgcolor: isDark ? '#1e293b' : '#ffffff', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+                    <Box sx={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, mt: 0.5, borderRadius: 2, overflow: 'hidden', border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`, bgcolor: isDark ? '#16161F' : '#ffffff', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
                       {onboardingLocationSuggests.map((s, i) => (
-                        <Box key={i} onClick={() => { setOnboardingLocation(s); setOnboardingLocationSuggests([]); }} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1.2, cursor: 'pointer', borderBottom: i < onboardingLocationSuggests.length - 1 ? `1px solid ${isDark ? '#334155' : '#f1f5f9'}` : 'none', '&:hover': { bgcolor: isDark ? '#0f172a' : '#f8fafc' } }}>
+                        <Box key={i} onClick={() => { setOnboardingLocation(s); setOnboardingLocationSuggests([]); }} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1.2, cursor: 'pointer', borderBottom: i < onboardingLocationSuggests.length - 1 ? `1px solid ${isDark ? '#27272F' : '#f1f5f9'}` : 'none', '&:hover': { bgcolor: isDark ? '#0f172a' : '#f8fafc' } }}>
                           <MapPin size={13} color="#6366f1" weight="fill" style={{ flexShrink: 0 }} />
-                          <Typography fontSize={13} color={isDark ? '#e2e8f0' : '#1e293b'} noWrap>{s}</Typography>
+                          <Typography fontSize={13} color={isDark ? '#e2e8f0' : '#16161F'} noWrap>{s}</Typography>
                         </Box>
                       ))}
                     </Box>
@@ -678,13 +678,13 @@ const AccountPage = () => {
                         </Stack>
                       )}
                     </Box>
-                    <Box component="label" sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1.5, border: `1px dashed ${onboardingResumeFile ? '#16a34a' : (isDark ? '#334155' : '#c7c4d8')}`, bgcolor: onboardingResumeFile ? (isDark ? 'rgba(22,163,74,0.1)' : '#f0fdf4') : (isDark ? '#1e293b' : 'white'), borderRadius: 2, cursor: 'pointer', transition: 'all 0.15s', '&:hover': { borderColor: '#3525cd', bgcolor: isDark ? 'rgba(53,37,205,0.1)' : '#f2f3ff' } }}>
+                    <Box component="label" sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1.5, border: `1px dashed ${onboardingResumeFile ? '#16a34a' : (isDark ? '#27272F' : '#c7c4d8')}`, bgcolor: onboardingResumeFile ? (isDark ? 'rgba(22,163,74,0.1)' : '#f0fdf4') : (isDark ? '#16161F' : 'white'), borderRadius: 2, cursor: 'pointer', transition: 'all 0.15s', '&:hover': { borderColor: '#3525cd', bgcolor: isDark ? 'rgba(53,37,205,0.1)' : '#f2f3ff' } }}>
                       <input type="file" accept=".pdf,.doc,.docx,.txt" hidden onChange={handleOnboardingResumeChange} />
-                      <Box sx={{ width: 40, height: 40, borderRadius: 1.5, flexShrink: 0, bgcolor: onboardingResumeFile ? (isDark ? 'rgba(22,163,74,0.2)' : '#dcfce7') : (isDark ? '#334155' : '#f1f5f9'), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Box sx={{ width: 40, height: 40, borderRadius: 1.5, flexShrink: 0, bgcolor: onboardingResumeFile ? (isDark ? 'rgba(22,163,74,0.2)' : '#dcfce7') : (isDark ? '#27272F' : '#f1f5f9'), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <UploadSimple size={18} color={onboardingResumeFile ? '#16a34a' : '#94a3b8'} weight="bold" />
                       </Box>
                       <Box flex={1} minWidth={0}>
-                        <Typography fontSize={13} fontWeight={700} color={onboardingResumeFile ? '#16a34a' : '#475569'}>{onboardingResumeFile ? onboardingResumeFile.name : 'Resume yuklash (ixtiyoriy)'}</Typography>
+                        <Typography fontSize={13} fontWeight={700} color={onboardingResumeFile ? '#16a34a' : '#3A3A48'}>{onboardingResumeFile ? onboardingResumeFile.name : 'Resume yuklash (ixtiyoriy)'}</Typography>
                         <Typography fontSize={11} color="#94a3b8">{onboardingResumeFile ? `${(onboardingResumeFile.size / 1024).toFixed(0)} KB` : 'PDF, DOC, DOCX · max 10MB'}</Typography>
                       </Box>
                     </Box>
@@ -757,7 +757,7 @@ const AccountPage = () => {
           </Stack>
 
           {/* Footer */}
-          <Typography fontSize={12} color="#475569" sx={{ position: 'relative', zIndex: 1 }}>
+          <Typography fontSize={12} color="#3A3A48" sx={{ position: 'relative', zIndex: 1 }}>
             © 2026 BuFu — Build Future. Barcha huquqlar himoyalangan.
           </Typography>
         </Box>
@@ -812,14 +812,14 @@ const AccountPage = () => {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       gap: 1.5, py: 1.3, px: 2,
                       bgcolor: inputBg,
-                      border: `1.5px solid ${isDark ? '#334155' : borderClr}`,
+                      border: `1.5px solid ${isDark ? '#27272F' : borderClr}`,
                       borderRadius: 2,
                       cursor: 'pointer',
                       textDecoration: 'none',
                       transition: 'all 0.15s',
                       '&:hover': {
                         borderColor: '#4285F4',
-                        bgcolor: isDark ? '#1e293b' : '#f8faff',
+                        bgcolor: isDark ? '#16161F' : '#f8faff',
                       },
                     }}
                   >
@@ -983,7 +983,7 @@ const AccountPage = () => {
                   <form onSubmit={handleSignupSubmit}>
                     <Stack spacing={2}>
                       {/* Profil rasm yuklash */}
-                      <Box component="label" sx={{ p: 2, bgcolor: inputBg, border: `1.5px dashed ${isDark ? 'transparent' : '#c7c4d8'}`, borderRadius: 2, display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer', transition: 'all 0.15s', '&:hover': { borderColor: '#3525cd', borderStyle: 'dashed', bgcolor: isDark ? '#1e293b' : '#f2f3ff' } }}>
+                      <Box component="label" sx={{ p: 2, bgcolor: inputBg, border: `1.5px dashed ${isDark ? 'transparent' : '#c7c4d8'}`, borderRadius: 2, display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer', transition: 'all 0.15s', '&:hover': { borderColor: '#3525cd', borderStyle: 'dashed', bgcolor: isDark ? '#16161F' : '#f2f3ff' } }}>
                         <input type="file" accept="image/*" hidden onChange={handleProfileImageChange} />
                         <Avatar src={profileImage || undefined} sx={{ width: 52, height: 52, bgcolor: '#3525cd', color: 'white', fontSize: 18, fontWeight: 800, flexShrink: 0 }}>
                           {getInitials(fullName, username)}
@@ -1060,8 +1060,8 @@ const AccountPage = () => {
                           <Box sx={{
                             position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
                             mt: 0.5, borderRadius: 2, overflow: 'hidden',
-                            border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-                            bgcolor: isDark ? '#1e293b' : '#ffffff',
+                            border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
+                            bgcolor: isDark ? '#16161F' : '#ffffff',
                             boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
                           }}>
                             {locationSuggests.map((s, i) => (
@@ -1071,11 +1071,11 @@ const AccountPage = () => {
                               }} sx={{
                                 display: 'flex', alignItems: 'center', gap: 1.5,
                                 px: 2, py: 1.2, cursor: 'pointer',
-                                borderBottom: i < locationSuggests.length - 1 ? `1px solid ${isDark ? '#334155' : '#f1f5f9'}` : 'none',
+                                borderBottom: i < locationSuggests.length - 1 ? `1px solid ${isDark ? '#27272F' : '#f1f5f9'}` : 'none',
                                 '&:hover': { bgcolor: isDark ? '#0f172a' : '#f8fafc' },
                               }}>
                                 <MapPin size={13} color="#6366f1" weight="fill" style={{ flexShrink: 0 }} />
-                                <Typography fontSize={13} color={isDark ? '#e2e8f0' : '#1e293b'} noWrap>{s}</Typography>
+                                <Typography fontSize={13} color={isDark ? '#e2e8f0' : '#16161F'} noWrap>{s}</Typography>
                               </Box>
                             ))}
                           </Box>
@@ -1199,7 +1199,7 @@ const AccountPage = () => {
                               size="small" fullWidth placeholder="Figma, React, SMM"
                               sx={inputSx}
                             />
-                            <Button variant="outlined" onClick={addSkill} sx={{ borderColor: isDark ? 'transparent' : borderClr, color: '#3525cd', bgcolor: inputBg, minWidth: 80, fontWeight: 700, borderRadius: 2, '&:hover': { borderColor: '#3525cd', bgcolor: isDark ? '#1e293b' : '#f2f3ff' } }}>Qo'sh</Button>
+                            <Button variant="outlined" onClick={addSkill} sx={{ borderColor: isDark ? 'transparent' : borderClr, color: '#3525cd', bgcolor: inputBg, minWidth: 80, fontWeight: 700, borderRadius: 2, '&:hover': { borderColor: '#3525cd', bgcolor: isDark ? '#16161F' : '#f2f3ff' } }}>Qo'sh</Button>
                           </Stack>
                           {skills.length > 0 && (
                             <Stack direction="row" flexWrap="wrap" gap={1}>

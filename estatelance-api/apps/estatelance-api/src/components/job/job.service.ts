@@ -15,6 +15,7 @@ import {
   UserType,
 } from '../../libs/enums/common.enums';
 import { NotificationService } from '../notification/notification.service';
+import { RedisService } from '../../libs/redis/redis.service';
 import { AdminLinkPaths } from '../../libs/constants/admin-link-paths';
 import {
   compareBoostListing,
@@ -28,6 +29,7 @@ export class JobService {
     @InjectModel('User') private readonly userModel: Model<User>,
     @InjectModel('Bid') private readonly bidModel: Model<Bid>,
     private readonly notificationService: NotificationService,
+    private readonly redis: RedisService,   // ishlar ro'yxati keshi
   ) {}
 
   // ─── Post a New Job ───────────────────────────────────────────────────────
@@ -35,12 +37,14 @@ export class JobService {
     const agent = await this.userModel.findById(agentId);
     if (!agent) throw new NotFoundException('Agent not found');
 
-    return this.jobModel.create({
+    const job = await this.jobModel.create({
       ...input,
       agentId,
       agentName: agent.fullName ?? agent.username,
       status: JobStatus.OPEN,
     });
+    await this.redis.delByPattern('jobs:list:*');  // yangi ish → ro'yxat keshi eskirdi
+    return job;
   }
 
   // ─── Get a Single Job ─────────────────────────────────────────────────────
@@ -66,7 +70,16 @@ export class JobService {
   }
 
   // ─── Get All Jobs (with filter + pagination) ──────────────────────────────
+  // KESH: bosh sahifa va Ishlar sahifasining asosiy so'rovi. Filtr/sahifaga qarab
+  // alohida kalit (JSON.stringify(input)) bilan 30 soniyaga keshlanadi.
+  // Yangi ish qo'shilsa yoki status o'zgarsa — "jobs:list:*" tozalanadi.
   async getJobs(input: GetJobsInput): Promise<Job[]> {
+    const cacheKey = `jobs:list:${JSON.stringify(input)}`;
+    return this.redis.remember(cacheKey, 30, () => this.queryJobs(input));
+  }
+
+  // Asosiy MongoDB so'rovi (kesh ichida chaqiriladi)
+  private async queryJobs(input: GetJobsInput): Promise<Job[]> {
     const filter: any = {};
 
     if (input.category) filter.category = input.category;
@@ -96,7 +109,8 @@ export class JobService {
       .sort({ bumpedAt: -1, createdAt: -1 })
       .skip(skip)
       .limit(input.limit)
-      .exec();
+      .lean()       // kesh uchun toza JS obyektlar (Mongoose hujjati emas)
+      .exec() as any;
 
     // Faol boostlar har doim tepada (bumpedAt null bo'lsa ham)
     return [...jobs].sort((a, b) => {

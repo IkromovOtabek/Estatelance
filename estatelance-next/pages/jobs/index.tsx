@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useTheme } from 'next-themes';
 import { useReactiveVar, useQuery, useMutation } from '@apollo/client';
 import { GET_JOBS } from '../../apollo/user/query';
@@ -75,6 +76,7 @@ const JobsPage = () => {
   const isDark = mounted && resolvedTheme === 'dark';
   const isFreelancer = mounted && user.userType === UserType.FREELANCER;
   const isAgent      = mounted && user.userType === UserType.AGENT;
+  const router       = useRouter();
 
   // Filters
   const [searchInput, setSearchInput]       = useState('');
@@ -93,6 +95,7 @@ const JobsPage = () => {
   const [contactJob, setContactJob]     = useState<Job | null>(null);
   const [requestJob, setRequestJob]     = useState<Job | null>(null);
   const [requestText, setRequestText]   = useState('');
+  const [showMessage, setShowMessage]   = useState(false);  // "Xabar qo'shish" toggle
   const [snackMsg, setSnackMsg]         = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
   const [sendMessage, { loading: sending }] = useMutation(SEND_MESSAGE);
@@ -115,6 +118,7 @@ const JobsPage = () => {
   const openRequestModal = (job: Job) => {
     setRequestJob(job);
     setRequestText(buildRequestText(job));
+    setShowMessage(false);  // boshlanishida xabar maydoni yopiq
   };
 
   const handleSendRequest = async () => {
@@ -268,14 +272,7 @@ const JobsPage = () => {
       </Head>
 
       {/* ── Sticky search header ─────────────────────────────────────────────── */}
-      <div
-        className="sticky top-0 z-30 backdrop-blur-md border-b -mx-6 px-6 py-3 mb-8"
-        style={{
-          backgroundColor: isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.92)',
-          borderColor: isDark ? '#334155' : '#e2e8f0',
-          boxShadow: isDark ? '0 1px 8px rgba(0,0,0,0.5)' : '0 1px 4px rgba(0,0,0,0.06)',
-        }}
-      >
+      <div className="sticky top-0 z-30 -mx-6 px-6 py-3 mb-8" style={{ background: 'transparent' }}>
         <div className="max-w-5xl mx-auto flex gap-2">
           <div className="relative flex-1">
             <span className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -291,8 +288,8 @@ const JobsPage = () => {
               placeholder="Kasb, lavozim yoki kalit so'z..."
               className="w-full h-11 pl-12 pr-10 rounded-xl border text-sm focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
               style={{
-                backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                borderColor: isDark ? '#334155' : '#e2e8f0',
+                backgroundColor: isDark ? '#16161F' : '#ffffff',
+                borderColor: isDark ? '#27272F' : '#e2e8f0',
                 color: isDark ? '#f1f5f9' : '#0f172a',
               }}
             />
@@ -326,7 +323,7 @@ const JobsPage = () => {
             O'zbekistonning eng yaxshi frilanserlarini premium mahalliy va xalqaro imkoniyatlar bilan bog'laymiz.
           </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-lg shrink-0" style={{ color: isDark ? '#94a3b8' : '#64748b', backgroundColor: isDark ? '#1e293b' : '#f8fafc', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
+        <div className="flex items-center gap-2 px-4 py-2 rounded-lg shrink-0" style={{ color: isDark ? '#94a3b8' : '#64748b', backgroundColor: isDark ? '#16161F' : '#f8fafc', border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}` }}>
           <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
@@ -357,7 +354,7 @@ const JobsPage = () => {
 
         {/* ════ LEFT SIDEBAR ════ */}
         <aside className="hidden lg:block lg:col-span-3 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto scrollbar-hide">
-          <div className="rounded-xl p-5" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div className="rounded-xl p-5" style={{ backgroundColor: isDark ? '#16161F' : '#ffffff', border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`, boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
 
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
@@ -572,20 +569,20 @@ const JobsPage = () => {
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="rounded-2xl p-5 animate-pulse"
-                  style={{ backgroundColor: isDark ? '#0f172a' : '#ffffff', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}` }}>
+                  style={{ backgroundColor: isDark ? '#0f172a' : '#ffffff', border: `1px solid ${isDark ? '#16161F' : '#e2e8f0'}` }}>
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl flex-shrink-0" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
+                    <div className="w-12 h-12 rounded-xl flex-shrink-0" style={{ backgroundColor: isDark ? '#16161F' : '#f1f5f9' }} />
                     <div className="flex-1 space-y-2">
-                      <div className="h-4 rounded-lg w-2/3" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
-                      <div className="h-3 rounded-lg w-full" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
-                      <div className="h-3 rounded-lg w-4/5" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
+                      <div className="h-4 rounded-lg w-2/3" style={{ backgroundColor: isDark ? '#16161F' : '#f1f5f9' }} />
+                      <div className="h-3 rounded-lg w-full" style={{ backgroundColor: isDark ? '#16161F' : '#f1f5f9' }} />
+                      <div className="h-3 rounded-lg w-4/5" style={{ backgroundColor: isDark ? '#16161F' : '#f1f5f9' }} />
                       <div className="flex gap-2 pt-1">
-                        <div className="h-5 w-16 rounded-full" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
-                        <div className="h-5 w-20 rounded-full" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
-                        <div className="h-5 w-14 rounded-full" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
+                        <div className="h-5 w-16 rounded-full" style={{ backgroundColor: isDark ? '#16161F' : '#f1f5f9' }} />
+                        <div className="h-5 w-20 rounded-full" style={{ backgroundColor: isDark ? '#16161F' : '#f1f5f9' }} />
+                        <div className="h-5 w-14 rounded-full" style={{ backgroundColor: isDark ? '#16161F' : '#f1f5f9' }} />
                       </div>
                     </div>
-                    <div className="w-24 h-8 rounded-xl flex-shrink-0" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} />
+                    <div className="w-24 h-8 rounded-xl flex-shrink-0" style={{ backgroundColor: isDark ? '#16161F' : '#f1f5f9' }} />
                   </div>
                 </div>
               ))}
@@ -634,7 +631,8 @@ const JobsPage = () => {
                 return (
                   <div
                     key={job._id}
-                    className={`group bg-white border rounded-xl p-5 hover:shadow-lg transition-all duration-200 relative overflow-hidden ${
+                    onClick={() => { if (user._id) incrementJobView({ variables: { jobId: job._id } }); router.push(`/jobs/${job._id}`); }}
+                    className={`group bg-white border rounded-xl p-5 hover:shadow-lg transition-all duration-200 relative overflow-hidden cursor-pointer ${
                       boosted
                         ? 'border-indigo-300 ring-1 ring-indigo-200/80 hover:border-indigo-500'
                         : 'border-slate-200 hover:border-indigo-400'
@@ -733,7 +731,7 @@ const JobsPage = () => {
                       <div className="flex items-center gap-4 text-xs text-slate-400">
                         {/* Agent */}
                         {job.agentId && (
-                          <Link href={`/profile/${job.agentId}`} className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors no-underline">
+                          <Link href={`/profile/${job.agentId}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors no-underline">
                             <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-bold border border-indigo-200">
                               {job.agentName?.[0]?.toUpperCase() ?? 'A'}
                             </div>
@@ -758,64 +756,33 @@ const JobsPage = () => {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         {isOwn ? (
                           <span className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 text-xs font-semibold">
                             Sizning ishingiz
                           </span>
-                        ) : isFreelancer ? (
-                          <>
-                            <Link href={`/jobs/${job._id}`} className="no-underline">
-                              <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95">
-                                Murojaat
-                              </button>
-                            </Link>
-                            <button
-                              onClick={() => openRequestModal(job)}
-                              className="px-3 py-2 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-semibold hover:bg-indigo-50 transition-all flex items-center gap-1"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                              </svg>
-                              So'rov
-                            </button>
-                            <button
-                              onClick={() => setContactJob(job)}
-                              className="px-3 py-2 border border-slate-200 text-slate-500 rounded-lg text-xs font-semibold hover:border-indigo-300 hover:text-indigo-600 transition-all"
-                            >
-                              Aloqa
-                            </button>
-                          </>
                         ) : (
                           <>
-                            <Link
-                              href={`/jobs/${job._id}`}
-                              className="no-underline"
-                              onClick={() => {
-                                if (user._id) incrementJobView({ variables: { jobId: job._id } });
-                              }}
-                            >
-                              <button className="px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-50 transition-all flex items-center gap-1">
-                                Ko&apos;rish
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                              </button>
-                            </Link>
+                            {/* Ariza yuborish */}
                             <button
-                              onClick={() => openRequestModal(job)}
-                              className="px-3 py-2 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-semibold hover:bg-indigo-50 transition-all flex items-center gap-1"
+                              onClick={(e) => { e.stopPropagation(); openRequestModal(job); }}
+                              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
                             >
                               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                               </svg>
-                              So'rov
+                              Ariza yuborish
                             </button>
+                            {/* Telefon (Aloqa) */}
                             <button
-                              onClick={() => setContactJob(job)}
-                              className="px-3 py-2 border border-slate-200 text-slate-500 rounded-lg text-xs font-semibold hover:border-indigo-300 hover:text-indigo-600 transition-all"
+                              onClick={(e) => { e.stopPropagation(); setContactJob(job); }}
+                              aria-label="Telefon orqali bog'lanish"
+                              title="Telefon orqali bog'lanish"
+                              className="w-9 h-9 flex items-center justify-center border border-slate-200 text-slate-500 rounded-lg hover:border-indigo-300 hover:text-indigo-600 transition-all"
                             >
-                              Aloqa
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                              </svg>
                             </button>
                           </>
                         )}
@@ -884,7 +851,7 @@ const JobsPage = () => {
                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                   </svg>
-                  <span className="text-white font-bold text-sm">So'rov jo'natish</span>
+                  <span className="text-white font-bold text-sm">Ariza yuborish</span>
                 </div>
                 <p className="text-white/70 text-xs truncate max-w-xs">{requestJob.title}</p>
               </div>
@@ -907,15 +874,36 @@ const JobsPage = () => {
 
             {/* Body */}
             <div className="px-6 py-5">
-              <label className="block text-xs font-bold text-slate-700 mb-2">Xabar matni (tahrirlash mumkin)</label>
-              <textarea
-                rows={7}
-                value={requestText}
-                onChange={e => setRequestText(e.target.value)}
-                placeholder="Xabaringizni yozing..."
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition-all bg-slate-50"
-              />
-              <p className="text-xs text-slate-400 mt-1">{requestText.length} / 1000 belgi</p>
+              {/* Xabar qo'shish toggle */}
+              <button
+                type="button"
+                onClick={() => setShowMessage(v => !v)}
+                className={`flex items-center gap-2 text-sm font-semibold transition-colors ${showMessage ? 'text-slate-500 hover:text-slate-700' : 'text-indigo-600 hover:text-indigo-700'}`}
+              >
+                {showMessage ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                )}
+                {showMessage ? 'Xabarni yashirish' : "Xabar qo'shish (ixtiyoriy)"}
+              </button>
+
+              {showMessage ? (
+                <div className="mt-3">
+                  <textarea
+                    rows={6}
+                    value={requestText}
+                    onChange={e => setRequestText(e.target.value)}
+                    placeholder="Xabaringizni yozing..."
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition-all bg-slate-50"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">{requestText.length} / 1000 belgi</p>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
+                  Standart xabar bilan ariza yuboriladi. Qo'shimcha izoh qoldirmoqchi bo'lsangiz <b>"Xabar qo'shish"</b>ni bosing.
+                </p>
+              )}
             </div>
 
             {/* Footer */}
@@ -935,7 +923,7 @@ const JobsPage = () => {
                 {sending ? (
                   <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Yuborilmoqda...</>
                 ) : (
-                  <><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg> So'rov yuborish</>
+                  <><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg> Ariza yuborish</>
                 )}
               </button>
             </div>

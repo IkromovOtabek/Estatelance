@@ -46,7 +46,7 @@ function MiniMapInline({ address, isDark }: { address: string; isDark: boolean }
   return (
     <div style={{ position: 'relative', height: 160 }}>
       {loading && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#1e293b' : '#f8fafc' }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#16161F' : '#f8fafc' }}>
           <div style={{ width: 20, height: 20, borderRadius: '50%', border: '3px solid #e2e8f0', borderTopColor: '#6366f1', animation: 'spin 0.8s linear infinite' }} />
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
@@ -180,7 +180,7 @@ function SkillTagInput({ skills, onAdd, onRemove, isDark = false }: SkillTagInpu
   return (
     <div
       className="flex flex-wrap gap-2 p-3 rounded-xl min-h-[56px] items-center cursor-text transition-all"
-      style={{ border: `1px solid ${isDark ? '#334155' : '#c7c4d8'}`, backgroundColor: isDark ? '#0f172a' : '#ffffff' }}
+      style={{ border: `1px solid ${isDark ? '#27272F' : '#c7c4d8'}`, backgroundColor: isDark ? '#0f172a' : '#ffffff' }}
       onClick={() => inputRef.current?.focus()}
     >
       {skills.map(s => (
@@ -218,15 +218,15 @@ const CreateJobPage = () => {
 
   // Dark mode color tokens
   const pageBg    = isDark ? '#0f172a' : '#faf8ff';
-  const cardBg    = isDark ? '#1e293b' : '#ffffff';
-  const cardBorder = isDark ? '#334155' : '#E2E8F0';
+  const cardBg    = isDark ? '#16161F' : '#ffffff';
+  const cardBorder = isDark ? '#27272F' : '#E2E8F0';
   const textPrim  = isDark ? '#f1f5f9' : '#131b2e';
   const textSec   = isDark ? '#94a3b8' : '#464555';
   const inputBg   = isDark ? '#0f172a' : '#ffffff';
-  const inputBorder = isDark ? '#334155' : '#c7c4d8';
+  const inputBorder = isDark ? '#27272F' : '#c7c4d8';
   const labelClr  = isDark ? '#e2e8f0' : '#131b2e';
   const sectionBg = isDark ? '#0f172a' : '#f2f3ff';
-  const sectionBorder = isDark ? '#334155' : '#c7c4d8';
+  const sectionBorder = isDark ? '#27272F' : '#c7c4d8';
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   const [agreed, setAgreed] = useState(false);
@@ -622,7 +622,7 @@ const CreateJobPage = () => {
                           {locationSuggests.map((s, i) => (
                             <div key={i} onClick={() => { setJobLocation(s); setLocationSuggests([]); }}
                               className="flex items-start gap-2 px-4 py-3 cursor-pointer transition-colors"
-                              style={{ borderBottom: i < locationSuggests.length - 1 ? `1px solid ${isDark ? '#334155' : '#f1f5f9'}` : 'none' }}
+                              style={{ borderBottom: i < locationSuggests.length - 1 ? `1px solid ${isDark ? '#27272F' : '#f1f5f9'}` : 'none' }}
                               onMouseEnter={e => (e.currentTarget.style.backgroundColor = isDark ? '#0f172a' : '#f8fafc')}
                               onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
                               <svg width="13" height="13" viewBox="0 0 24 24" fill="#6366f1" style={{ flexShrink: 0, marginTop: 2 }}>
@@ -817,7 +817,7 @@ const CreateJobPage = () => {
                   </div>
 
                   {/* Preview card */}
-                  <div className="rounded-2xl p-6" style={{ backgroundColor: sectionBg, border: `1px solid ${isDark ? '#334155' : 'rgba(99,102,241,0.15)'}` }}>
+                  <div className="rounded-2xl p-6" style={{ backgroundColor: sectionBg, border: `1px solid ${isDark ? '#27272F' : 'rgba(99,102,241,0.15)'}` }}>
                     <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
                       <div>
                         <h3 className="text-xl font-bold leading-tight" style={{ color: textPrim }}>{title || '—'}</h3>
