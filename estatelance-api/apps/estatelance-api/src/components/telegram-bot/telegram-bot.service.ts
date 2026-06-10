@@ -1,5 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 interface TgUser {
   id: number;
@@ -9,12 +11,21 @@ interface TgUser {
   photo_url?: string;
 }
 
+interface TgDocument {
+  file_id: string;
+  file_unique_id?: string;
+  file_name?: string;
+  mime_type?: string;
+  file_size?: number;
+}
+
 interface TgUpdate {
   update_id: number;
   message?: {
     from: TgUser;
     chat: { id: number };
     text?: string;
+    document?: TgDocument;
   };
   callback_query?: {
     id: string;
@@ -38,6 +49,11 @@ export class TelegramBotService implements OnModuleInit {
   private readonly apiBase = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
   private readonly APP_SCHEME = 'bufu';
 
+  // APK file_id — Telegram serverida saqlangan fayl identifikatori.
+  // Bu usul hajm cheklovini chetlab o'tadi (URL=20MB, multipart=50MB cheklovlari tegmaydi).
+  private apkFileId: string | null = process.env.APK_FILE_ID || null;
+  private readonly apkStorePath = path.join(process.cwd(), 'apk-file-id.json');
+
   // Telegram tokens
   private readonly pending = new Map<string, PendingToken>();
 
@@ -49,6 +65,9 @@ export class TelegramBotService implements OnModuleInit {
       this.logger.warn('TELEGRAM_BOT_TOKEN not set');
       return;
     }
+
+    // Diskdan saqlangan APK file_id ni yuklaymiz (restartdan keyin ham ishlaydi)
+    this.loadApkFileId();
 
     const webhookUrl = `${process.env.API_BASE_URL || 'https://api.bufu.uz'}/telegram/webhook`;
     this.tg('setWebhook', { url: webhookUrl })
@@ -86,7 +105,16 @@ export class TelegramBotService implements OnModuleInit {
     }
 
     const msg  = update.message;
-    if (!msg?.text || !msg.from) return;
+    if (!msg?.from) return;
+
+    // Admin botga APK fayl yuborsa — uning file_id sini ushlab saqlaymiz.
+    // Shu file_id orqali bot keyin istalgan hajmdagi APK ni qayta yubora oladi.
+    if (msg.document) {
+      await this.registerApk(msg.from, msg.document);
+      return;
+    }
+
+    if (!msg.text) return;
 
     const text = msg.text.trim();
     const from = msg.from;
@@ -126,6 +154,30 @@ export class TelegramBotService implements OnModuleInit {
 
   // ─── Android ilovani yuborish ─────────────────────────────────────────────
   private async sendAppDownload(chatId: number) {
+    const caption =
+      '📥 <b>BuFu — Android ilova</b>\n\n' +
+      '1️⃣ Faylni yuklab oling\n' +
+      '2️⃣ Oching va o\'rnating\n' +
+      '3️⃣ "Noma\'lum manbalar"ga ruxsat bering (so\'rasa)\n\n' +
+      '✅ Tayyor! Endi BuFu\'dan to\'liq foydalaning.';
+
+    // 1) ENG ISHONCHLI: file_id orqali yuborish.
+    //    Fayl allaqachon Telegram serverida — hajm cheklovi (20/50MB) tegmaydi.
+    if (this.apkFileId) {
+      const res = await this.tg('sendDocument', {
+        chat_id:    chatId,
+        document:   this.apkFileId,
+        caption,
+        parse_mode: 'HTML',
+      });
+      if (res?.ok) return;
+
+      // file_id eskirgan/yaroqsiz bo'lsa — tozalab, keyingi usulga o'tamiz
+      this.logger.warn(`sendDocument by file_id failed: ${res?.description}`);
+      this.apkFileId = null;
+      this.saveApkFileId(null);
+    }
+
     const apkUrl = process.env.APK_DOWNLOAD_URL;
 
     if (!apkUrl) {
@@ -136,28 +188,91 @@ export class TelegramBotService implements OnModuleInit {
       return;
     }
 
-    // APK faylni to'g'ridan-to'g'ri hujjat sifatida yuboramiz (50MB gacha)
+    // 2) URL orqali (Telegram faylni o'zi yuklaydi — faqat ≤20MB ishlaydi)
     const res = await this.tg('sendDocument', {
       chat_id:  chatId,
       document: apkUrl,
-      caption:
-        '📥 <b>BuFu — Android ilova</b>\n\n' +
-        '1️⃣ Faylni yuklab oling\n' +
-        '2️⃣ Oching va o\'rnating\n' +
-        '3️⃣ "Noma\'lum manbalar"ga ruxsat bering (so\'rasa)\n\n' +
-        '✅ Tayyor! Endi BuFu\'dan to\'liq foydalaning.',
+      caption,
       parse_mode: 'HTML',
     });
+    if (res?.ok) return;
 
-    // Agar sendDocument ishlamasa (URL/o'lcham muammosi) — havola yuboramiz
-    if (!res?.ok) {
-      await this.tg('sendMessage', {
-        chat_id: chatId,
-        text: '📥 Android ilovani yuklab olish:',
-        reply_markup: {
-          inline_keyboard: [[{ text: '⬇️ BuFu.apk yuklab olish', url: apkUrl }]],
-        },
-      });
+    // 3) Yuborilmasa (hajm katta/URL muammosi) — to'g'ridan-to'g'ri havola tugmasi
+    await this.tg('sendMessage', {
+      chat_id: chatId,
+      text:
+        '📥 Android ilovani yuklab olish uchun quyidagi tugmani bosing 👇\n\n' +
+        'Yuklab olgach: oching → o\'rnating → "Noma\'lum manbalar"ga ruxsat bering.',
+      reply_markup: {
+        inline_keyboard: [[{ text: '⬇️ BuFu.apk yuklab olish', url: apkUrl }]],
+      },
+    });
+  }
+
+  // ─── Admin yuborgan APK file_id ni ro'yxatga olish ────────────────────────
+  private async registerApk(from: TgUser, doc: TgDocument) {
+    const adminId = process.env.TELEGRAM_ADMIN_ID;
+
+    // TELEGRAM_ADMIN_ID o'rnatilgan bo'lsa — faqat admin APK yangilay oladi
+    if (adminId && String(from.id) !== String(adminId)) {
+      return;
+    }
+
+    const isApk =
+      doc.mime_type === 'application/vnd.android.package-archive' ||
+      (doc.file_name || '').toLowerCase().endsWith('.apk');
+
+    if (!isApk) return;
+
+    this.apkFileId = doc.file_id;
+    this.saveApkFileId(doc.file_id);
+
+    const sizeMb = doc.file_size ? (doc.file_size / 1024 / 1024).toFixed(2) : '?';
+    this.logger.log(`APK registered: ${doc.file_name} (${sizeMb} MB) file_id=${doc.file_id}`);
+
+    await this.tg('sendMessage', {
+      chat_id: from.id,
+      text:
+        '✅ <b>APK qabul qilindi va saqlandi!</b>\n\n' +
+        `📦 Fayl: <code>${doc.file_name || 'bufu.apk'}</code>\n` +
+        `📊 Hajm: ${sizeMb} MB\n\n` +
+        'Endi foydalanuvchilar /download orqali shu ilovani to\'g\'ridan-to\'g\'ri yuklab oladi ' +
+        '(hajm cheklovisiz).\n\n' +
+        '💡 Doimiy saqlash uchun <code>.env</code> ga qo\'ying:\n' +
+        `<code>APK_FILE_ID=${doc.file_id}</code>`,
+      parse_mode: 'HTML',
+    });
+  }
+
+  // ─── APK file_id ni diskka saqlash / o'qish ──────────────────────────────
+  private saveApkFileId(fileId: string | null) {
+    try {
+      if (fileId) {
+        fs.writeFileSync(this.apkStorePath, JSON.stringify({ fileId, updatedAt: Date.now() }));
+      } else if (fs.existsSync(this.apkStorePath)) {
+        fs.unlinkSync(this.apkStorePath);
+      }
+    } catch (e: any) {
+      this.logger.warn(`APK file_id saqlanmadi: ${e.message}`);
+    }
+  }
+
+  private loadApkFileId() {
+    // Env ustuvor — qo'lda o'rnatilgan bo'lsa o'shani ishlatamiz
+    if (process.env.APK_FILE_ID) {
+      this.apkFileId = process.env.APK_FILE_ID;
+      return;
+    }
+    try {
+      if (fs.existsSync(this.apkStorePath)) {
+        const data = JSON.parse(fs.readFileSync(this.apkStorePath, 'utf8'));
+        if (data?.fileId) {
+          this.apkFileId = data.fileId;
+          this.logger.log('APK file_id diskdan yuklandi');
+        }
+      }
+    } catch {
+      /* ignore */
     }
   }
 

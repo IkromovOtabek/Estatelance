@@ -112,10 +112,17 @@ pm2 save
 `MONGO_DEV`, `MONGO_PROD`, `JWT_SECRET`, `PORT`, `NODE_ENV`, `ALLOWED_ORIGINS`,
 `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_NAME`, `API_BASE_URL`, `GEMINI_API_KEY`, **`GROQ_API_KEY`**,
 `UPLOAD_FOLDER`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`, `FRONTEND_URL`,
-`PLATFORM_PAYMENT_*`.
+`PLATFORM_PAYMENT_*`, **`APK_FILE_ID`** (ixtiyoriy), **`APK_DOWNLOAD_URL`** (ixtiyoriy fallback), **`TELEGRAM_ADMIN_ID`** (ixtiyoriy).
 
 > Eslatma: AI chat **Gemini** (`GEMINI_API_KEY`) ishlatadi; **AI Resume** esa **Groq** (`GROQ_API_KEY`,
 > model `llama-3.3-70b-versatile`) ishlatadi — ikki xil provayder, alohida kalit, muammosiz.
+
+> **APK yuklab olish (Telegram bot):** Telegram Bot API hajm cheklovi — URL orqali `sendDocument` ≤20MB,
+> multipart ≤50MB. BuFu APK ~72MB bo'lgani uchun ikkalasi ham ishlamaydi → yuklash qotib qoladi. Yechim:
+> **`file_id`** usuli (`telegram-bot.service.ts`). Admin botga APK faylni bir marta yuboradi (Telegram'ga 2GB
+> gacha), bot `file_id` ni ushlab `apk-file-id.json` (cwd) ga saqlaydi va `/download` da o'sha `file_id`
+> orqali qayta yuboradi — **hajm cheklovisiz, restartdan keyin ham ishlaydi**. `TELEGRAM_ADMIN_ID` o'rnatilsa
+> faqat admin APK yangilay oladi. Doimiy uchun bot bergan `APK_FILE_ID` ni `.env` ga qo'yish mumkin.
 
 **`estatelance-next/.env.local`** — `NEXT_PUBLIC_*` (Telegram bot name, Google auth URL, API URL).
 
