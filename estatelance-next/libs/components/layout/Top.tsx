@@ -11,6 +11,8 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogContent,
   Divider,
   Drawer,
   IconButton,
@@ -116,16 +118,40 @@ const Top = () => {
   const [profileMenuAnchor, setProfileMenuAnchor] = useState<null | HTMLElement>(null);
   const [notifAnchor, setNotifAnchor] = useState<null | HTMLElement>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [authModal, setAuthModal] = useState(false);
   const bellRef = useRef<HTMLButtonElement>(null);
 
   // Close drawer on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [router.pathname]);
+  useEffect(() => { setMobileOpen(false); }, [router.pathname]);
 
-  // ── Navbar: barcha sahifalarda har doim glass (blur + shaffof), burchakli ──
-  const overlay = false;     // overlay rejimi o'chirildi — nav doim glass
-  const effDark = isDark;    // ranglar oddiy temaga qarab
+  // Scroll listener — 10px threshold, passive for performance
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 10);
+    handler();
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
+
+  const overlay = false;
+  const effDark = isDark;
+
+  // Icon button stili yordamchisi: shaffof holatda fonsiz, scrollda pill ko'rinish
+  const iconBtnSx = (activeColor?: string) => ({
+    borderRadius: 2,
+    width: 34, height: 34,
+    transition: 'all 300ms ease',
+    color: scrolled ? (isDark ? '#A1A1AA' : '#64748b') : (isDark ? '#e2e8f0' : '#374151'),
+    bgcolor: scrolled ? (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)') : 'transparent',
+    border: scrolled
+      ? `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`
+      : '1px solid transparent',
+    '&:hover': {
+      bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+      color: activeColor ?? (isDark ? '#e2e8f0' : '#0f172a'),
+      borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.14)',
+    },
+  });
   const { count: favCount } = useFavorites();  // Sevimlilar soni (Favourite tugma badge)
 
   // Favourite tugmasi (theme toggle oldida) — Sevimlilar sahifasiga o'tadi
@@ -133,16 +159,8 @@ const Top = () => {
     <Tooltip title="Sevimlilar">
       <IconButton
         size="small"
-        onClick={() => router.push('/favorites')}
-        sx={{
-          color: isDark ? '#A1A1AA' : '#64748b',
-          bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(100,116,139,0.08)',
-          border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
-          borderRadius: 2,
-          width: 34, height: 34,
-          position: 'relative',
-          '&:hover': { color: isDark ? '#818CF8' : '#4f46e5', borderColor: isDark ? '#818CF8' : '#c7d2fe', bgcolor: isDark ? 'rgba(99,102,241,0.12)' : '#eef2ff' },
-        }}
+        onClick={() => isLoggedIn ? router.push('/favorites') : setAuthModal(true)}
+        sx={{ ...iconBtnSx('#6366f1'), position: 'relative' }}
       >
         <FavoriteIcon size={18} weight={favCount > 0 ? 'fill' : 'regular'} />
         {favCount > 0 && (
@@ -357,20 +375,50 @@ const Top = () => {
       <AppBar
         position="sticky"
         elevation={0}
-        sx={{
-          // Frosted tinted fon — nav har qanday bo'lim (to'q/rangli) ustida ham
-          // matn o'qiladigan bo'lib qoladi. To'liq shaffof emas.
-          bgcolor: isDark ? 'rgba(10,10,15,0.72)' : 'rgba(255,255,255,0.82)',
-          backgroundImage: 'none',
-          backdropFilter: 'blur(14px) saturate(160%)',
-          WebkitBackdropFilter: 'blur(14px) saturate(160%)',
+        style={{
+          // --page-base rang bilan mos (F3F5FF light / 0A0A0F dark) — edge artifact yo'q
+          backgroundColor: scrolled
+            ? (isDark ? 'rgba(10,10,15,0.92)' : 'rgba(243,245,255,0.94)')
+            : 'transparent',
+          backdropFilter: scrolled ? 'blur(12px) saturate(160%)' : 'none',
+          WebkitBackdropFilter: scrolled ? 'blur(12px) saturate(160%)' : 'none',
           boxShadow: 'none',
-          borderRadius: 0,
-          borderBottom: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(15,23,42,0.06)',
+          border: 'none',
+          outline: 'none',
+          transition: 'background-color 350ms ease, backdrop-filter 350ms ease',
+        }}
+        sx={{
+          backgroundImage: 'none !important',
+          borderRadius: '0 !important',
+          border: 'none !important',
+          borderTop: 'none !important',
+          borderBottom: 'none !important',
+          borderLeft: 'none !important',
+          borderRight: 'none !important',
+          boxShadow: 'none !important',
+          outline: 'none !important',
+          outlineOffset: '0 !important',
+          top: 0,
+          margin: 0,
+          padding: 0,
           color: isDark ? '#F4F4F5' : '#0F172A',
+          // MUI Paper va AppBar default override
+          '&.MuiPaper-root': {
+            border: 'none !important',
+            boxShadow: 'none !important',
+            outline: 'none !important',
+            backgroundImage: 'none !important',
+          },
+          '&.MuiAppBar-root': {
+            border: 'none !important',
+            boxShadow: 'none !important',
+            outline: 'none !important',
+          },
+          '&::before': { display: 'none !important' },
+          '&::after':  { display: 'none !important' },
         }}
       >
-        <Toolbar sx={{ maxWidth: 1280, width: '100%', mx: 'auto', px: { xs: 2, lg: 4 }, minHeight: { xs: 56, sm: 64 } }}>
+        <Toolbar sx={{ maxWidth: 1280, width: '100%', mx: 'auto', px: { xs: 2, lg: 5 }, minHeight: { xs: 60, sm: 72 } }}>
 
           {/* ── Hamburger (mobile only) ── */}
           <IconButton
@@ -378,11 +426,8 @@ const Top = () => {
             sx={{
               display: { xs: 'flex', lg: 'none' },
               mr: 1,
-              color: effDark ? '#e2e8f0' : '#374151',
-              border: `1px solid ${overlay ? 'rgba(255,255,255,0.25)' : (isDark ? '#27272F' : '#e2e8f0')}`,
-              borderRadius: 2,
+              ...iconBtnSx(),
               width: 36, height: 36,
-              '&:hover': { bgcolor: effDark ? 'rgba(255,255,255,0.1)' : '#FAFAFA' },
             }}
           >
             <MenuIcon size={20} />
@@ -390,15 +435,15 @@ const Top = () => {
 
           {/* ── Logo ── */}
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <Stack direction="row" alignItems="center" spacing={1}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
               {/* Icon */}
               <Box sx={{
-                width: 36, height: 36, borderRadius: 2, flexShrink: 0,
+                width: 42, height: 42, borderRadius: 2.5, flexShrink: 0,
                 background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 10px rgba(99,102,241,0.4)',
+                boxShadow: '0 4px 14px rgba(99,102,241,0.45)',
               }}>
-                <svg width="22" height="22" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="3" y="5" width="10" height="22" rx="2" fill="white"/>
                   <rect x="13" y="5" width="8" height="4.5" rx="2" fill="white"/>
                   <rect x="13" y="13" width="7" height="4" rx="2" fill="white"/>
@@ -410,21 +455,21 @@ const Top = () => {
               </Box>
               {/* Wordmark */}
               <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-                <Typography sx={{ fontWeight: 800, fontSize: 17, lineHeight: 1, letterSpacing: -0.5 }}>
+                <Typography sx={{ fontWeight: 900, fontSize: 21, lineHeight: 1, letterSpacing: -0.8 }}>
                   <span style={{ color: effDark ? '#e0e7ff' : '#1e1b4b' }}>Bu</span><span style={{ color: effDark ? '#A5B4FC' : '#6366f1' }}>Fu</span>
                 </Typography>
-                <Typography sx={{ fontSize: 9, color: '#8b5cf6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>
+                <Typography sx={{ fontSize: 10, color: '#8b5cf6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.2 }}>
                   Build Future
                 </Typography>
               </Box>
-              <Typography sx={{ display: { xs: 'block', sm: 'none' }, fontWeight: 800, fontSize: 17, letterSpacing: -0.5 }}>
+              <Typography sx={{ display: { xs: 'block', sm: 'none' }, fontWeight: 900, fontSize: 21, letterSpacing: -0.8 }}>
                 <span style={{ color: effDark ? '#e0e7ff' : '#1e1b4b' }}>Bu</span><span style={{ color: effDark ? '#A5B4FC' : '#6366f1' }}>Fu</span>
               </Typography>
             </Stack>
           </Link>
 
           {/* ── Desktop Nav Links ── */}
-          <Stack direction="row" spacing={0.5} sx={{ display: { xs: 'none', lg: 'flex' }, ml: 4 }}>
+          <Stack direction="row" spacing={0.5} sx={{ display: { xs: 'none', lg: 'flex' }, ml: 5 }}>
             {NAV_LINKS.map((link) => {
               const isActive = router.pathname === link.href;
               const isMessages = link.href === '/messages';
@@ -445,12 +490,13 @@ const Top = () => {
                     }}
                   >
                     <Button size="small" sx={{
-                      color: isActive ? (effDark ? '#A5B4FC' : '#6366F1') : (effDark ? '#cbd5e1' : '#64748b'),
-                      bgcolor: isActive ? (effDark ? 'rgba(129,140,248,0.15)' : '#eef2ff') : 'transparent',
+                      color: isActive ? (effDark ? '#A5B4FC' : '#6366F1') : (effDark ? '#e2e8f0' : '#374151'),
+                      bgcolor: isActive ? (effDark ? 'rgba(129,140,248,0.12)' : 'rgba(99,102,241,0.07)') : 'transparent',
                       fontWeight: isActive ? 700 : 500,
-                      fontSize: 13, px: 1.5, borderRadius: 2,
-                      '&:hover': { bgcolor: effDark ? 'rgba(255,255,255,0.07)' : '#FAFAFA', color: effDark ? '#FAFAFA' : '#0F172A' },
-                      transition: 'all 0.15s',
+                      fontSize: 14.5, px: 1.75, py: 0.75, borderRadius: 2,
+                      letterSpacing: -0.1,
+                      '&:hover': { bgcolor: effDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', color: effDark ? '#fff' : '#0F172A' },
+                      transition: 'all 200ms ease',
                     }}>
                       {link.label}
                     </Button>
@@ -486,10 +532,8 @@ const Top = () => {
                   size="small"
                   onClick={() => setTheme(isDark ? 'light' : 'dark')}
                   sx={{
-                    color: overlay ? '#e2e8f0' : (isDark ? '#facc15' : '#64748b'),
-                    bgcolor: overlay ? 'rgba(255,255,255,0.1)' : (isDark ? 'rgba(250,204,21,0.1)' : 'rgba(100,116,139,0.08)'),
-                    '&:hover': { bgcolor: overlay ? 'rgba(255,255,255,0.18)' : (isDark ? 'rgba(250,204,21,0.2)' : 'rgba(100,116,139,0.15)') },
-                    width: 34, height: 34,
+                    ...iconBtnSx(isDark ? '#facc15' : '#6366f1'),
+                    color: scrolled ? (isDark ? '#facc15' : '#64748b') : (isDark ? '#e2e8f0' : '#374151'),
                   }}
                 >
                   {isDark ? <Sun size={18} weight="fill" /> : <Moon size={18} />}
@@ -505,14 +549,11 @@ const Top = () => {
                   sx={{
                     position: 'relative',
                     overflow: 'visible',
-                    color: notifOpen ? '#6366F1' : unreadCount > 0 ? '#6366F1' : '#64748b',
-                    bgcolor: notifOpen ? '#eef2ff' : unreadCount > 0 ? '#eef2ff' : 'transparent',
-                    border: '1px solid',
-                    borderColor: notifOpen ? '#c7d2fe' : unreadCount > 0 ? '#c7d2fe' : (isDark ? '#27272F' : '#e2e8f0'),
-                    borderRadius: 2,
+                    ...iconBtnSx('#6366F1'),
                     width: 36, height: 36,
-                    transition: 'all 0.2s',
-                    '&:hover': { bgcolor: isDark ? '#16161F' : '#FAFAFA', color: isDark ? '#A5B4FC' : '#6366F1', borderColor: '#c7d2fe' },
+                    color: notifOpen || unreadCount > 0 ? '#6366F1' : undefined,
+                    bgcolor: notifOpen || unreadCount > 0 ? (isDark ? 'rgba(99,102,241,0.15)' : '#eef2ff') : undefined,
+                    borderColor: notifOpen || unreadCount > 0 ? '#c7d2fe' : undefined,
                   }}
                 >
                   <NotificationsNoneIcon
@@ -817,9 +858,8 @@ const Top = () => {
                   size="small"
                   onClick={() => setTheme(isDark ? 'light' : 'dark')}
                   sx={{
-                    color: overlay ? '#e2e8f0' : (isDark ? '#facc15' : '#64748b'),
-                    bgcolor: overlay ? 'rgba(255,255,255,0.1)' : (isDark ? 'rgba(250,204,21,0.1)' : 'rgba(100,116,139,0.08)'),
-                    '&:hover': { bgcolor: overlay ? 'rgba(255,255,255,0.18)' : (isDark ? 'rgba(250,204,21,0.2)' : 'rgba(100,116,139,0.15)') },
+                    ...iconBtnSx(isDark ? '#facc15' : '#6366f1'),
+                    color: scrolled ? (isDark ? '#facc15' : '#64748b') : (isDark ? '#e2e8f0' : '#374151'),
                     width: 34, height: 34,
                   }}
                 >
@@ -863,6 +903,78 @@ const Top = () => {
       >
         {mobileDrawer}
       </Drawer>
+
+      {/* ── Auth Modal (login bo'lmagan foydalanuvchi sevimlilar tugmasini bossа) ── */}
+      <Dialog
+        open={authModal}
+        onClose={() => setAuthModal(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            p: 1,
+            bgcolor: isDark ? '#16161F' : '#fff',
+            border: `1px solid ${isDark ? '#27272F' : '#e2e8f0'}`,
+            boxShadow: isDark ? '0 24px 60px rgba(0,0,0,0.5)' : '0 24px 60px rgba(0,0,0,0.12)',
+          },
+        }}
+      >
+        <DialogContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
+          {/* Icon */}
+          <Box sx={{
+            width: 56, height: 56, borderRadius: '50%', mx: 'auto', mb: 2.5,
+            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 8px 24px rgba(99,102,241,0.35)',
+          }}>
+            <FavoriteIcon size={26} weight="fill" color="white" />
+          </Box>
+
+          <Typography fontWeight={800} fontSize={20} mb={1} color={isDark ? '#F4F4F5' : '#0F172A'}>
+            Sevimlilarga saqlash
+          </Typography>
+          <Typography fontSize={14} color={isDark ? '#94A3B8' : '#64748B'} mb={3.5} lineHeight={1.6}>
+            Ishlarni saqlash uchun tizimga kiring yoki hisob yarating
+          </Typography>
+
+          <Stack spacing={1.5}>
+            <Link href="/account" style={{ textDecoration: 'none' }} onClick={() => setAuthModal(false)}>
+              <Button
+                fullWidth variant="contained"
+                sx={{
+                  bgcolor: '#6366F1', '&:hover': { bgcolor: '#4338ca' },
+                  fontWeight: 700, fontSize: 14, borderRadius: 2, py: 1.25,
+                  boxShadow: '0 4px 14px rgba(99,102,241,0.4)',
+                }}
+              >
+                Kirish
+              </Button>
+            </Link>
+            <Link href="/account?tab=register" style={{ textDecoration: 'none' }} onClick={() => setAuthModal(false)}>
+              <Button
+                fullWidth variant="outlined"
+                sx={{
+                  borderColor: isDark ? '#27272F' : '#e2e8f0',
+                  color: isDark ? '#CBD5E1' : '#374151',
+                  fontWeight: 600, fontSize: 14, borderRadius: 2, py: 1.25,
+                  '&:hover': { borderColor: '#6366F1', color: '#6366F1', bgcolor: 'rgba(99,102,241,0.05)' },
+                }}
+              >
+                Ro&apos;yxatdan o&apos;tish
+              </Button>
+            </Link>
+          </Stack>
+
+          <Button
+            size="small"
+            onClick={() => setAuthModal(false)}
+            sx={{ mt: 2, color: isDark ? '#64748B' : '#94A3B8', fontSize: 12 }}
+          >
+            Keyinroq
+          </Button>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

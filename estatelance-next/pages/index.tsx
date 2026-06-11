@@ -1,17 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { useTheme } from 'next-themes';
 import { useFavorites } from '../libs/hooks/useFavorites';
 import { useQuery, useReactiveVar } from '@apollo/client';
 import {
-  MagnifyingGlass,
   ArrowRight,
+  ArrowUpRight,
   Star,
   Fire,
   Clock,
-  Briefcase,
   TrendUp,
   CurrencyDollar,
   Globe,
@@ -32,16 +30,28 @@ import {
   MapPin,
   SealCheck,
   TrendUp as TrendUpIcon,
+  MagnifyingGlass,
+  Briefcase,
 } from '@phosphor-icons/react';
 
-import { GET_JOBS, GET_FREELANCERS } from '../apollo/user/query';
+import { GET_JOBS, GET_FREELANCERS, GET_POSTS } from '../apollo/user/query';
 import { compareBoostFirst } from '../libs/utils/boost';
 import { userVar } from '../apollo/store';
 import withLayoutBasic from '../libs/components/layout/LayoutBasic';
 import JobCard from '../libs/components/common/JobCard';
-import { Job, User } from '../libs/types';
+import HeroLatestArticles from '../libs/components/home/HeroLatestArticles';
+import { Job, User, Post } from '../libs/types';
 import { JobStatus, UserType } from '../libs/enums';
 import { getCatIcon } from '../libs/utils/jobCategoryIcons';
+
+// ─── Hero to'liq-fon video ───────────────────────────────────────────────────
+// Spline'dan MP4 export qilib, ffmpeg bilan siqilgach quyidagi fayllarni
+// `public/hero/` ga tashlang. Bo'sh bo'lsa — eski indigo gradient fon ishlaydi.
+//   public/hero/bufu-hero.webm  (asosiy, yengil)
+//   public/hero/bufu-hero.mp4   (Safari/iOS fallback)
+//   public/hero/bufu-hero-poster.jpg  (video yuklanguncha ko'rinadigan rasm)
+const HERO_VIDEO_SRC = '';        // masalan: '/hero/bufu-hero' (kengaytmasiz) — yoqilganda video chiqadi
+const HERO_VIDEO_POSTER = '/hero/bufu-hero-poster.jpg';
 
 // ─── Category meta ─────────────────────────────────────────────────────────────
 const CAT: Record<string, { label: string; bg: string; text: string; darkBg: string; darkText: string }> = {
@@ -142,14 +152,7 @@ const FreelancerCard = ({ freelancer, isDark }: { freelancer: User; isDark?: boo
   const displayName = freelancer.fullName ?? freelancer.username ?? '';
   return (
     <Link href={`/profile/${freelancer._id}`} className="no-underline block">
-      <div
-        className="rounded-2xl p-6 hover:shadow-lg hover:border-indigo-200 transition-all cursor-pointer border"
-        style={{
-          backgroundColor: isDark ? '#16161F' : '#ffffff',
-          borderColor: isDark ? '#27272F' : '#f1f5f9',
-          boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.05)',
-        }}
-      >
+      <div className="card-base job-card p-6 cursor-pointer">
         <div className="relative w-20 h-20 mx-auto mb-4">
           {freelancer.profileImage ? (
             <img
@@ -166,12 +169,12 @@ const FreelancerCard = ({ freelancer, isDark }: { freelancer: User; isDark?: boo
             className="absolute -bottom-1 -right-1 w-5 h-5 border-[3px] rounded-full"
             style={{
               backgroundColor: freelancer.availability === 'AVAILABLE' ? '#22c55e' : '#f59e0b',
-              borderColor: isDark ? '#16161F' : '#ffffff',
+              borderColor: 'var(--surface)',
             }}
           />
         </div>
         <div className="text-center mb-4">
-          <h4 className={`font-bold text-sm truncate ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{displayName}</h4>
+          <h4 className="font-bold text-sm truncate" style={{ color: 'var(--text-1)' }}>{displayName}</h4>
           <span
             className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
             style={{ backgroundColor: isDark ? cat.darkBg : cat.bg, color: isDark ? cat.darkText : cat.text }}
@@ -179,23 +182,26 @@ const FreelancerCard = ({ freelancer, isDark }: { freelancer: User; isDark?: boo
             {cat.label}
           </span>
         </div>
-        <div className={`grid grid-cols-3 gap-2 py-4 border-y mb-4 ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
+        <div className="grid grid-cols-3 gap-2 py-4 border-y mb-4" style={{ borderColor: 'var(--border)' }}>
           <div className="text-center">
-            <p className="text-xs font-bold text-indigo-600">{freelancer.averageRating?.toFixed(1) ?? '5.0'}</p>
-            <p className="text-[10px] text-slate-400">Reyting</p>
+            <p className="text-xs font-bold" style={{ color: 'var(--primary)' }}>{freelancer.averageRating?.toFixed(1) ?? '5.0'}</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-4)' }}>Reyting</p>
           </div>
           <div className="text-center">
-            <p className="text-xs font-bold text-indigo-600">{freelancer.completedJobCount ?? 0}</p>
-            <p className="text-[10px] text-slate-400">Ishlar</p>
+            <p className="text-xs font-bold" style={{ color: 'var(--primary)' }}>{freelancer.completedJobCount ?? 0}</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-4)' }}>Ishlar</p>
           </div>
           <div className="text-center">
-            <p className="text-xs font-bold text-indigo-600">
+            <p className="text-xs font-bold" style={{ color: 'var(--primary)' }}>
               {freelancer.hourlyRate ? `$${freelancer.hourlyRate}` : '—'}
             </p>
-            <p className="text-[10px] text-slate-400">Soat</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-4)' }}>Soat</p>
           </div>
         </div>
-        <button className={`w-full py-2 text-indigo-600 text-sm font-semibold rounded-xl hover:bg-indigo-600 hover:text-white transition-all ${isDark ? 'bg-slate-700/60' : 'bg-slate-100'}`}>
+        <button
+          className="w-full py-2 text-sm font-semibold rounded-xl hover:bg-indigo-600 hover:text-white transition-all"
+          style={{ background: 'var(--surface-3)', color: 'var(--primary)' }}
+        >
           Profilni ko'rish
         </button>
       </div>
@@ -207,13 +213,11 @@ const FreelancerCard = ({ freelancer, isDark }: { freelancer: User; isDark?: boo
 const FaqItem = ({ question, answer, isDark }: { question: string; answer: string; isDark?: boolean }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div
-      className="rounded-xl overflow-hidden border"
-      style={{ backgroundColor: isDark ? '#16161F' : '#ffffff', borderColor: isDark ? '#27272F' : '#e2e8f0' }}
-    >
+    <div className="card-flat overflow-hidden">
       <button
         onClick={() => setOpen((p) => !p)}
-        className={`w-full flex items-center justify-between p-5 text-left font-semibold text-sm ${isDark ? 'text-slate-100' : 'text-slate-900'}`}
+        className="w-full flex items-center justify-between p-5 text-left font-semibold text-sm"
+        style={{ color: 'var(--text-1)' }}
       >
         <span>{question}</span>
         <CaretDown
@@ -222,13 +226,25 @@ const FaqItem = ({ question, answer, isDark }: { question: string; answer: strin
         />
       </button>
       {open && (
-        <div className={`px-5 pb-5 text-sm border-t pt-4 leading-relaxed ${isDark ? 'text-slate-400 border-slate-700' : 'text-slate-600 border-slate-100'}`}>
+        <div
+          className="px-5 pb-5 text-sm border-t pt-4 leading-relaxed"
+          style={{ color: 'var(--text-3)', borderColor: 'var(--border)' }}
+        >
           {answer}
         </div>
       )}
     </div>
   );
 };
+
+// ─── Skeleton grid (yuklanish holati — spinner o'rniga shimmer kartalar) ───────
+const SkeletonGrid = ({ count, cols, h }: { count: number; cols: string; h: number }) => (
+  <div className={`grid ${cols} gap-4 sm:gap-5 lg:gap-6 items-stretch`}>
+    {Array.from({ length: count }).map((_, i) => (
+      <div key={i} className="skeleton" style={{ height: h }} />
+    ))}
+  </div>
+);
 
 // ─── Home Page ────────────────────────────────────────────────────────────────
 const HomePage = () => {
@@ -277,6 +293,11 @@ const HomePage = () => {
     fetchPolicy: 'cache-and-network',
   });
 
+  const { data: postsData, loading: postsLoading } = useQuery(GET_POSTS, {
+    variables: { page: 1, limit: 20 },
+    fetchPolicy: 'cache-and-network',
+  });
+
   const allJobs: Job[] = (jobsData?.getJobs ?? []).filter(
     (j) => j.status === JobStatus.OPEN || j.status === JobStatus.ACTIVE,
   );
@@ -301,23 +322,11 @@ const HomePage = () => {
     )
     .slice(0, 5);
 
-  // Hero "trust" bloki uchun: rasmi borlarni oldinga qo'yib, 5 ta avatar
-  const heroAvatars: User[] = [...allFreelancers]
-    .sort((a, b) => (b.profileImage ? 1 : 0) - (a.profileImage ? 1 : 0))
-    .slice(0, 5);
-  const freelancerCount = allFreelancers.length;
-  const ratedFreelancers = allFreelancers.filter((f) => (f.averageRating ?? 0) > 0);
-  const heroAvgRating = ratedFreelancers.length
-    ? (ratedFreelancers.reduce((sum, f) => sum + (f.averageRating ?? 0), 0) / ratedFreelancers.length).toFixed(1)
-    : null;
-
-  // Trust pill DOIMO ko'rinsin — ma'lumot yuklanmasa fallback (gradient avatarlar + 10+ + 5.0)
-  const trustCount  = freelancerCount > 0 ? freelancerCount : 10;
-  const trustRating = heroAvgRating ?? '5.0';
-  // Avatarlar: haqiqiy frilanserlar bo'lsa — ular; bo'lmasa 5 ta gradient placeholder
-  const trustAvatars: (User | null)[] = heroAvatars.length > 0
-    ? heroAvatars
-    : [null, null, null, null, null];
+  const latestPosts: Post[] = [...(postsData?.getPosts ?? [])].sort((a, b) => {
+    const ca = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const cb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return cb - ca;
+  });
 
   return (
     <div ref={revealRef} className={`home-sections${isDark ? ' is-dark' : ''}`}>
@@ -345,182 +354,93 @@ const HomePage = () => {
         style={{
           marginLeft: 'calc(-50vw + 50%)',
           marginRight: 'calc(-50vw + 50%)',
-          marginTop: '-112px', // nav + main pt + zaxira — tepada oq bo'shliq HECH QANDAY brauzerda qolmaydi (rasm overflow:hidden bilan kesiladi)
+          marginTop: '-120px',
         }}
       >
-        {/* Toza temali fon — Light: indigo mesh · Dark: grid + glow */}
-        <div
-          className="hero-bg"
-          style={{
-            background: isDark
-              ? 'radial-gradient(ellipse 60% 50% at 50% -8%, rgba(99,102,241,0.22), transparent 60%), radial-gradient(ellipse 40% 40% at 85% 30%, rgba(139,92,246,0.12), transparent 55%)'
-              : 'radial-gradient(ellipse 62% 52% at 50% -6%, rgba(99,102,241,0.16), transparent 62%), radial-gradient(ellipse 42% 42% at 88% 24%, rgba(124,58,237,0.08), transparent 58%)',
-          }}
-        />
+        {HERO_VIDEO_SRC ? (
+          <>
+            {/* Spline export — to'liq-fon video (autoplay · muted · loop) */}
+            <video
+              className="hero-video"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              poster={HERO_VIDEO_POSTER}
+              aria-hidden="true"
+            >
+              <source src={`${HERO_VIDEO_SRC}.webm`} type="video/webm" />
+              <source src={`${HERO_VIDEO_SRC}.mp4`} type="video/mp4" />
+            </video>
+            {/* Matn o'qilishi uchun overlay (light/dark alohida — app.scss) */}
+            <div className="hero-video-overlay" />
+          </>
+        ) : null}
+
         {/* Scroll indikatori */}
-        <div className="hero-scroll" style={{ color: isDark ? '#71717A' : '#94a3b8' }}>
-          <span className="hero-scroll-txt">Scroll</span>
+        <div className="hero-scroll">
+          <span>Scroll</span>
           <CaretDown size={18} weight="bold" />
         </div>
 
-        {/* Kontent (markazda) */}
-        <div className="relative z-10 hw text-center flex flex-col items-center" style={{ paddingTop: 48, paddingBottom: 64 }}>
-          <div className="hero-eyebrow" style={{
-            color: isDark ? '#A5B4FC' : '#4F46E5',
-            background: isDark ? 'rgba(99,102,241,0.12)' : '#EEF2FF',
-            border: `1px solid ${isDark ? 'rgba(129,140,248,0.28)' : '#C7D2FE'}`,
-          }}>✦ O'zbekistonning №1 frilanser platformasi</div>
-
-          <h1 className="text-4xl sm:text-5xl lg:text-[3.7rem] font-black leading-[1.04] tracking-tight mt-6 mb-4 max-w-3xl"
-              style={{ color: isDark ? '#FFFFFF' : '#0F172A' }}>
-            Orzuingizdagi ishni{' '}
-            <span className="hero-brand">BuFu</span>da toping
-          </h1>
-
-          <p className="text-lg leading-relaxed mb-8 max-w-2xl" style={{ color: isDark ? '#A1A1AA' : '#64748B' }}>
-            O'zbekistonning eng ishonchli freelancer platformasi. Mutaxassis yollang yoki o'z mahoratingiz bilan daromad olishni bugundan boshlang.
-          </p>
-
-          {/* CTA — auth holati va rolga qarab (saqlangan) */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-9">
-            {isFreelancer ? (
-              <Link
-                href="/jobs"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all no-underline shadow-lg shadow-indigo-500/30"
-              >
-                <MagnifyingGlass size={18} weight="bold" /> Ish topish
-              </Link>
-            ) : isAgent ? (
-              <>
-                <Link
-                  href="/my-works/create"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all no-underline shadow-lg shadow-indigo-500/30"
-                >
-                  <Briefcase size={18} weight="bold" /> Ish e'lon joylash
+        {/* Ikki ustun: chap matn + CTA · o'ng stacked frilanser karuseli */}
+        <div className="hero-content hero-content--freelancers relative z-10 hw">
+          <div className="hero-left hero-rise">
+            <span className="hero-eyebrow">✦ O&apos;zbekistonning №1 frilanser platformasi</span>
+            <h1 className="hero-title">
+              Orzuingizdagi ishni{' '}
+              <span className="hero-brand">BuFu</span>da toping
+            </h1>
+            <p className="hero-sub">
+              O&apos;zbekistonning eng ishonchli frilanser platformasi. Mutaxassis yollang yoki
+              o&apos;z mahoratingiz bilan daromad olishni bugundan boshlang.
+            </p>
+            <div className="hero-ctas">
+              {isFreelancer ? (
+                <Link href="/jobs" className="hero-cta hero-cta-primary no-underline">
+                  Ish topish
+                  <ArrowUpRight size={18} weight="bold" />
                 </Link>
-                <Link
-                  href="/browse"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm transition-all no-underline"
-                  style={{ backgroundColor: isDark ? '#818CF8' : '#7C3AED', boxShadow: isDark ? '0 10px 24px rgba(99,102,241,0.4)' : '0 10px 24px rgba(124,58,237,0.3)' }}
-                >
-                  <MagnifyingGlass size={18} weight="bold" /> Ishchi izlash
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/browse"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all no-underline shadow-lg shadow-indigo-500/30"
-                >
-                  <MagnifyingGlass size={18} weight="bold" /> Mutaxassis topish
-                </Link>
-                <Link
-                  href="/account"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm transition-all no-underline"
-                  style={{ backgroundColor: isDark ? '#818CF8' : '#7C3AED', boxShadow: isDark ? '0 10px 24px rgba(99,102,241,0.4)' : '0 10px 24px rgba(124,58,237,0.3)' }}
-                >
-                  <Briefcase size={18} weight="bold" /> Ishchi izlayapman
-                </Link>
-              </>
-            )}
+              ) : isAgent ? (
+                <>
+                  <Link href="/my-works/create" className="hero-cta hero-cta-primary no-underline">
+                    Ish e&apos;lon joylash
+                    <ArrowUpRight size={18} weight="bold" />
+                  </Link>
+                  <Link href="/browse" className="hero-cta hero-cta-secondary no-underline">
+                    Ishchi izlash
+                    <ArrowUpRight size={18} weight="bold" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/browse" className="hero-cta hero-cta-primary no-underline">
+                    Mutaxassis topish
+                    <ArrowUpRight size={18} weight="bold" />
+                  </Link>
+                  <Link href="/account" className="hero-cta hero-cta-secondary no-underline">
+                    Ish izlayapman
+                    <ArrowUpRight size={18} weight="bold" />
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Trust pill — DOIMO ko'rinadi (frilanserlar + soni + reyting) */}
-          <div
-            className="inline-flex items-center gap-3.5 px-5 py-2.5 rounded-full"
-            style={{
-              background: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#E2E8F0'}`,
-              boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.45)' : '0 4px 16px rgba(15,23,42,0.06)',
-              backdropFilter: 'blur(14px)',
-            }}
-          >
-            <div className="flex -space-x-3">
-              {trustAvatars.map((f, i) => {
-                const name = f?.fullName ?? f?.username ?? 'U';
-                // Fallback avatarlar uchun turli gradientlar (chiroyli ko'rinish)
-                const grads = [
-                  'linear-gradient(135deg,#6366F1,#818CF8)',
-                  'linear-gradient(135deg,#0891B2,#22D3EE)',
-                  'linear-gradient(135deg,#7C3AED,#C084FC)',
-                  'linear-gradient(135deg,#16A34A,#4ADE80)',
-                  'linear-gradient(135deg,#D97706,#FBBF24)',
-                ];
-                return (
-                  <div
-                    key={f?._id ?? `ph-${i}`}
-                    className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold"
-                    style={{
-                      zIndex: trustAvatars.length - i,
-                      background: grads[i % grads.length],
-                      border: `2px solid ${isDark ? '#0A0A0F' : '#FFFFFF'}`,
-                    }}
-                    title={name}
-                  >
-                    {f?.profileImage ? (
-                      <img src={f.profileImage} alt={name} className="w-full h-full object-cover" />
-                    ) : f ? (
-                      name[0]?.toUpperCase()
-                    ) : (
-                      <UserIcon size={18} weight="fill" className="text-white/90" />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            <div className="text-left">
-              <div className="text-sm font-semibold" style={{ color: isDark ? '#F4F4F5' : '#0F172A' }}>
-                <span className="font-black" style={{ color: isDark ? '#A5B4FC' : '#4F46E5' }}>{trustCount}+</span> frilanser bizga ishonadi
-              </div>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="flex items-center gap-0.5">
-                  {[0, 1, 2, 3, 4].map((n) => (
-                    <Star key={n} size={13} weight="fill" color="#F59E0B" />
-                  ))}
-                </span>
-                <span className="text-xs font-bold" style={{ color: isDark ? '#D4D4D8' : '#334155' }}>{trustRating}</span>
-                <span className="text-xs" style={{ color: isDark ? '#A1A1AA' : '#64748B' }}>o'rtacha reyting</span>
-              </div>
-            </div>
+          <div className="hero-articles-panel hero-rise" style={{ animationDelay: '0.12s' }}>
+            <HeroLatestArticles posts={latestPosts} loading={postsLoading} />
           </div>
         </div>
-
-        <style jsx>{`
-          .bufu-hero { min-height: 92vh; display: flex; align-items: center; }
-          /* Temali fon overlay (mesh / glow) — z-0 */
-          .hero-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-          .hero-scroll {
-            position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 11;
-            display: flex; flex-direction: column; align-items: center; gap: 2px;
-            font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-            animation: heroScrollBounce 1.8s ease-in-out infinite;
-          }
-          @keyframes heroScrollBounce {
-            0%, 100% { transform: translate(-50%, 0); opacity: 0.75; }
-            50% { transform: translate(-50%, 7px); opacity: 1; }
-          }
-          .hero-eyebrow {
-            display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700;
-            padding: 7px 16px; border-radius: 999px;
-          }
-          @media (prefers-reduced-motion: reduce) {
-            .hero-scroll { animation: none; }
-          }
-        `}</style>
       </section>
 
       {/* ─── HOW IT WORKS (step-by-step · faqat mehmonlar uchun) ──────────── */}
       {!isLoggedIn && (
-        <section className="py-24 hw-bg">
-          <div className="text-center mb-16">
-            <span
-              className="inline-block px-3 py-1 mb-3 rounded-full text-xs font-bold tracking-wide"
-              style={{ background: isDark ? 'rgba(99,102,241,0.15)' : '#eef2ff', color: '#6366f1' }}
-            >
-              ODDIY 4 QADAM
-            </span>
-            <h2 className={`text-3xl font-black mb-3 ${isDark ? 'text-white' : 'text-slate-900'}`}>Platforma qanday ishlaydi?</h2>
-            <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+        <section className="section-pad hw-bg">
+          <div className="section-head text-center flex flex-col items-center">
+            <span className="h-eyebrow mb-4">ODDIY 4 QADAM</span>
+            <h2 className="h-section mb-3">Platforma qanday ishlaydi?</h2>
+            <p className="t-lead">
               Ro'yxatdan o'tib, bir necha daqiqada birinchi loyihangizni boshlang
             </p>
           </div>
@@ -601,10 +521,10 @@ const HomePage = () => {
       )}
 
       {/* ─── CATEGORIES ───────────────────────────────────────────────────── */}
-      <section className="py-24 hw-bg">
-        <div className="text-center mb-16">
-          <h2 className={`text-3xl font-black mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>Yo'nalishlar bo'yicha izlash</h2>
-          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Har qanday murakkablikdagi vazifalar uchun mutaxassislar</p>
+      <section className="section-pad hw-bg">
+        <div className="section-head text-center">
+          <h2 className="h-section mb-3">Yo'nalishlar bo'yicha izlash</h2>
+          <p className="t-lead">Har qanday murakkablikdagi vazifalar uchun mutaxassislar</p>
         </div>
         <div className="cat-marquee" style={{ width: '100%' }}>
           <div className="cat-track">
@@ -612,14 +532,7 @@ const HomePage = () => {
               const cat = CAT[key] ?? CAT.OTHER;
               return (
                 <Link key={`${key}-${i}`} href={`/browse?category=${key}`} className="no-underline group shrink-0 w-40" aria-hidden={i >= CATEGORIES_DISPLAY.length}>
-                  <div
-                    className="p-5 rounded-2xl flex flex-col items-center text-center hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer border"
-                    style={{
-                      backgroundColor: isDark ? '#16161F' : '#ffffff',
-                      borderColor: isDark ? '#27272F' : '#e2e8f0',
-                      boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.4)' : undefined,
-                    }}
-                  >
+                  <div className="card-base p-5 flex flex-col items-center text-center cursor-pointer">
                     <div
                       className="w-14 h-14 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
                       style={{
@@ -639,28 +552,26 @@ const HomePage = () => {
       </section>
 
       {/* ─── LATEST JOBS ──────────────────────────────────────────────────── */}
-      <section className="py-24 hw-bg">
-        <div className="flex justify-between items-end mb-12">
+      <section className="section-pad hw-bg">
+        <div className="section-head flex justify-between items-end gap-4">
           <div>
-            <h2 className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Oxirgi loyihalar</h2>
-            <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Siz uchun mos keladigan yangi buyurtmalar</p>
+            <h2 className="h-section mb-2">Oxirgi loyihalar</h2>
+            <p className="t-lead">Siz uchun mos keladigan yangi buyurtmalar</p>
           </div>
-          <Link href="/jobs" className="text-indigo-600 text-sm font-semibold flex items-center gap-1 hover:underline no-underline">
+          <Link href="/jobs" className="text-indigo-600 text-sm font-semibold flex items-center gap-1 hover:underline no-underline shrink-0">
             Hammasini ko'rish <ArrowRight size={16} />
           </Link>
         </div>
 
         {jobsLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
-          </div>
+          <SkeletonGrid count={8} cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" h={232} />
         ) : latestJobs.length === 0 ? (
-          <div className="text-center py-16 rounded-2xl border" style={{ backgroundColor: isDark ? '#16161F' : '#fff', borderColor: isDark ? '#27272F' : '#e2e8f0' }}>
-            <ClipboardText size={48} className="text-slate-300 mx-auto mb-3" />
-            <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Hozircha ish e'lonlari yo'q</p>
+          <div className="empty-state">
+            <ClipboardText size={48} className="empty-icon text-slate-300" />
+            <p className="empty-desc">Hozircha ish e'lonlari yo'q</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 items-stretch">
             {latestJobs.map((job) => (
               <JobCard key={job._id} job={job} isDark={isDark} />
             ))}
@@ -669,31 +580,29 @@ const HomePage = () => {
       </section>
 
       {/* ─── POPULAR JOBS ─────────────────────────────────────────────────── */}
-      <section className="py-16 hw-bg">
-        <div className="flex justify-between items-end mb-12">
+      <section className="section-pad hw-bg">
+        <div className="section-head flex justify-between items-end gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Fire size={22} weight="fill" className="text-red-500" />
-              <h2 className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Eng mashhur ishlar</h2>
+              <h2 className="h-section">Eng mashhur ishlar</h2>
             </div>
-            <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Eng ko'p taklif olgan va talabgir bo'lgan ish e'lonlari</p>
+            <p className="t-lead">Eng ko'p taklif olgan va talabgir bo'lgan ish e'lonlari</p>
           </div>
-          <Link href="/jobs" className="text-indigo-600 text-sm font-semibold flex items-center gap-1 hover:underline no-underline">
+          <Link href="/jobs" className="text-indigo-600 text-sm font-semibold flex items-center gap-1 hover:underline no-underline shrink-0">
             Barcha ishlar <ArrowRight size={16} />
           </Link>
         </div>
 
         {jobsLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
-          </div>
+          <SkeletonGrid count={4} cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" h={232} />
         ) : popularJobs.length === 0 ? (
-          <div className="text-center py-16 rounded-2xl border" style={{ backgroundColor: isDark ? '#16161F' : '#fff', borderColor: isDark ? '#27272F' : '#e2e8f0' }}>
-            <Fire size={48} className="text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 text-sm">Hozircha ma'lumot yo'q</p>
+          <div className="empty-state">
+            <Fire size={48} className="empty-icon text-slate-300" />
+            <p className="empty-desc">Hozircha ma'lumot yo'q</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 items-stretch">
             {popularJobs.map((job) => (
               <JobCard key={job._id} job={job} hot isDark={isDark} />
             ))}
@@ -702,27 +611,25 @@ const HomePage = () => {
       </section>
 
       {/* ─── TOP FREELANCERS ──────────────────────────────────────────────── */}
-      <section className="py-24 hw-bg">
+      <section className="section-pad hw-bg">
         <div>
-          <div className="text-center mb-16">
+          <div className="section-head text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Star size={24} weight="fill" className="text-amber-400" />
-              <h2 className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Top Frilanserlar</h2>
+              <h2 className="h-section">Top Frilanserlar</h2>
             </div>
-            <p className={`mt-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ishonchli va tajribali mutaxassislar bilan ishlang</p>
+            <p className="t-lead">Ishonchli va tajribali mutaxassislar bilan ishlang</p>
           </div>
 
           {freelancersLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
-            </div>
+            <SkeletonGrid count={5} cols="grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" h={288} />
           ) : topFreelancers.length === 0 ? (
-            <div className="text-center py-16 rounded-2xl border" style={{ backgroundColor: isDark ? '#16161F' : '#fff', borderColor: isDark ? '#27272F' : '#e2e8f0' }}>
-              <UserIcon size={48} className="text-slate-300 mx-auto mb-3" />
-              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Hozircha frilanserlar yo'q</p>
+            <div className="empty-state">
+              <UserIcon size={48} className="empty-icon text-slate-300" />
+              <p className="empty-desc">Hozircha frilanserlar yo'q</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
               {topFreelancers.map((f) => (
                 <FreelancerCard key={f._id} freelancer={f} isDark={isDark} />
               ))}
@@ -741,23 +648,21 @@ const HomePage = () => {
       </section>
 
       {/* ─── PRICING ──────────────────────────────────────────────────────── */}
-      <section className="py-24 hw-bg">
-        <div className="text-center mb-16">
-          <h2 className={`text-3xl font-black mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>Platforma paketlari</h2>
-          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Ehtiyojlaringizga mos tarifni tanlang</p>
+      <section className="section-pad hw-bg">
+        <div className="section-head text-center">
+          <h2 className="h-section mb-3">Platforma paketlari</h2>
+          <p className="t-lead">Ehtiyojlaringizga mos tarifni tanlang</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-4xl mx-auto items-start">
           {PRICING_PLANS.map((plan) => (
             <div
               key={plan.name}
-              className={`p-8 rounded-2xl flex flex-col transition-all relative overflow-hidden border ${
+              className={`card-flat p-8 flex flex-col relative overflow-hidden transition-all ${
                 plan.popular ? 'shadow-xl md:-translate-y-4' : 'hover:shadow-xl'
               }`}
               style={{
-                backgroundColor: isDark ? '#16161F' : '#ffffff',
-                borderColor: plan.popular ? '#6366f1' : (isDark ? '#27272F' : '#e2e8f0'),
+                borderColor: plan.popular ? 'var(--primary)' : 'var(--border)',
                 borderTopWidth: plan.popular ? '4px' : '1px',
-                boxShadow: isDark ? '0 4px 24px rgba(0,0,0,0.5)' : undefined,
               }}
             >
               {plan.popular && (
@@ -765,14 +670,14 @@ const HomePage = () => {
                   POPULAR
                 </div>
               )}
-              <h3 className={`text-lg font-black mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{plan.name}</h3>
+              <h3 className="text-lg font-black mb-2" style={{ color: 'var(--text-1)' }}>{plan.name}</h3>
               <div className="flex items-baseline gap-1 mb-6">
-                <span className={`text-4xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{plan.price}</span>
-                <span className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-400'}`}>{plan.period}</span>
+                <span className="text-4xl font-black" style={{ color: 'var(--text-1)' }}>{plan.price}</span>
+                <span className="text-xs font-semibold" style={{ color: 'var(--text-4)' }}>{plan.period}</span>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
                 {plan.features.map((f) => (
-                  <li key={f} className={`flex items-center gap-2 text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                  <li key={f} className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-2)' }}>
                     <CheckCircle size={16} weight="fill" className="text-green-500 shrink-0" />
                     {f}
                   </li>
@@ -793,9 +698,9 @@ const HomePage = () => {
       </section>
 
       {/* ─── FAQ ──────────────────────────────────────────────────────────── */}
-      <section className="py-24 hw-bg">
+      <section className="section-pad hw-bg">
         <div className="max-w-3xl mx-auto">
-          <h2 className={`text-3xl font-black text-center mb-12 ${isDark ? 'text-white' : 'text-slate-900'}`}>Ko'p so'raladigan savollar</h2>
+          <h2 className="h-section text-center mb-10">Ko'p so'raladigan savollar</h2>
           <div className="space-y-3">
             {FAQS.map(([question, answer]) => (
               <FaqItem key={question} question={question} answer={answer} isDark={isDark} />
@@ -805,8 +710,8 @@ const HomePage = () => {
       </section>
 
       {/* ─── APP DOWNLOAD BANNER ──────────────────────────────────────────── */}
-      <section className="py-24 hw-bg">
-        <div className="bg-indigo-600 rounded-3xl p-10 md:p-14 flex flex-col md:flex-row items-center gap-12 overflow-hidden relative">
+      <section className="section-pad hw-bg">
+        <div className="bg-indigo-600 rounded-3xl p-8 sm:p-10 md:p-14 flex flex-col md:flex-row items-center gap-10 md:gap-12 overflow-hidden relative">
           {/* Decorative orb */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
 
@@ -816,17 +721,24 @@ const HomePage = () => {
               BuFu mobil ilovasini yuklab oling va bildirishnomalarni birinchilardan bo'lib qabul qiling.
             </p>
             <div className="flex flex-wrap gap-4">
-              <button className="bg-black text-white px-7 py-3.5 rounded-xl flex items-center gap-3 hover:scale-105 transition-transform">
+              <a
+                href={process.env.NEXT_PUBLIC_APK_URL || 'https://bufu.uz/downloads/bufu.apk'}
+                download
+                className="bg-black text-white px-7 py-3.5 rounded-xl flex items-center gap-3 hover:scale-105 transition-transform"
+              >
                 <AndroidLogo size={28} weight="fill" />
                 <div className="text-left">
-                  <p className="text-[10px] uppercase font-bold opacity-60 tracking-widest">Get it on</p>
-                  <p className="text-base font-bold leading-none">Google Play</p>
+                  <p className="text-[10px] uppercase font-bold opacity-60 tracking-widest">Yuklab olish</p>
+                  <p className="text-base font-bold leading-none">Android (APK)</p>
                 </div>
-              </button>
-              <button className="bg-black text-white px-7 py-3.5 rounded-xl flex items-center gap-3 hover:scale-105 transition-transform">
+              </a>
+              <button
+                disabled
+                className="bg-black/60 text-white px-7 py-3.5 rounded-xl flex items-center gap-3 cursor-not-allowed"
+              >
                 <AppleLogo size={28} weight="fill" />
                 <div className="text-left">
-                  <p className="text-[10px] uppercase font-bold opacity-60 tracking-widest">Download on</p>
+                  <p className="text-[10px] uppercase font-bold opacity-60 tracking-widest">Tez orada</p>
                   <p className="text-base font-bold leading-none">App Store</p>
                 </div>
               </button>

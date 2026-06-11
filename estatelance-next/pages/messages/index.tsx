@@ -182,10 +182,13 @@ const MessagesPage = () => {
     }
   };
 
-  if (!isLoggedIn) {
+  if (mounted && !isLoggedIn) {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bufu-auth-required'));
+    }
     return (
       <div className="text-center py-16 text-slate-500">
-        Xabarlarni ko'rish uchun tizimga kiring.
+        Xabarlarni ko&apos;rish uchun tizimga kiring.
       </div>
     );
   }

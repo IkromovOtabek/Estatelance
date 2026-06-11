@@ -12,6 +12,8 @@ import { userVar } from '../apollo/store';
 import AnnouncementBanner from '../libs/components/common/AnnouncementBanner';
 import SpamModal from '../libs/components/common/SpamModal';
 import ChatWidget from '../libs/components/common/ChatWidget';
+import AuthRequiredModal from '../libs/components/common/AuthRequiredModal';
+import SiteBackground from '../libs/components/layout/SiteBackground';
 import { TRACK_VISIT, START_SESSION, TRACK_PAGE, PING_SESSION, END_SESSION } from '../apollo/admin/mutation';
 import '../scss/app.scss';
 
@@ -122,7 +124,7 @@ const lightMuiTheme = createTheme({
     mode: 'light',
     primary:    { main: '#4F46E5', dark: '#4338CA', light: '#818CF8' },
     secondary:  { main: '#818CF8' },
-    background: { default: '#F8FAFC', paper: '#FFFFFF' },
+    background: { default: '#F3F5FF', paper: '#FFFFFF' },
     text:       { primary: '#0F172A', secondary: '#64748B' },
     divider:    '#E2E8F0',
     action: {
@@ -315,6 +317,15 @@ function DynamicMuiProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AppShell({ children, showBackground }: { children: React.ReactNode; showBackground: boolean }) {
+  return (
+    <>
+      {showBackground && <SiteBackground />}
+      <div className="site-content">{children}</div>
+    </>
+  );
+}
+
 function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const user = useReactiveVar(userVar);
@@ -389,15 +400,20 @@ export default function App({ Component, pageProps }: AppProps) {
     return () => router.events.off('routeChangeComplete', handleRouteChange);
   }, [router.events]);
 
+  const isAdmin = router.pathname.startsWith('/_admin');
+
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       <ApolloProvider client={apolloClient}>
         <DynamicMuiProvider>
           <OnboardingGuard>
-            <Component {...pageProps} />
+            <AppShell showBackground={!isAdmin}>
+              <Component {...pageProps} />
+            </AppShell>
           </OnboardingGuard>
           <AnnouncementBanner />
           <SpamModal />
+          <AuthRequiredModal />
           <ChatWidget />
         </DynamicMuiProvider>
       </ApolloProvider>

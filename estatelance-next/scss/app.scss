@@ -62,6 +62,13 @@
 
   // Autofill fon rangi (transition emas — inset shadow, qaltirishsiz)
   --autofill-bg: #ffffff;
+
+  // Sahifa foni — hero aurora tizimi (MUI background.default bilan sinxron)
+  --page-base:  #F3F5FF;
+  --hero-bg:    #F3F5FF;
+  --band-a:     rgba(255, 255, 255, 0.82);
+  --band-b:     rgba(245, 247, 254, 0.68);
+  --footer-bg:  rgba(248, 250, 252, 0.85);
 }
 
 // ─── Browser autofill (LIGHT + umumiy) ───────────────────────────────────────
@@ -123,38 +130,115 @@ html {
   }
 }
 
-// ─── Bosh sahifa: navbatma-navbat fon ranglari + gradient ulanish ─────────────
-// Har bir bo'lim foni navbat bilan A/B rangda. Bo'lim tepasidagi gradient oldingi
-// bo'lim rangidan o'ziniki rangiga singib o'tadi → seam'lar bir-biriga ulanadi.
+// ─── Global aurora fon (barcha public sahifalar) ───────────────────────────────
+.site-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.site-content {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-aurora,
+.hero-aurora {
+  position: absolute;
+  inset: -12% -6%;
+  z-index: 0;
+  pointer-events: none;
+  // Hero glow xarakteri (indigo yuqori-o'ng + purple pastki-o'ng), biroz yumshatilgan —
+  // global fixed fon sifatida barcha sahifalar orqasida ko'rinadi.
+  background:
+    radial-gradient(ellipse 60% 50% at 80% 18%, rgba(99, 102, 241, 0.09), transparent 62%),
+    radial-gradient(ellipse 52% 46% at 90% 68%, rgba(168, 85, 247, 0.06), transparent 58%),
+    radial-gradient(ellipse 46% 50% at 14% 30%, rgba(99, 102, 241, 0.045), transparent 72%);
+  filter: blur(6px);
+  animation: auroraDrift 22s ease-in-out infinite alternate;
+}
+.dark .site-aurora,
+.dark .hero-aurora {
+  background:
+    radial-gradient(ellipse 60% 50% at 80% 18%, rgba(99, 102, 241, 0.16), transparent 62%),
+    radial-gradient(ellipse 52% 46% at 90% 68%, rgba(168, 85, 247, 0.14), transparent 58%),
+    radial-gradient(ellipse 46% 50% at 14% 30%, rgba(99, 102, 241, 0.09), transparent 72%);
+}
+
+.site-blob,
+.hero-blob {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  filter: blur(64px);
+  pointer-events: none;
+  opacity: 0.55;
+}
+.site-blob-a,
+.hero-blob-a {
+  width: 380px; height: 380px; top: -70px; left: -50px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.22), transparent 70%);
+}
+.site-blob-b,
+.hero-blob-b {
+  width: 440px; height: 440px; bottom: -90px; right: -70px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.18), transparent 70%);
+}
+.dark .site-blob,
+.dark .hero-blob { opacity: 0.5; }
+.dark .site-blob-a,
+.dark .hero-blob-a {
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.45), transparent 70%);
+}
+.dark .site-blob-b,
+.dark .hero-blob-b {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.38), transparent 70%);
+}
+
+@keyframes auroraDrift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(2%, 1.6%, 0) scale(1.06); }
+  100% { transform: translate3d(-1.6%, -1%, 0) scale(1.03); }
+}
+
+@media (max-width: 1100px) {
+  .site-blob, .hero-blob { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-aurora, .hero-aurora, .hero-float { animation: none !important; }
+}
+
+// ─── Bosh sahifa: barcha sectionlar shaffof, global aurora ko'rinadi ──────────
+// Stripe/Linear kabi — bir xil fon, sectionlar tipografiya bilan ajralib turadi.
+// Band overlay tizimi o'chirildi → section chegaralari (seam) yo'q.
 .home-sections {
-  --band-a: #ffffff;   // toq bo'limlar (oq)
-  --band-b: #F5F7FE;   // juft bo'limlar (juda nozik indigo tus)
-  --hero-bg: #F3F5FF;  // hero foni (light — yengil indigo)
-  --footer-bg: #F8FAFC;// footer foni (slate-50)
-  // LayoutBasic dagi main py:4 (pastki 32px) ni bekor qilib, oxirgi bo'lim footerga ulanadi
   margin-bottom: -32px;
 }
-.home-sections.is-dark {
-  --band-a: #0A0A0F;   // deyarli qora (Premium Dark)
-  --band-b: #0E0E17;   // nozik ko'tarilish
-  --hero-bg: #0A0A0F;  // hero foni (dark)
-  --footer-bg: #0C0C13;// footer foni (dark)
+// Barcha sectionlar — to'liq shaffof (global aurora fixed fon orqadan ko'rinadi)
+.home-sections > section {
+  background: transparent !important;
 }
-// Toq bo'limlar: tepada B'dan A'ga o'tadi, pasti A
-.home-sections > section:nth-of-type(odd) {
-  background: linear-gradient(180deg, var(--band-b) 0%, var(--band-a) 16%, var(--band-a) 100%);
-}
-// Juft bo'limlar: tepada A'dan B'ga o'tadi, pasti B
-.home-sections > section:nth-of-type(even) {
-  background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 16%, var(--band-b) 100%);
-}
-// Hero: pastki qismi keyingi bo'lim rangiga (band-a) singib, 2-bo'limga ulanadi
-.home-sections > section.bufu-hero {
-  background: linear-gradient(180deg, var(--hero-bg) 0%, var(--hero-bg) 80%, var(--band-a) 100%) !important;
-}
-// Oxirgi bo'lim: pasti footer rangiga singib, footerga silliq ulanadi
+// Oxirgi bo'lim: pasti footer rangiga silliq ulanish uchun pastdan gradient
 .home-sections > section:last-of-type {
-  background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 16%, var(--band-b) 80%, var(--footer-bg) 100%) !important;
+  background: linear-gradient(180deg, transparent 60%, var(--footer-bg) 100%) !important;
+}
+// Hero: faqat brend radial glow (ustida) — hech qanday solid fon yo'q
+.home-sections > section.bufu-hero {
+  background:
+    radial-gradient(ellipse 80% 65% at 75% 22%, rgba(99, 102, 241, 0.11), transparent 62%),
+    radial-gradient(ellipse 60% 55% at 95% 72%, rgba(168, 85, 247, 0.07), transparent 58%),
+    transparent !important;
+}
+.dark .home-sections > section.bufu-hero,
+.home-sections.is-dark > section.bufu-hero {
+  background:
+    radial-gradient(ellipse 80% 65% at 75% 22%, rgba(99, 102, 241, 0.18), transparent 62%),
+    radial-gradient(ellipse 60% 55% at 95% 72%, rgba(168, 85, 247, 0.14), transparent 58%),
+    transparent !important;
 }
 
 // ─── Jonli ko'ruvchilar nuqtasi (job card) ────────────────────────────────────
@@ -221,7 +305,7 @@ html {
 
 body {
   font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-  background-color: #FAFAFA;
+  background-color: var(--page-base);
   color: var(--text-1);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -265,9 +349,15 @@ body {
   --autofill-bg: #0A0A0F;
   --ring: 0 0 0 3px rgba(129, 140, 248, 0.32);
 
+  --page-base:  #0A0A0F;
+  --hero-bg:    #0A0A0F;
+  --band-a:     rgba(10, 10, 15, 0.88);
+  --band-b:     rgba(14, 14, 23, 0.82);
+  --footer-bg:  rgba(12, 12, 19, 0.92);
+
   // ── Page background ───────────────────────────────────────────────────────────
   body {
-    background-color: #0A0A0F;
+    background-color: var(--page-base);
     color: #F4F4F5;
   }
 
@@ -630,6 +720,14 @@ input, select, textarea {
   border: 1px solid var(--border);
 }
 
+// Job/listing kartasi: tinch holatda yengil soya, hoverda card-base ko'taradi
+.job-card {
+  box-shadow: var(--shadow-sm);
+}
+.job-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
 .card-glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(16px);
@@ -766,6 +864,166 @@ input, select, textarea {
   line-height: 1.6;
 }
 
+// ─── Bosh sahifa: yagona tipografiya + bo'lim ritmi (clamp-based) ─────────────
+// Bu klasslar butun home sahifasi bo'ylab bir xil sarlavha/bo'shliq beradi.
+// Eski har joyda takrorlangan `text-3xl font-black ${isDark...}` o'rniga.
+.section-pad {
+  padding-block: clamp(3.5rem, 8vw, 6rem);
+}
+.section-head {
+  margin-bottom: clamp(2.25rem, 5vw, 3.75rem);
+}
+.h-section {
+  font-size: clamp(1.625rem, 1.1rem + 2.2vw, 2.25rem);
+  font-weight: 800;
+  color: var(--text-1);
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+.t-lead {
+  font-size: clamp(0.95rem, 0.9rem + 0.3vw, 1.0625rem);
+  color: var(--text-3);
+  line-height: 1.6;
+}
+// Bo'lim ustidagi kichik yorliq-pill (masalan "ODDIY 4 QADAM")
+.h-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: var(--primary-bg);
+  border: 1px solid var(--primary-border);
+}
+.dark .h-eyebrow {
+  color: var(--primary-light);
+  background: rgba(99, 102, 241, 0.14);
+  border-color: rgba(129, 140, 248, 0.28);
+}
+
+// ─── Hero qidiruv paneli (token-driven, dark .dark orqali) ───────────────────
+.hero-search {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  max-width: 580px;
+  padding: 8px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+.dark .hero-search {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+// Segment toggle (Ishlar / Frilanserlar)
+.hero-search-seg {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 3px;
+  border-radius: var(--radius-full);
+  background: var(--surface-3);
+}
+.dark .hero-search-seg { background: rgba(255, 255, 255, 0.06); }
+.hero-search-seg button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition);
+  white-space: nowrap;
+}
+.hero-search-seg button.is-active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+.dark .hero-search-seg button.is-active {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--primary-light);
+}
+.hero-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-1);
+  font-size: 15px;
+  font-family: inherit;
+  padding: 0 6px;
+}
+.hero-search input::placeholder { color: var(--text-4); }
+.hero-search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 0 20px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter var(--transition), transform var(--transition);
+}
+.dark .hero-search-btn { background: var(--primary-grad); }
+.hero-search-btn:hover { filter: brightness(1.06); }
+.hero-search-btn:active { transform: scale(0.97); }
+@media (max-width: 560px) {
+  .hero-search {
+    flex-wrap: wrap;
+    border-radius: var(--radius-lg);
+    gap: 8px;
+  }
+  .hero-search-seg { width: 100%; justify-content: center; }
+  .hero-search-seg button { flex: 1; }
+  .hero-search input { width: 100%; flex-basis: 60%; padding: 6px 10px; }
+  .hero-search-btn { flex: 1; padding: 12px 16px; }
+}
+
+// ─── Skeleton (yuklanish holati uchun shimmer) ───────────────────────────────
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-3);
+  border-radius: var(--radius-lg);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+.dark .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+}
+@keyframes skeletonShimmer {
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+}
+
 // ─── Gradient Text ────────────────────────────────────────────────────────────
 .gradient-text {
   background: linear-gradient(135deg, #4f46e5, #7c3aed);
@@ -796,6 +1054,1421 @@ input, select, textarea {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+// ─── HERO (token-driven, global — styled-jsx scope o'rniga) ──────────────────
+.bufu-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  box-sizing: border-box;
+  // Har qanday ekranda (27" iMac, 4K, laptop, mobil) viewport ni to'ldiradi
+  min-height: 100vh;
+  min-height: 100svh; // iOS Safari uchun (address bar hisobga olinadi)
+  padding-bottom: clamp(3rem, 6vh, 5rem);
+
+  @media (max-width: 480px) { padding-bottom: 2.5rem; }
+}
+// ─── Hero to'liq-fon video (Spline export) ──────────────────────────────────
+.hero-video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+// Matn o'qilishi uchun overlay: pastdan tepaga to'q + brend tint.
+// Light va dark uchun alohida — video ustida sarlavha doim aniq ko'rinadi.
+.hero-video-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 40%, rgba(99, 102, 241, 0.10), transparent 70%),
+    linear-gradient(180deg, var(--hero-bg) 0%, rgba(243, 245, 255, 0.55) 35%, rgba(243, 245, 255, 0.75) 100%);
+}
+.dark .hero-video-overlay {
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 40%, rgba(139, 92, 246, 0.14), transparent 70%),
+    linear-gradient(180deg, rgba(10, 10, 15, 0.55) 0%, rgba(10, 10, 15, 0.70) 45%, rgba(10, 10, 15, 0.88) 100%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-video { display: none; } // harakatni kamaytirish so'ralsa — videoni ko'rsatmaymiz (poster qoladi)
+}
+
+// ─── Premium hero: suzuvchi kartalar · kirish animatsiya (aurora → .site-* global) ─
+
+// Suzuvchi kartalar (faqat keng ekranlarda · dekorativ)
+.hero-floats {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none; // kontentga (qidiruv/CTA) xalaqit bermaydi
+}
+.hero-float {
+  position: absolute;
+  animation: heroFloat 7s ease-in-out infinite;
+  will-change: transform;
+}
+.hero-float-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.dark .hero-float-card {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.hero-float-img { display: block; width: 100%; object-fit: cover; }
+// Joylashuvlar (preview'dagidek 4 burchak)
+.hero-float-tl { top: 15%; left: 3.5%;  animation-delay: 0s;   }
+.hero-float-tr { top: 13%; right: 4.5%; animation-delay: 1.2s; }
+.hero-float-mr { top: 47%; right: 6.5%; animation-delay: 2.1s; }
+.hero-float-bl { bottom: 17%; left: 5%; animation-delay: 0.6s; }
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+// Reyting glass-chip ichi
+.hero-fc-rating { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
+.hero-fc-rating .hero-fc-num { font-size: 22px; font-weight: 900; color: var(--text-1); line-height: 1; }
+.hero-fc-rating .hero-fc-cap { font-size: 11px; color: var(--text-3); font-weight: 600; }
+// Mini "ish" karta
+.hero-fc-job { width: 200px; }
+.hero-fc-job .hero-float-img { height: 88px; }
+.hero-fc-job-body { padding: 10px 12px; }
+.hero-fc-job-title { font-size: 13px; font-weight: 700; color: var(--text-1); }
+.hero-fc-job-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+.hero-fc-price { font-size: 12px; font-weight: 800; color: var(--primary); }
+.dark .hero-fc-price { color: var(--primary-light); }
+.hero-fc-chip {
+  font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full);
+  background: var(--primary-bg); color: var(--primary);
+}
+// Rasmli kichik karta + label
+.hero-fc-photo { width: 150px; }
+.hero-fc-photo .hero-float-img { height: 168px; }
+.hero-fc-photo .hero-float-img.is-wide { height: 110px; }
+.hero-fc-label {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px; font-size: 12px; font-weight: 700; color: var(--text-1);
+}
+.hero-fc-label .dot { width: 7px; height: 7px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 3px rgba(34,197,94,0.18); }
+
+// Kirish animatsiyasi (staggered fade-up)
+.hero-rise { opacity: 0; animation: heroRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+@keyframes heroRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// Suzuvchi kartalar — faqat keng ekran (mobil/planshet toza qoladi)
+@media (max-width: 1100px) {
+  .hero-floats { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-rise { animation: none; opacity: 1; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  "SHOWROOM" HERO REDIZAYN — to'liq ekran · chap kontent · o'ng qiya kollaj · DOIM qorong'i
+//  (bu blok manba tartibida oxirida — temaga bog'liq .hero-* qoidalarni ustunlik bilan qoplaydi)
+// ═══════════════════════════════════════════════════════════════════════════════
+.bufu-hero .hero-content {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(2rem, 4vw, 4rem);
+  text-align: left;
+  padding-top: clamp(7.5rem, 14vh, 11rem);
+  padding-bottom: clamp(2.5rem, 6vh, 4rem);
+}
+.hero-left {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  z-index: 3;
+}
+
+// ── Eyebrow ──
+.bufu-hero .hero-eyebrow {
+  color: var(--primary);
+  background: var(--primary-bg);
+  border: 1px solid var(--primary-border);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+.home-sections.is-dark .bufu-hero .hero-eyebrow {
+  color: #C7D2FE;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+// ── Sarlavha ──
+.bufu-hero .hero-title {
+  color: var(--text-1);
+  font-size: clamp(2.6rem, 1.5rem + 4.6vw, 4.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  max-width: 15ch;
+  margin: 1.4rem 0 1rem;
+}
+.home-sections.is-dark .bufu-hero .hero-title {
+  color: #FFFFFF;
+}
+.bufu-hero .hero-brand {
+  background: linear-gradient(120deg, var(--primary), #7C3AED);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.home-sections.is-dark .bufu-hero .hero-brand {
+  background: linear-gradient(120deg, #818CF8, #C4B5FD);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+// ── Subtitle ──
+.bufu-hero .hero-sub {
+  color: var(--text-3);
+  max-width: 42ch;
+  margin-bottom: 1.75rem;
+}
+.home-sections.is-dark .bufu-hero .hero-sub {
+  color: rgba(226, 232, 240, 0.78);
+}
+// ── Qidiruv paneli (premium dark glass) ──
+.bufu-hero .hero-search {
+  max-width: 660px;
+  margin: 0;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+.home-sections.is-dark .bufu-hero .hero-search {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.bufu-hero .hero-search-seg { background: rgba(255, 255, 255, 0.07); }
+.bufu-hero .hero-search-seg button { color: rgba(226, 232, 240, 0.72); }
+.bufu-hero .hero-search-seg button.is-active {
+  background: rgba(255, 255, 255, 0.16);
+  color: #FFFFFF;
+}
+.bufu-hero .hero-search input { color: #FFFFFF; }
+.bufu-hero .hero-search input::placeholder { color: rgba(226, 232, 240, 0.5); }
+.bufu-hero .hero-search-btn {
+  background: var(--primary-grad);
+}
+// ── CTA tugmalari ──
+.bufu-hero .hero-ctas { justify-content: flex-start; margin-top: 1.5rem; }
+.bufu-hero .hero-cta-primary {
+  box-shadow: none;
+}
+.bufu-hero .hero-cta-secondary {
+  color: var(--primary);
+  border-color: var(--primary-border);
+  background: transparent;
+}
+.bufu-hero .hero-cta-secondary:hover {
+  background: var(--primary-bg);
+  border-color: var(--primary);
+}
+.home-sections.is-dark .bufu-hero .hero-cta-secondary {
+  color: #C7D2FE;
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.03);
+}
+.home-sections.is-dark .bufu-hero .hero-cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.42);
+}
+// ── Trust pill ──
+.bufu-hero .hero-trust {
+  background: var(--surface);
+  border-color: var(--border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.home-sections.is-dark .bufu-hero .hero-trust {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+// ── Scroll indikatori ──
+.bufu-hero .hero-scroll { color: var(--text-4); }
+.home-sections.is-dark .bufu-hero .hero-scroll { color: rgba(226, 232, 240, 0.6); }
+
+// ── O'ng tomon: qiya rasm kollaji ──
+.hero-collage {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 54%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+// Chap chekkasini qorong'i fonga singdirib yuboradi (reference kabi)
+.hero-collage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: linear-gradient(90deg, #0A0A14 0%, rgba(10, 10, 20, 0.55) 24%, transparent 58%);
+}
+.hero-collage-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 55% at 62% 38%, rgba(99, 102, 241, 0.26), transparent 60%),
+    radial-gradient(ellipse 50% 50% at 84% 72%, rgba(168, 85, 247, 0.20), transparent 55%);
+}
+.hero-frame {
+  position: absolute;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 36px 90px rgba(0, 0, 0, 0.6);
+  animation: heroFloat 8s ease-in-out infinite;
+}
+.hero-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.hero-frame-1 { width: clamp(220px, 19vw, 300px); aspect-ratio: 3 / 4;  top: 13%; left: 16%; transform: rotate(-6deg); z-index: 2; animation-delay: 0s; }
+.hero-frame-2 { width: clamp(260px, 23vw, 360px); aspect-ratio: 16 / 11; top: 34%; left: 42%; transform: rotate(5deg);  z-index: 4; animation-delay: 1.4s; }
+.hero-frame-3 { width: clamp(180px, 16vw, 250px); aspect-ratio: 4 / 5;  top: 56%; left: 22%; transform: rotate(-3deg); z-index: 3; animation-delay: 2.4s; }
+
+// ── Kollaj ustidagi suzuvchi aksent kartalar ──
+.bufu-hero .hero-float-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+}
+.bufu-hero .hero-fc-num { color: #FFFFFF; }
+.bufu-hero .hero-fc-cap { color: rgba(226, 232, 240, 0.7); }
+.bufu-hero .hero-fc-label { color: #F1F5F9; }
+.hero-float-rating { position: absolute; top: 15%;  right: 5%;  z-index: 6; }
+.hero-float-online { position: absolute; bottom: 18%; right: 9%; z-index: 6; }
+
+// ── Responsive: planshet/mobil — kontent markazlashadi, kollaj yashiriladi ──
+@media (max-width: 980px) {
+  .bufu-hero .hero-content.hero-content--freelancers {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    padding-top: clamp(8rem, 16vh, 11rem);
+  }
+  .hero-left { align-items: center; max-width: 680px; }
+  .bufu-hero .hero-title { max-width: none; }
+  .bufu-hero .hero-sub { max-width: 46ch; }
+  .bufu-hero .hero-ctas { justify-content: center; }
+  .hero-freelancers-panel,
+  .hero-articles-panel {
+    width: 100%;
+    justify-content: center;
+  }
+  .hero-freelancers-hero {
+    max-width: min(480px, 100%);
+    margin: 0 auto;
+    align-items: center;
+  }
+  .hero-collage { display: none; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  HERO — Top 5 Frilanserlar stacked cards (OpenN9-style carousel)
+// ═══════════════════════════════════════════════════════════════════════════════
+.bufu-hero .hero-content.hero-content--freelancers {
+  flex: 0 1 auto;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(2rem, 4vw, 4rem);
+  min-height: 0;
+  padding-top: clamp(7rem, 13vh, 10rem);
+  padding-bottom: clamp(2.5rem, 5vh, 3.5rem);
+  text-align: left;
+}
+
+.hero-freelancers-panel {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.hero-freelancers-hero {
+  width: 100%;
+  max-width: clamp(320px, 42vw, 480px);
+  margin: 0 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(1.25rem, 3vh, 1.75rem);
+}
+
+.hero-freelancers-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero-freelancer-stack-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 clamp(2.5rem, 8vw, 3.5rem);
+}
+
+.hero-freelancer-stack {
+  position: relative;
+  width: clamp(260px, 72vw, 340px);
+  height: clamp(300px, 42svh, 380px);
+  margin: 0 auto;
+}
+
+.bufu-hero .hero-fc-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  transition:
+    transform 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  transform-origin: center center;
+}
+.home-sections.is-dark .bufu-hero .hero-fc-card {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+.hero-fc-card--active {
+  box-shadow: none;
+  border-color: var(--primary-border);
+}
+.home-sections.is-dark .bufu-hero .hero-fc-card--active {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.hero-fc-card--back { cursor: default; }
+.hero-fc-card--skeleton {
+  background: var(--surface-3);
+  border-color: var(--border);
+  animation: heroSkeletonPulse 1.4s ease-in-out infinite;
+}
+.home-sections.is-dark .bufu-hero .hero-fc-card--skeleton {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+@keyframes heroSkeletonPulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.85; }
+}
+
+.hero-fc-visual {
+  position: relative;
+  flex-shrink: 0;
+  height: clamp(130px, 18svh, 150px);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+}
+.home-sections.is-dark .bufu-hero .hero-fc-visual {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.hero-fc-avatar-lg-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-fc-avatar-lg {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border);
+}
+.hero-fc-avatar-lg--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  span {
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.92);
+  }
+}
+.home-sections.is-dark .bufu-hero .hero-fc-avatar-lg {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+// Eski float-karta rasmlari (dekorativ)
+.hero-fc-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hero-fc-photo--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  span {
+    font-size: clamp(3rem, 10vw, 4.5rem);
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.92);
+  }
+}
+
+.hero-fc-top {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #FDE68A;
+  background: rgba(245, 158, 11, 0.22);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  backdrop-filter: blur(8px);
+}
+
+.hero-fc-profile-pill {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  max-width: calc(100% - 20px);
+}
+.home-sections.is-dark .bufu-hero .hero-fc-profile-pill {
+  background: rgba(10, 10, 20, 0.55);
+  border-color: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(12px);
+}
+.hero-fc-avatar-sm {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.hero-fc-avatar-sm--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+.hero-fc-profile-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  text-align: left;
+}
+.hero-fc-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+.home-sections.is-dark .bufu-hero .hero-fc-name {
+  color: #F8FAFC;
+}
+.hero-fc-cat {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+.home-sections.is-dark .bufu-hero .hero-fc-cat {
+  color: rgba(226, 232, 240, 0.72);
+}
+
+.hero-fc-rating-row {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-1);
+}
+.home-sections.is-dark .bufu-hero .hero-fc-rating-row {
+  background: rgba(10, 10, 20, 0.55);
+  border-color: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  color: #F1F5F9;
+}
+.hero-fc-rating-sep { opacity: 0.45; }
+.hero-fc-avail {
+  font-size: 11px;
+  font-weight: 600;
+  &[data-status='on'] { color: #4ADE80; }
+  &[data-status='off'] { color: #FBBF24; }
+}
+
+.hero-fc-body {
+  flex-shrink: 0;
+  padding: 12px 14px 14px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+}
+.home-sections.is-dark .bufu-hero .hero-fc-body {
+  background: rgba(10, 10, 20, 0.72);
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+.hero-fc-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.hero-fc-stat-val {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1.2;
+}
+.home-sections.is-dark .bufu-hero .hero-fc-stat-val {
+  color: #C7D2FE;
+}
+.hero-fc-stat-lbl {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-4);
+  margin-top: 2px;
+}
+.home-sections.is-dark .bufu-hero .hero-fc-stat-lbl {
+  color: rgba(226, 232, 240, 0.55);
+}
+
+.hero-fc-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  color: #fff;
+  background: var(--primary-grad);
+  box-shadow: none;
+  transition: filter var(--transition), transform var(--transition);
+  &:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  &:active { transform: scale(0.98); }
+}
+.hero-fc-cta--ghost {
+  width: auto;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  color: var(--text-2);
+}
+.home-sections.is-dark .bufu-hero .hero-fc-cta--ghost {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #E2E8F0;
+}
+
+.hero-fc-select-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.hero-fc-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background var(--transition), transform var(--transition), border-color var(--transition);
+  &:hover {
+    background: var(--surface-3);
+    border-color: var(--primary-border);
+    transform: translateY(-50%) scale(1.05);
+  }
+  &:active { transform: translateY(-50%) scale(0.96); }
+}
+.home-sections.is-dark .bufu-hero .hero-fc-nav {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(10, 10, 20, 0.72);
+  color: #F1F5F9;
+  backdrop-filter: blur(12px);
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+}
+.hero-fc-nav--prev { left: 0; }
+.hero-fc-nav--next { right: 0; }
+
+.hero-fc-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  button {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.22);
+    cursor: pointer;
+    transition: transform var(--transition), background var(--transition), width var(--transition);
+    &.is-active {
+      width: 24px;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+    }
+    &:hover:not(.is-active) { background: rgba(255, 255, 255, 0.4); }
+  }
+}
+
+.hero-fc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 1.5rem;
+  border-radius: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  p { margin: 0; font-size: 15px; }
+}
+.home-sections.is-dark .bufu-hero .hero-fc-empty {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(226, 232, 240, 0.75);
+}
+
+.hero-fc-browse-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  transition: color var(--transition), transform var(--transition);
+  &:hover {
+    color: var(--primary-dark, var(--primary));
+    transform: translateY(-1px);
+  }
+}
+.home-sections.is-dark .bufu-hero .hero-fc-browse-link {
+  color: rgba(199, 210, 254, 0.85);
+  &:hover { color: #E0E7FF; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  HERO — So'nggi maqolalar stacked carousel (premium)
+// ═══════════════════════════════════════════════════════════════════════════════
+.hero-articles-panel {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: min(100%, 520px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-art-carousel {
+  width: 100%;
+  max-width: clamp(360px, 42vw, 480px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(0.75rem, 2vh, 1.25rem);
+
+  @media (hover: hover) {
+    &:hover .hero-art-nav,
+    &:focus-within .hero-art-nav {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(-50%) scale(1);
+    }
+  }
+}
+
+.hero-art-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-art-stack-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+
+  .hero-art-nav {
+    position: absolute;
+    top: 50%;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%) scale(0.92);
+    transition:
+      opacity 0.45s cubic-bezier(0.12, 1, 0.32, 1),
+      transform 0.45s cubic-bezier(0.12, 1, 0.32, 1),
+      background var(--transition),
+      border-color var(--transition);
+  }
+}
+
+.hero-art-stack {
+  position: relative;
+  flex: 0 1 clamp(280px, 76vw, 340px);
+  width: clamp(280px, 76vw, 340px);
+  height: clamp(320px, 44svh, 400px);
+  overflow: visible;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+}
+.hero-art-stack--dragging {
+  cursor: grabbing;
+}
+
+.bufu-hero .hero-art-card {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  opacity: 1;
+  transition:
+    transform 1.35s cubic-bezier(0.12, 1, 0.32, 1),
+    opacity 1.35s cubic-bezier(0.12, 1, 0.32, 1),
+    border-color 0.65s ease,
+    box-shadow 1.35s cubic-bezier(0.12, 1, 0.32, 1),
+    filter 1.2s cubic-bezier(0.12, 1, 0.32, 1);
+  transform-origin: center center;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+.hero-art-card--dragging {
+  transition: none !important;
+}
+.home-sections.is-dark .bufu-hero .hero-art-card {
+  background: var(--surface);
+  border-color: var(--border);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.hero-art-card--slot-center {
+  z-index: 10;
+  pointer-events: auto;
+  box-shadow:
+    0 22px 48px rgba(15, 23, 42, 0.28),
+    0 8px 20px rgba(15, 23, 42, 0.14);
+}
+.home-sections.is-dark .bufu-hero .hero-art-card--slot-center {
+  box-shadow:
+    0 24px 52px rgba(0, 0, 0, 0.45),
+    0 10px 24px rgba(0, 0, 0, 0.28);
+}
+.hero-art-card--slot-left {
+  z-index: 1;
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: none;
+}
+.hero-art-card--slot-right {
+  z-index: 2;
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: none;
+}
+.hero-art-card--slot-hidden,
+.hero-art-card--hidden {
+  z-index: 0;
+  pointer-events: none;
+  cursor: default;
+  box-shadow: none;
+}
+
+.hero-art-card--active {
+  border-color: var(--primary-border);
+}
+.home-sections.is-dark .bufu-hero .hero-art-card--active {
+  border-color: rgba(129, 140, 248, 0.38);
+}
+.hero-art-card--side {
+  background: var(--surface);
+  border-color: rgba(148, 163, 184, 0.22);
+}
+.home-sections.is-dark .bufu-hero .hero-art-card--side {
+  background: var(--surface);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.hero-art-card--skeleton {
+  background: var(--surface-3);
+  border-color: var(--border);
+  animation: heroSkeletonPulse 1.4s ease-in-out infinite;
+  pointer-events: none;
+}
+.hero-art-card--skeleton.hero-art-card--slot-left {
+  z-index: 1;
+  transform: translate3d(-46%, 0, -52px) scale(0.8) rotateY(12deg);
+  opacity: 0.42;
+}
+.hero-art-card--skeleton.hero-art-card--slot-center {
+  z-index: 10;
+  transform: translate3d(0, 0, 36px) scale(1);
+  opacity: 1;
+}
+.hero-art-card--skeleton.hero-art-card--slot-right {
+  z-index: 2;
+  transform: translate3d(46%, 0, -52px) scale(0.8) rotateY(-12deg);
+  opacity: 0.42;
+}
+.home-sections.is-dark .bufu-hero .hero-art-card--skeleton {
+  background: var(--surface-3);
+  border-color: var(--border);
+}
+
+.hero-art-card-link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: inherit;
+}
+.hero-art-card-link-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+}
+
+.hero-art-cover {
+  position: relative;
+  flex-shrink: 0;
+  height: clamp(118px, 16svh, 138px);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.home-sections.is-dark .bufu-hero .hero-art-cover {
+  background: var(--surface-3);
+}
+.hero-art-cover-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1.25s cubic-bezier(0.12, 1, 0.32, 1);
+}
+.hero-art-card--active:hover .hero-art-cover-img {
+  transform: scale(1.04);
+}
+.hero-art-cover-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.22) 100%);
+  pointer-events: none;
+}
+.hero-art-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.hero-art-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px 12px;
+  gap: 7px;
+}
+.hero-art-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hero-art-excerpt {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hero-art-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+.hero-art-author-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1.5px solid var(--border);
+}
+.hero-art-author-avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+}
+.hero-art-author-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.hero-art-author-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hero-art-date {
+  font-size: 10px;
+  color: var(--text-4);
+}
+
+.hero-art-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+.hero-art-read {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.home-sections.is-dark .bufu-hero .hero-art-read {
+  color: var(--primary-light);
+}
+
+.hero-art-select-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.hero-art-nav {
+  z-index: 20;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: none;
+  backdrop-filter: blur(12px);
+  &:hover {
+    background: var(--surface-3);
+    border-color: var(--primary-border);
+    transform: translateY(-50%) scale(1.06);
+  }
+}
+.hero-art-nav--prev { left: 0; }
+.hero-art-nav--next { right: 0; }
+.home-sections.is-dark .bufu-hero .hero-art-nav {
+  background: rgba(10, 10, 20, 0.78);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #F1F5F9;
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+}
+
+.hero-art-footer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-top: 0.125rem;
+}
+
+.hero-art-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  button {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background: var(--border);
+    cursor: pointer;
+    transition: transform var(--transition), background var(--transition), width var(--transition);
+    &.is-active {
+      width: 22px;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+    }
+    &:hover:not(.is-active) { background: var(--text-4); }
+  }
+}
+
+.hero-art-read-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  transition: color var(--transition), transform var(--transition);
+  &:hover {
+    color: var(--primary-dark, var(--primary));
+    transform: translateY(-1px);
+  }
+}
+.home-sections.is-dark .bufu-hero .hero-art-read-link {
+  color: rgba(199, 210, 254, 0.85);
+  &:hover { color: #E0E7FF; }
+}
+
+.hero-art-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem 1.5rem;
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  p { margin: 0; font-size: 15px; }
+}
+.home-sections.is-dark .bufu-hero .hero-art-empty {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(226, 232, 240, 0.75);
+}
+
+@media (max-width: 980px) {
+  .hero-articles-panel {
+    width: 100%;
+    justify-content: center;
+  }
+  .hero-art-carousel {
+    max-width: min(480px, 100%);
+    margin: 0 auto;
+  }
+  .hero-art-head { align-items: center; }
+}
+
+@media (max-width: 640px) {
+  .hero-art-stack {
+    flex: 0 1 min(82vw, 300px);
+    width: min(82vw, 300px);
+    height: clamp(300px, 42svh, 360px);
+  }
+  .hero-art-card--skeleton.hero-art-card--slot-left {
+    transform: translate3d(-40%, 0, -48px) scale(0.78) rotateY(10deg);
+    opacity: 0.38;
+  }
+  .hero-art-card--skeleton.hero-art-card--slot-right {
+    transform: translate3d(40%, 0, -48px) scale(0.78) rotateY(-10deg);
+    opacity: 0.38;
+  }
+  .hero-art-nav {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-art-card { transition: none; }
+  .hero-art-cover-img { transition: none; }
+  .hero-art-card--skeleton { animation: none; opacity: 0.6; }
+}
+
+@media (max-width: 640px) {
+  .hero-freelancer-stack {
+    width: min(92vw, 300px);
+    height: clamp(280px, 40svh, 340px);
+  }
+  .hero-fc-nav {
+    width: 38px;
+    height: 38px;
+  }
+  .hero-fc-nav--prev { left: -4px; }
+  .hero-fc-nav--next { right: -4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-fc-card { transition: none; }
+  .hero-fc-card--skeleton { animation: none; opacity: 0.6; }
+}
+
+.hero-content {
+  // Tepada nav (~112px overlap) ni hisobga olib kontentni pastga suramiz
+  padding-top: clamp(7.5rem, 14vh, 10rem);
+  padding-bottom: clamp(3rem, 7vw, 4.5rem);
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: var(--radius-full);
+  color: var(--primary);
+  background: var(--primary-bg);
+  border: 1px solid var(--primary-border);
+}
+.dark .hero-eyebrow {
+  color: var(--primary-light);
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(129, 140, 248, 0.28);
+}
+.hero-title {
+  font-size: clamp(2.25rem, 1.5rem + 3.4vw, 3.7rem);
+  font-weight: 900;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  color: var(--text-1);
+  margin: 1.5rem 0 1rem;
+  max-width: 46rem;
+}
+.hero-sub {
+  font-size: clamp(1rem, 0.95rem + 0.5vw, 1.2rem);
+  line-height: 1.6;
+  color: var(--text-3);
+  max-width: 38rem;
+  margin-bottom: 1.5rem;
+}
+.hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 1.75rem;
+}
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform var(--transition), filter var(--transition),
+    background var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+.hero-cta:active { transform: scale(0.98); }
+.hero-cta-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(79, 70, 229, 0.32);
+}
+.dark .hero-cta-primary {
+  background: var(--primary-grad);
+  box-shadow: 0 10px 28px rgba(99, 102, 241, 0.4);
+}
+.hero-cta-primary:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.hero-cta-secondary {
+  background: transparent;
+  color: var(--primary);
+  border: 1.5px solid var(--primary-border);
+}
+.dark .hero-cta-secondary {
+  color: var(--primary-light);
+  border-color: rgba(129, 140, 248, 0.32);
+}
+.hero-cta-secondary:hover { background: var(--primary-bg); border-color: var(--primary); }
+.hero-trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  margin-top: 2rem;
+  text-decoration: none;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.hero-trust:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.dark .hero-trust {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.hero-scroll {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.25rem, 3vh, 1.75rem);
+  transform: translateX(-50%);
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  animation: heroScrollBounce 1.8s ease-in-out infinite;
+}
+@keyframes heroScrollBounce {
+  0%, 100% { transform: translate(-50%, 0); opacity: 0.75; }
+  50% { transform: translate(-50%, 7px); opacity: 1; }
+}
+// Past bo'yli ekranlarda scroll indikatorini yashir (search bar bilan to'qnashmasin)
+@media (max-height: 720px) {
+  .hero-scroll { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-scroll { animation: none; }
 }
 
 // ─── Dividers ─────────────────────────────────────────────────────────────────

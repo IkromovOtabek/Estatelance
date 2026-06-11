@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useQuery } from '@apollo/client';
 import { MagnifyingGlass as SearchIcon, Star as StarIcon, MapPin as LocationOnIcon, User as UserIcon, CaretRight } from '@phosphor-icons/react';
 import { GET_FREELANCERS } from '../../apollo/user/query';
@@ -144,6 +145,7 @@ const FreelancerListCard = ({ freelancer }: { freelancer: User }) => {
 
 // ─── Browse Page ──────────────────────────────────────────────────────────────
 const BrowsePage = () => {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [searchText, setSearchText] = useState('');
@@ -153,6 +155,17 @@ const BrowsePage = () => {
   const [minRating, setMinRating] = useState(0);
   const [locationFilter, setLocationFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+
+  // URL query'dan boshlang'ich qidiruv/kategoriya (bosh sahifa kategoriya linklari
+  // /browse?category=... va hero qidiruvi /browse?search=... shu yerda qo'llanadi)
+  useEffect(() => {
+    if (!router.isReady) return;
+    const q = typeof router.query.search === 'string' ? router.query.search : '';
+    const cat = typeof router.query.category === 'string' ? router.query.category : '';
+    if (q) { setSearchInput(q); setSearchText(q); }
+    if (cat) setSelectedCategory(cat);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady]);
 
   const { data, loading } = useQuery(GET_FREELANCERS, {
     variables: {

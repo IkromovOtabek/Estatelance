@@ -27,16 +27,25 @@ const Footer = () => {
   useEffect(() => { setMounted(true); }, []);
   const isDark = mounted && resolvedTheme === 'dark';
 
-  // Color tokens
-  const bg       = isDark ? '#0f172a' : '#f8fafc';
-  const border   = isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0';
+  // Color tokens — semi-transparent, global aurora orqadan ko'rinadi
+  const bg       = isDark ? 'rgba(12, 12, 19, 0.92)' : 'rgba(248, 250, 252, 0.85)';
+  const border   = isDark ? '#27272F' : '#E2E8F0';
   const heading  = isDark ? '#ffffff' : '#0f172a';
   const body     = isDark ? '#64748b' : '#64748b';
   const subtle   = isDark ? '#94a3b8' : '#3A3A48';
   const accent   = isDark ? '#818cf8' : '#6366f1';
 
   return (
-    <Box component="footer" sx={{ bgcolor: bg, color: subtle, mt: 'auto', borderTop: `1px solid ${border}` }}>
+    <Box component="footer" sx={{
+      bgcolor: bg,
+      color: subtle,
+      mt: 'auto',
+      borderTop: `1px solid ${border}`,
+      backdropFilter: 'blur(12px) saturate(140%)',
+      WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+      position: 'relative',
+      zIndex: 1,
+    }}>
 
       {/* ── Main footer content ── */}
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 3, lg: 4 }, pt: { xs: 5, md: 7 }, pb: 4 }}>

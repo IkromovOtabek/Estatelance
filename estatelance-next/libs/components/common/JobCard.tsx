@@ -1,11 +1,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useReactiveVar } from '@apollo/client';
 import {
   Fire, Clock, MapPin, SealCheck, BookmarkSimple, TrendUp,
 } from '@phosphor-icons/react';
 import { Job } from '../../types';
 import { useFavorites } from '../../hooks/useFavorites';
+import { userVar } from '../../../apollo/store';
 
 // ─── Tajriba / format label'lari ──────────────────────────────────────────────
 const EXP_LABELS: Record<string, string> = {
@@ -51,31 +53,40 @@ interface Props {
 
 const JobCard = ({ job, hot, isDark, removeMode }: Props) => {
   const router = useRouter();
+  const user = useReactiveVar(userVar);
+  const isLoggedIn = !!user._id;
   const { isFavorite, toggle, remove } = useFavorites();
   const saved = isFavorite(job._id);
   const sal = formatSalary(job);
   const viewers = job.viewCount && job.viewCount > 0 ? job.viewCount : null;
   const isHot = hot || (job.bidCount ?? 0) >= 4;
 
+  // Token-driven ranglar — endi isDark ternary'lari yo'q, CSS o'zgaruvchilari
+  // (app.scss `.dark` bloki) light/dark'ni avtomatik almashtiradi.
   const c = {
-    card:   isDark ? '#16161F' : '#FFFFFF',
-    border: isDark ? '#27272F' : '#D9E0EA',  // light: aniq ko'rinadigan border
-    title:  isDark ? '#F4F4F5' : '#0F172A',
-    body:   isDark ? '#D4D4D8' : '#334155',
-    muted:  isDark ? '#A1A1AA' : '#64748B',
-    faint:  isDark ? '#71717A' : '#94A3B8',
-    chip:   isDark ? '#1E1E29' : '#F1F5F9',
-    chipTx: isDark ? '#A1A1AA' : '#475569',
-    verify: isDark ? '#60A5FA' : '#2563EB',
-    danger: isDark ? '#F87171' : '#DC2626',
+    card:   'var(--surface)',
+    border: 'var(--border)',
+    title:  'var(--text-1)',
+    body:   'var(--text-2)',
+    muted:  'var(--text-3)',
+    faint:  'var(--text-4)',
+    chip:   'var(--surface-3)',
+    chipTx: 'var(--text-2)',
+    verify: 'var(--info)',
+    danger: 'var(--danger)',
   };
 
   // Saqlash: sevimlilarga qo'shadi va Sevimlilar sahifasiga o'tadi.
   // removeMode (Sevimlilar sahifasida): o'chiradi.
+  // Guest bo'lsa — auth modal ochiladi va amal bekor qilinadi.
   const handleSave = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (removeMode) { remove(job._id); return; }
+    if (!isLoggedIn) {
+      window.dispatchEvent(new CustomEvent('bufu-auth-required'));
+      return; // amal bekor qilindi
+    }
     if (!saved) toggle(job);
     router.push('/favorites');
   };
@@ -83,16 +94,8 @@ const JobCard = ({ job, hot, isDark, removeMode }: Props) => {
   return (
     <Link href={`/jobs/${job._id}`} className="no-underline block group h-full">
       <div
-        className="rounded-2xl border cursor-pointer h-full flex flex-col"
-        style={{
-          backgroundColor: c.card,
-          borderColor: c.border,
-          padding: '22px 24px',
-          boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.4)' : '0 1px 3px rgba(15,23,42,0.06)',
-          transition: 'transform .18s cubic-bezier(.22,1,.36,1), box-shadow .18s cubic-bezier(.22,1,.36,1), border-color .18s ease',
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = isDark ? '#3A3A48' : '#A5B4FC'; e.currentTarget.style.boxShadow = isDark ? '0 16px 44px rgba(0,0,0,0.5)' : '0 14px 40px rgba(79,70,229,0.12)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.borderColor = c.border; e.currentTarget.style.boxShadow = isDark ? '0 1px 4px rgba(0,0,0,0.4)' : '0 1px 3px rgba(15,23,42,0.06)'; }}
+        className="job-card card-base cursor-pointer h-full flex flex-col"
+        style={{ padding: '22px 24px' }}
       >
         {/* 1. Jonli ko'ruvchilar / sana */}
         <div className="flex items-center gap-2 mb-3" style={{ fontSize: 13, color: c.faint, fontWeight: 500 }}>
@@ -150,10 +153,7 @@ const JobCard = ({ job, hot, isDark, removeMode }: Props) => {
 
         {/* 6. Amallar — kartaning eng pastida (mt-auto bilan bir xil balandlik) */}
         <div className="flex items-center gap-2.5 mt-auto pt-3">
-          <span
-            className="inline-flex items-center justify-center flex-1 whitespace-nowrap"
-            style={{ background: isDark ? 'linear-gradient(135deg,#6366F1,#8B5CF6)' : '#4F46E5', color: '#fff', fontSize: 14, fontWeight: 600, padding: '11px 16px', borderRadius: 11, boxShadow: isDark ? '0 4px 16px rgba(99,102,241,0.35)' : '0 4px 14px rgba(79,70,229,0.28)' }}
-          >
+          <span className="btn-primary flex-1 justify-center whitespace-nowrap" style={{ pointerEvents: 'none' }}>
             Ariza yuborish
           </span>
           <button
@@ -163,7 +163,7 @@ const JobCard = ({ job, hot, isDark, removeMode }: Props) => {
             style={{
               width: 44, height: 44, borderRadius: 11,
               border: `1px solid ${removeMode ? c.danger : (saved ? c.verify : c.border)}`,
-              background: !removeMode && saved ? (isDark ? 'rgba(99,102,241,0.14)' : '#EEF2FF') : 'transparent',
+              background: !removeMode && saved ? 'var(--primary-bg)' : 'transparent',
               color: removeMode ? c.danger : (saved ? c.verify : c.muted),
               cursor: 'pointer',
             }}

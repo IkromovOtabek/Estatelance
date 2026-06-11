@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useMutation, useQuery } from '@apollo/client';
 import { useReactiveVar } from '@apollo/client';
 import { Alert, Avatar, Box, Button, CircularProgress, Divider, Snackbar, Stack, TextField, Typography } from '@mui/material';
@@ -22,6 +23,7 @@ function fixImgUrl(url?: string): string | undefined {
 }
 
 const ArticlesPage = () => {
+  const router = useRouter();
   const user = useReactiveVar(userVar);
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -33,6 +35,7 @@ const ArticlesPage = () => {
   const [postImageUrl, setPostImageUrl] = useState('');
   const [commentText, setCommentText] = useState<Record<string, string>>({});
   const [expandedPost, setExpandedPost] = useState<string | null>(null);
+  const autoExpandedRef = useRef(false);
   const [commentError, setCommentError] = useState('');
   const [commentSending, setCommentSending] = useState<Record<string, boolean>>({});
 
@@ -45,6 +48,21 @@ const ArticlesPage = () => {
   const [addComment] = useMutation(ADD_COMMENT);
 
   const posts: Post[] = data?.getPosts ?? [];
+
+  // ?post=<id> query param — hero cartidan o'tganda shu maqolani ochib, scrollaydi
+  useEffect(() => {
+    const postId = router.query.post as string | undefined;
+    if (!postId || autoExpandedRef.current || posts.length === 0) return;
+    const target = posts.find((p) => p._id === postId);
+    if (!target) return;
+    autoExpandedRef.current = true;
+    setExpandedPost(postId);
+    // Biroz kechikib DOM element paydo bo'lgach scroll qilamiz
+    setTimeout(() => {
+      const el = document.getElementById(`post-${postId}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
+  }, [posts, router.query.post]);
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +109,10 @@ const ArticlesPage = () => {
   };
 
   const handleLike = async (postId: string) => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn) {
+      window.dispatchEvent(new CustomEvent('bufu-auth-required'));
+      return;
+    }
     await toggleLike({ variables: { postId }, refetchQueries: ['GetPosts'] });
   };
 
@@ -99,7 +120,7 @@ const ArticlesPage = () => {
     const text = commentText[postId]?.trim();
     if (!text) return;
     if (!user._id) {
-      setCommentError("Izoh yozish uchun tizimga kiring.");
+      window.dispatchEvent(new CustomEvent('bufu-auth-required'));
       return;
     }
     setCommentSending(prev => ({ ...prev, [postId]: true }));
@@ -193,7 +214,7 @@ const ArticlesPage = () => {
             const isExpanded = expandedPost === post._id;
 
             return (
-              <Box key={post._id} className="card-base" sx={{ overflow: 'hidden' }}>
+              <Box key={post._id} id={`post-${post._id}`} className="card-base" sx={{ overflow: 'hidden' }}>
                 {post.imageUrl && (
                   <Box sx={{ height: 220, overflow: 'hidden' }}>
                     <img src={fixImgUrl(post.imageUrl)} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -241,7 +262,9 @@ const ArticlesPage = () => {
                     </Stack>
                   </Link>
 
-                  <Typography variant="h6" fontWeight={800} mb={1}>{post.title}</Typography>
+                  <Link href={`/articles/${post._id}`} style={{ textDecoration: 'none' }}>
+                    <Typography variant="h6" fontWeight={800} mb={1} sx={{ '&:hover': { color: 'primary.main' }, transition: 'color 0.15s', cursor: 'pointer' }}>{post.title}</Typography>
+                  </Link>
                   <Typography fontSize={14} color="text.secondary" mb={2} sx={isExpanded ? {} : { display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                     {post.body}
                   </Typography>

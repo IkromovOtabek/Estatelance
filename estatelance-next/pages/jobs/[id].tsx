@@ -297,6 +297,10 @@ const JobDetailPage = () => {
 
   const handleBidSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLoggedIn) {
+      window.dispatchEvent(new CustomEvent('bufu-auth-required'));
+      return;
+    }
     setBidError('');
     const amount = Number(bidAmount);
     if (!amount || amount <= 0) { setBidError("Iltimos, to'g'ri taklif summasi kiriting."); return; }

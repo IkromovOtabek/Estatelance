@@ -375,7 +375,8 @@ const ProfilePage = () => {
   };
 
   const handleToggleFollow = async () => {
-    if (!isLoggedIn || !profile) return;
+    if (!profile) return;
+    if (!isLoggedIn) { window.dispatchEvent(new CustomEvent('bufu-auth-required')); return; }
     setFollowLoading(true);
     const wasFollowing = isFollowing;
     setIsFollowing(!wasFollowing);

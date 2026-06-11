@@ -108,6 +108,17 @@ const JobsPage = () => {
     return () => clearTimeout(t);
   }, [snackMsg]);
 
+  // URL query'dan boshlang'ich qidiruv/kategoriya (bosh sahifa hero qidiruvi va
+  // kategoriya linklari shu yerda ishlaydi: /jobs?search=... yoki ?category=...)
+  useEffect(() => {
+    if (!router.isReady) return;
+    const q = typeof router.query.search === 'string' ? router.query.search : '';
+    const cat = typeof router.query.category === 'string' ? router.query.category : '';
+    if (q) { setSearchInput(q); setSearch(q); }
+    if (cat) setFilterCategory(cat);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady]);
+
   const buildRequestText = (job: Job) =>
     `Salom! "${job.title}" e'loningizni ko'rdim va ushbu loyihada ishlashni xohlayman.\n\n` +
     `📋 E'lon: ${job.title}\n` +
