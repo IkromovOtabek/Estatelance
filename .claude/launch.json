@@ -2,6 +2,13 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "kg-web",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/otabek/Desktop/KinderGarden/kg-web && npx next dev -p $PORT"],
+      "autoPort": true,
+      "port": 3000
+    },
+    {
       "name": "estatelance-next",
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd estatelance-next && npx next dev -p $PORT"],
