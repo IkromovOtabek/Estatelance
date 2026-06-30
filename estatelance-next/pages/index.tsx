@@ -481,16 +481,20 @@ const HomePage = () => {
                 icon: <ShieldCheck size={26} weight="fill" />,
               },
             ].map((step, i, arr) => (
-              <div key={step.num} className="relative flex flex-col items-center text-center">
+              <div
+                key={step.num}
+                className="hw-step relative flex flex-col items-center text-center"
+                style={{ transitionDelay: `${i * 0.12}s` }}
+              >
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 relative z-10 text-white"
+                  className="hw-step-icon w-16 h-16 rounded-2xl flex items-center justify-center mb-5 relative z-10 text-white"
                   style={{
-                    background: 'linear-gradient(135deg, #6366f1, #818CF8)',
-                    boxShadow: '0 12px 28px rgba(99,102,241,0.35)',
+                    background: 'linear-gradient(135deg, #818CF8, #A5B4FC)',
+                    boxShadow: '0 14px 32px rgba(99,102,241,0.28)',
                   }}
                 >
                   <span
-                    className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white text-indigo-600 text-xs font-black flex items-center justify-center"
+                    className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white text-indigo-500 text-xs font-black flex items-center justify-center"
                     style={{ border: '2px solid #e0e7ff' }}
                   >
                     {step.num}

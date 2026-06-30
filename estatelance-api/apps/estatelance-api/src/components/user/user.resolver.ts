@@ -169,4 +169,14 @@ export class UserResolver {
   ): Promise<User> {
     return this.userService.submitProfileBoostPayment(userId, plan, receiptUrl);
   }
+
+  // ─── Admin user yaratish (development uchun) ──────────────────────────────────
+  @Mutation(() => User)
+  async createAdminUser(
+    @Args('username') username: string,
+    @Args('password') password: string,
+    @Args('fullName', { nullable: true }) fullName?: string,
+  ): Promise<User> {
+    return this.userService.createAdminUser(username, password, fullName);
+  }
 }

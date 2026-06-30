@@ -589,6 +589,28 @@ export class UserService {
     return true;
   }
 
+  // ─── Admin user yaratish (development) ─────────────────────────────────────
+  async createAdminUser(username: string, password: string, fullName?: string): Promise<User> {
+    if (await this.userModel.exists({ username })) {
+      throw new BadRequestException('Username allaqachon ishlatilgan');
+    }
+
+    const hashedPassword = await this.authService.hashPassword(password);
+    const user = await this.userModel.create({
+      username,
+      password: hashedPassword,
+      role: 'admin',
+      userType: UserType.AGENT,
+      fullName: fullName || 'Administrator',
+      isVerified: true,
+      status: UserStatus.ACTIVE,
+      followerCount: 0,
+      followingCount: 0,
+    });
+
+    return user;
+  }
+
   // ─── Private Helpers ──────────────────────────────────────────────────────
   private async getUniqueUsername(base: string): Promise<string> {
     let username = base.toLowerCase().replace(/[^a-z0-9_]/g, '');

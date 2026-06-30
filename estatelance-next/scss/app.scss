@@ -7,15 +7,15 @@
 
 // ─── CSS Custom Properties — LIGHT (Professional · indigo + slate) ───────────
 :root {
-  // Primary — Indigo (Professional: 4F46E5 yetakchi)
-  --primary:        #4F46E5;          // indigo-600
-  --primary-dark:   #4338CA;          // indigo-700 — hover/press
-  --primary-light:  #6366F1;          // indigo-500
-  --primary-bg:     #EEF2FF;          // indigo-50
-  --primary-border: #C7D2FE;          // indigo-200
-  // Gradient — birlamchi CTA va hero urg'ulari uchun (yengil, did bilan)
-  --primary-grad:   linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
-  --accent-2:       #7C3AED;          // violet — ikkilamchi urg'u
+  // Primary — Indigo (yumshatilgan: 6366F1 yetakchi — yengilroq, did bilan)
+  --primary:        #6366F1;          // indigo-500 — yumshoqroq yetakchi
+  --primary-dark:   #4F46E5;          // indigo-600 — hover/press
+  --primary-light:  #818CF8;          // indigo-400 — yengil urg'u
+  --primary-bg:     #F0F3FF;          // yumshoq indigo fon
+  --primary-border: #DDE3FE;          // yumshoq indigo border
+  // Gradient — yumshoq, did bilan (indigo → soft violet)
+  --primary-grad:   linear-gradient(135deg, #6366F1 0%, #818CF8 100%);
+  --accent-2:       #8B5CF6;          // yumshoq violet — ikkilamchi urg'u
 
   // Status
   --success:      #16A34A;
@@ -23,26 +23,26 @@
   --danger:       #DC2626;
   --info:         #0EA5E9;
 
-  // Typography — Slate palette (sovuq, professional, SaaS tus)
-  --text-1:  #0F172A;   // slate-900 — sarlavha
-  --text-2:  #334155;   // slate-700 — asosiy matn
-  --text-3:  #64748B;   // slate-500 — ikkilamchi
-  --text-4:  #94A3B8;   // slate-400 — meta/placeholder
+  // Typography — yumshoq slate palette (kamroq kontrast, ko'zga yengil)
+  --text-1:  #1E293B;   // slate-800 — sarlavha (yumshoqroq qora)
+  --text-2:  #475569;   // slate-600 — asosiy matn
+  --text-3:  #94A3B8;   // slate-400 — ikkilamchi
+  --text-4:  #B4C0D3;   // yumshoq slate — meta/placeholder
 
-  // Surfaces
+  // Surfaces — yumshoq, iliq oq tuslar
   --surface:    #FFFFFF;
-  --surface-2:  #F8FAFC;   // slate-50 — yumshoq fon
-  --surface-3:  #F1F5F9;   // slate-100 — ko'tarilgan
+  --surface-2:  #FAFBFF;   // yumshoq indigo-oq fon
+  --surface-3:  #F4F6FD;   // yengil ko'tarilgan, yumshoq
 
-  // Borders — nozik, chalg'itmaydi
-  --border:     #E2E8F0;   // slate-200
-  --border-2:   #F1F5F9;   // slate-100
+  // Borders — juda nozik, yumshoq indigo tusли
+  --border:     #EAEEF9;   // yumshoq indigo-slate
+  --border-2:   #F2F5FC;   // juda yengil
 
-  // Shadows — yumshoq, indigo tusли (Professional)
-  --shadow-sm: 0 1px 2px rgba(15,23,42,0.05);
-  --shadow-md: 0 4px 16px rgba(15,23,42,0.07), 0 1px 3px rgba(15,23,42,0.04);
-  --shadow-lg: 0 12px 36px rgba(79,70,229,0.10), 0 4px 12px rgba(15,23,42,0.05);
-  --shadow-xl: 0 24px 60px rgba(79,70,229,0.14);
+  // Shadows — yumshoq, tarqoq, indigo tusли (havoga suzgandek)
+  --shadow-sm: 0 2px 8px rgba(99,102,241,0.05);
+  --shadow-md: 0 6px 20px rgba(99,102,241,0.08), 0 2px 6px rgba(30,41,59,0.04);
+  --shadow-lg: 0 16px 44px rgba(99,102,241,0.12), 0 6px 16px rgba(30,41,59,0.05);
+  --shadow-xl: 0 28px 68px rgba(99,102,241,0.16);
 
   // Radii
   --radius-sm:  10px;
@@ -63,12 +63,12 @@
   // Autofill fon rangi (transition emas — inset shadow, qaltirishsiz)
   --autofill-bg: #ffffff;
 
-  // Sahifa foni — hero aurora tizimi (MUI background.default bilan sinxron)
-  --page-base:  #F3F5FF;
-  --hero-bg:    #F3F5FF;
-  --band-a:     rgba(255, 255, 255, 0.82);
-  --band-b:     rgba(245, 247, 254, 0.68);
-  --footer-bg:  rgba(248, 250, 252, 0.85);
+  // Sahifa foni — indigo/purple aurora (dark mode kabi, lekin light tonда)
+  --page-base:  #F4F5FF;
+  --hero-bg:    #F4F5FF;
+  --band-a:     rgba(248, 249, 255, 0.72);
+  --band-b:     rgba(243, 244, 255, 0.58);
+  --footer-bg:  rgba(245, 246, 255, 0.88);
 }
 
 // ─── Browser autofill (LIGHT + umumiy) ───────────────────────────────────────
@@ -154,10 +154,11 @@ html {
   pointer-events: none;
   // Hero glow xarakteri (indigo yuqori-o'ng + purple pastki-o'ng), biroz yumshatilgan —
   // global fixed fon sifatida barcha sahifalar orqasida ko'rinadi.
+  // Light mode — dark mode kabi to'liq indigo/purple glow (barcha sahifalarda)
   background:
-    radial-gradient(ellipse 60% 50% at 80% 18%, rgba(99, 102, 241, 0.09), transparent 62%),
-    radial-gradient(ellipse 52% 46% at 90% 68%, rgba(168, 85, 247, 0.06), transparent 58%),
-    radial-gradient(ellipse 46% 50% at 14% 30%, rgba(99, 102, 241, 0.045), transparent 72%);
+    radial-gradient(ellipse 60% 50% at 80% 18%, rgba(99, 102, 241, 0.16), transparent 62%),
+    radial-gradient(ellipse 52% 46% at 90% 68%, rgba(168, 85, 247, 0.13), transparent 58%),
+    radial-gradient(ellipse 46% 50% at 14% 30%, rgba(99, 102, 241, 0.10), transparent 72%);
   filter: blur(6px);
   animation: auroraDrift 22s ease-in-out infinite alternate;
 }
@@ -176,17 +177,17 @@ html {
   border-radius: 50%;
   filter: blur(64px);
   pointer-events: none;
-  opacity: 0.55;
+  opacity: 0.5;   // light mode — dark mode kabi to'liq glow
 }
 .site-blob-a,
 .hero-blob-a {
   width: 380px; height: 380px; top: -70px; left: -50px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.22), transparent 70%);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.28), transparent 70%);
 }
 .site-blob-b,
 .hero-blob-b {
   width: 440px; height: 440px; bottom: -90px; right: -70px;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.18), transparent 70%);
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.22), transparent 70%);
 }
 .dark .site-blob,
 .dark .hero-blob { opacity: 0.5; }
@@ -284,18 +285,38 @@ html {
   .cat-track { animation: none; }
 }
 
-// ─── Scroll-reveal (bo'limlar scroll'da yumshoq paydo bo'ladi) ─────────────────
+// ─── Scroll-reveal (bo'limlar scroll'da yumshoq suzib chiqadi) ─────────────────
 .reveal-on-scroll {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-  will-change: opacity, transform;
+  transform: translateY(38px) scale(0.99);
+  transition:
+    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .reveal-on-scroll.is-visible {
   opacity: 1;
   transform: none;
 }
+// ─── "How it works" qadamlari — staggered reveal + icon micro-interaction ─────
+.hw-step {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+}
+.is-visible .hw-step {
+  opacity: 1;
+  transform: none;
+}
+.hw-step-icon {
+  transition: transform 0.45s var(--ease-out), box-shadow 0.45s var(--ease-out);
+}
+.hw-step:hover .hw-step-icon {
+  transform: translateY(-6px) scale(1.08) rotate(-4deg);
+  box-shadow: 0 20px 40px rgba(99, 102, 241, 0.4) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .hw-step { opacity: 1 !important; transform: none !important; }
   .reveal-on-scroll {
     opacity: 1 !important;
     transform: none !important;
@@ -705,12 +726,12 @@ input, select, textarea {
   background: var(--surface);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
+  transition: box-shadow 0.4s var(--ease-out), border-color 0.4s var(--ease-out), transform 0.4s var(--ease-out);
 
   &:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
     border-color: var(--primary-border);
-    transform: translateY(-2px);
+    transform: translateY(-5px);
   }
 }
 
@@ -720,12 +741,14 @@ input, select, textarea {
   border: 1px solid var(--border);
 }
 
-// Job/listing kartasi: tinch holatda yengil soya, hoverda card-base ko'taradi
+// Job/listing kartasi: tinch holatda yengil soya, hoverda yumshoq ko'tariladi
 .job-card {
   box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.4s var(--ease-out), border-color 0.4s var(--ease-out), transform 0.4s var(--ease-out);
 }
 .job-card:hover {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-6px);
 }
 
 .card-glass {
@@ -1087,9 +1110,11 @@ input, select, textarea {
   inset: 0;
   z-index: 1;
   pointer-events: none;
+  // Oq fon — chap (matn) tomonда quyuqroq, o'ng (video) tomonда tiniqroq
   background:
-    radial-gradient(ellipse 70% 60% at 50% 40%, rgba(99, 102, 241, 0.10), transparent 70%),
-    linear-gradient(180deg, var(--hero-bg) 0%, rgba(243, 245, 255, 0.55) 35%, rgba(243, 245, 255, 0.75) 100%);
+    radial-gradient(ellipse 65% 55% at 50% 40%, rgba(99, 102, 241, 0.07), transparent 70%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.70) 38%, rgba(255, 255, 255, 0.30) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.40) 0%, transparent 30%, rgba(255, 255, 255, 0.55) 100%);
 }
 .dark .hero-video-overlay {
   background:

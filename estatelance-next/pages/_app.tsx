@@ -124,7 +124,7 @@ const lightMuiTheme = createTheme({
     mode: 'light',
     primary:    { main: '#4F46E5', dark: '#4338CA', light: '#818CF8' },
     secondary:  { main: '#818CF8' },
-    background: { default: '#F3F5FF', paper: '#FFFFFF' },
+    background: { default: '#F4F5FF', paper: '#FFFFFF' },
     text:       { primary: '#0F172A', secondary: '#64748B' },
     divider:    '#E2E8F0',
     action: {
